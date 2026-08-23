@@ -77,7 +77,7 @@ export default function Auth() {
           </form>
 
           <p className="muted-2" style={{ fontSize: 12, textAlign: 'center', marginTop: 20 }}>
-            New accounts start with $25,000 in demo funds.
+            New accounts start at $0 — fund your balance with a crypto deposit.
           </p>
         </div>
         <Link className="muted-2" to="/" style={{ display: 'block', textAlign: 'center', marginTop: 16, fontSize: 13 }}>
