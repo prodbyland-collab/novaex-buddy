@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { createCryptoDeposit, fetchCryptoDeposits } from '@/lib/api';
+import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals } from '@/lib/api';
+import { usePortfolio } from '@/lib/portfolio';
 
 const currencies = [
   { value: 'btc', label: 'Bitcoin', symbol: 'BTC' },
@@ -28,7 +29,12 @@ export default function Wallet() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [copied, setCopied] = useState('');
-  const [testWithdrawal, setTestWithdrawal] = useState(false);
+  const { holdings, prices, reload } = usePortfolio();
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [wSymbol, setWSymbol] = useState('USD');
+  const [wAmount, setWAmount] = useState('');
+  const [wAddress, setWAddress] = useState('');
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const loadDeposits = useCallback(async () => {
     if (!user) return;
@@ -72,9 +78,37 @@ export default function Wallet() {
     setTimeout(() => setCopied(''), 1800);
   }
 
-  function handleTestWithdrawal() {
-    setTestWithdrawal(true);
-    setNotice('Test withdrawal complete. No funds were moved and no payout was sent.');
+  const loadWithdrawals = useCallback(async () => {
+    if (!user) return;
+    try {
+      setWithdrawals(await fetchWithdrawals(user.id));
+    } catch {
+      /* history is non-critical */
+    }
+  }, [user]);
+
+  useEffect(() => { loadWithdrawals(); }, [loadWithdrawals]);
+
+  const available = holdings.find(h => h.symbol === wSymbol)?.amount ?? 0;
+  const unitPrice = wSymbol === 'USD' ? 1 : (prices?.[wSymbol] ?? 0);
+
+  async function handleWithdraw(e) {
+    e.preventDefault();
+    setError('');
+    setNotice('');
+    setWithdrawing(true);
+    try {
+      const amount = Number(wAmount);
+      await createWithdrawal(user.id, wSymbol, amount, wAddress, amount * unitPrice);
+      setWAmount('');
+      setWAddress('');
+      await Promise.all([loadWithdrawals(), reload()]);
+      setNotice('Withdrawal processed. Your balance has been updated.');
+    } catch (err) {
+      setError(err?.message || 'Could not process this withdrawal.');
+    } finally {
+      setWithdrawing(false);
+    }
   }
 
   return (
@@ -104,13 +138,6 @@ export default function Wallet() {
             </button>
           </form>
 
-          <div className="test-withdraw-card">
-            <div>
-              <strong>Test withdrawal</strong>
-              <p>Simulation only. This does not send crypto or change your balance.</p>
-            </div>
-            <button className="btn small ghost" onClick={handleTestWithdrawal}>{testWithdrawal ? 'Tested' : 'Run test'}</button>
-          </div>
         </div>
 
         <div className="card deposit-detail-card">
@@ -147,6 +174,54 @@ export default function Wallet() {
       </div>
 
       {(error || notice) && <div className={`toast ${error ? 'error' : 'success'}`}>{error || notice}</div>}
+
+      <div className="wallet-grid">
+        <div className="card">
+          <p className="eyebrow">Withdraw</p>
+          <h2 className="wallet-card-title">Send to an external address</h2>
+          <p className="wallet-help">Withdrawals settle instantly against your account balance.</p>
+          <form onSubmit={handleWithdraw}>
+            <div className="field">
+              <label>Asset</label>
+              <select value={wSymbol} onChange={e => setWSymbol(e.target.value)}>
+                <option value="USD">USD</option>
+                {holdings.filter(h => h.symbol !== 'USD').map(h => (
+                  <option key={h.symbol} value={h.symbol}>{h.symbol}</option>
+                ))}
+              </select>
+              <span className="field-hint">Available: {formatAmount(available)} {wSymbol}</span>
+            </div>
+            <div className="field">
+              <label>Amount</label>
+              <input type="number" min="0" step="any" value={wAmount} onChange={e => setWAmount(e.target.value)} required />
+              <span className="field-hint">≈ ${(Number(wAmount || 0) * unitPrice).toFixed(2)} USD</span>
+            </div>
+            <div className="field">
+              <label>Destination address</label>
+              <input type="text" value={wAddress} onChange={e => setWAddress(e.target.value)} placeholder="Paste the receiving address" required />
+            </div>
+            <button className="btn" disabled={withdrawing} style={{ width: '100%', justifyContent: 'center' }}>
+              {withdrawing ? 'Processing...' : 'Withdraw'}
+            </button>
+          </form>
+        </div>
+
+        <div className="card">
+          <p className="eyebrow">Activity</p>
+          <h2 className="wallet-card-title">Withdrawal history</h2>
+          {withdrawals.length === 0 ? <p className="muted-2">No withdrawals yet.</p> : (
+            <div className="deposit-history-list">
+              {withdrawals.map(w => (
+                <div key={w.id} className="deposit-history-row">
+                  <span><strong>{w.symbol}</strong><small>{formatDate(w.created_at)}</small></span>
+                  <span><strong>{formatAmount(w.amount)}</strong><small>${Number(w.usd_value).toFixed(2)} USD</small></span>
+                  <span className="badge badge-teal">{w.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="card deposit-history-card">
         <div className="wallet-section-heading">
