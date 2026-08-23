@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ApiPublicNowpaymentsWebhookRouteImport } from './routes/api/public/nowpayments-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicNowpaymentsWebhookRoute =
@@ -26,27 +32,31 @@ const ApiPublicNowpaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/public/nowpayments-webhook': typeof ApiPublicNowpaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/public/nowpayments-webhook': typeof ApiPublicNowpaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/public/nowpayments-webhook': typeof ApiPublicNowpaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/nowpayments-webhook'
+  fullPaths: '/' | '/auth' | '/api/public/nowpayments-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/nowpayments-webhook'
-  id: '__root__' | '/' | '/api/public/nowpayments-webhook'
+  to: '/' | '/auth' | '/api/public/nowpayments-webhook'
+  id: '__root__' | '/' | '/auth' | '/api/public/nowpayments-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   ApiPublicNowpaymentsWebhookRoute: typeof ApiPublicNowpaymentsWebhookRoute
 }
 
@@ -57,6 +67,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/nowpayments-webhook': {
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   ApiPublicNowpaymentsWebhookRoute: ApiPublicNowpaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
