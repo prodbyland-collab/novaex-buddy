@@ -193,9 +193,49 @@ export async function fetchCryptoDeposits(userId) {
 }
 
 export async function createCryptoDeposit(currency, amountUsd) {
-  const { data, error } = await supabase.functions.invoke('nowpayments-create-deposit', {
-    body: { currency, amountUsd },
-  });
-  if (error || !data?.deposit) throw new Error('Could not create a deposit address');
-  return data.deposit;
+  const result = await createDeposit({ data: { currency, amountUsd: Number(amountUsd) } });
+  if (!result?.deposit) throw new Error('Could not create a deposit address');
+  return result.deposit;
+}
+
+// ---- Withdrawals (simulated: balances change, no funds ever leave) ----
+
+export async function fetchWithdrawals(userId) {
+  const { data, error } = await supabase
+    .from('withdrawals')
+    .select('id, symbol, amount, usd_value, address, status, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function createWithdrawal(userId, symbol, amount, address, usdValue) {
+  if (!address || address.trim().length < 12) throw new Error('Enter a valid destination address');
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error('Enter an amount greater than zero');
+
+  const { data: row } = await supabase
+    .from('holdings')
+    .select('id, amount')
+    .eq('user_id', userId)
+    .eq('symbol', symbol)
+    .maybeSingle();
+
+  const available = row?.amount ?? 0;
+  if (available < amount) throw new Error(`Insufficient ${symbol} balance`);
+
+  const remaining = available - amount;
+  if (symbol !== 'USD' && remaining <= 0) {
+    await supabase.from('holdings').delete().eq('id', row.id);
+  } else {
+    await supabase.from('holdings').update({ amount: remaining }).eq('id', row.id);
+  }
+
+  const { data, error } = await supabase
+    .from('withdrawals')
+    .insert({ user_id: userId, symbol, amount, address: address.trim(), usd_value: usdValue, status: 'completed' })
+    .select('id, symbol, amount, usd_value, address, status, created_at')
+    .single();
+  if (error) throw error;
+  return data;
 }
