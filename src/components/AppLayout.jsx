@@ -1,9 +1,9 @@
-import { Link, Outlet, useNavigate, useLocation } from '@tanstack/react-router';
+import { Link, useNavigate, useLocation } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth';
 import { usePortfolio } from '@/lib/portfolio';
 import { formatUsd } from '@/lib/markets';
 
-export default function AppLayout() {
+export default function AppLayout({ children }) {
   const { user, signOut } = useAuth();
   const { total, changeUsd, changePct, flashDir } = usePortfolio();
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export default function AppLayout() {
         </div>
       </header>
       <div className="app-body">
-        <Outlet />
+        {children}
       </div>
     </div>
   );
