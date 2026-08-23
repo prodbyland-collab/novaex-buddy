@@ -36,8 +36,3 @@ declare module "@/lib/markets" {
 declare module "@/lib/useLivePrices" {
   export const useLivePrices: any;
 }
-
-declare module "@/lib/api" {
-  const api: any;
-  export = api;
-}
