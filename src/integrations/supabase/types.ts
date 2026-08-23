@@ -14,13 +14,223 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      crypto_deposits: {
+        Row: {
+          actually_paid: number
+          created_at: string
+          credited_at: string | null
+          id: string
+          pay_address: string | null
+          pay_amount: number | null
+          pay_currency: string
+          payment_id: string | null
+          price_amount: number
+          price_currency: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actually_paid?: number
+          created_at?: string
+          credited_at?: string | null
+          id?: string
+          pay_address?: string | null
+          pay_amount?: number | null
+          pay_currency: string
+          payment_id?: string | null
+          price_amount: number
+          price_currency?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actually_paid?: number
+          created_at?: string
+          credited_at?: string | null
+          id?: string
+          pay_address?: string | null
+          pay_amount?: number | null
+          pay_currency?: string
+          payment_id?: string | null
+          price_amount?: number
+          price_currency?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      holdings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          amount: number
+          created_at: string
+          filled_at: string | null
+          id: string
+          price: number
+          side: string
+          status: string
+          symbol: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          filled_at?: string | null
+          id?: string
+          price: number
+          side: string
+          status?: string
+          symbol: string
+          type: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          filled_at?: string | null
+          id?: string
+          price?: number
+          side?: string
+          status?: string
+          symbol?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recurring_buys: {
+        Row: {
+          active: boolean
+          amount_usd: number
+          created_at: string
+          frequency: string
+          id: string
+          last_run: string | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount_usd: number
+          created_at?: string
+          frequency: string
+          id?: string
+          last_run?: string | null
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          active?: boolean
+          amount_usd?: number
+          created_at?: string
+          frequency?: string
+          id?: string
+          last_run?: string | null
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      security_settings: {
+        Row: {
+          created_at: string
+          id: string
+          login_alerts: boolean
+          two_factor_enabled: boolean
+          user_id: string
+          withdrawal_whitelist: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          login_alerts?: boolean
+          two_factor_enabled?: boolean
+          user_id?: string
+          withdrawal_whitelist?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          login_alerts?: boolean
+          two_factor_enabled?: boolean
+          user_id?: string
+          withdrawal_whitelist?: boolean
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          address: string
+          amount: number
+          created_at: string
+          id: string
+          status: string
+          symbol: string
+          usd_value: number
+          user_id: string
+        }
+        Insert: {
+          address: string
+          amount: number
+          created_at?: string
+          id?: string
+          status?: string
+          symbol: string
+          usd_value?: number
+          user_id?: string
+        }
+        Update: {
+          address?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          status?: string
+          symbol?: string
+          usd_value?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      credit_crypto_deposit: {
+        Args: {
+          p_actually_paid: number
+          p_payment_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
