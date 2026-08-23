@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
-// Ensure the current user has a USD cash balance to trade with (demo funding).
-// Called right after sign-up / first dashboard load.
+// Ensure the current user has a USD cash row. New accounts start at $0 —
+// balance only grows through confirmed crypto deposits.
 export async function ensureUsdBalance(userId) {
   const { data: existing } = await supabase
     .from('holdings')
@@ -11,7 +11,7 @@ export async function ensureUsdBalance(userId) {
     .maybeSingle();
 
   if (!existing) {
-    await supabase.from('holdings').insert({ user_id: userId, symbol: 'USD', amount: 25000 });
+    await supabase.from('holdings').insert({ user_id: userId, symbol: 'USD', amount: 0 });
   }
 }
 
