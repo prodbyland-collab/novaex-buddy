@@ -54,6 +54,7 @@ export type Database = {
           enabled: boolean
           id: string
           last_accrued_at: string | null
+          last_payout_date: string | null
           started_at: string | null
           total_profit: number
           updated_at: string
@@ -65,6 +66,7 @@ export type Database = {
           enabled?: boolean
           id?: string
           last_accrued_at?: string | null
+          last_payout_date?: string | null
           started_at?: string | null
           total_profit?: number
           updated_at?: string
@@ -76,6 +78,7 @@ export type Database = {
           enabled?: boolean
           id?: string
           last_accrued_at?: string | null
+          last_payout_date?: string | null
           started_at?: string | null
           total_profit?: number
           updated_at?: string
@@ -292,7 +295,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accrue_ai_trading_profit: { Args: never; Returns: number }
       credit_crypto_deposit: {
         Args: {
           p_actually_paid: number
@@ -301,6 +303,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      run_daily_ai_trading_payout: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
