@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_trades: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          price: number
+          profit: number
+          side: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          price: number
+          profit?: number
+          side: string
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          price?: number
+          profit?: number
+          side?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_trading_settings: {
+        Row: {
+          created_at: string
+          daily_rate: number
+          enabled: boolean
+          id: string
+          last_accrued_at: string | null
+          started_at: string | null
+          total_profit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_rate?: number
+          enabled?: boolean
+          id?: string
+          last_accrued_at?: string | null
+          started_at?: string | null
+          total_profit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          daily_rate?: number
+          enabled?: boolean
+          id?: string
+          last_accrued_at?: string | null
+          started_at?: string | null
+          total_profit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       crypto_deposits: {
         Row: {
           actually_paid: number
@@ -223,6 +292,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accrue_ai_trading_profit: { Args: never; Returns: number }
       credit_crypto_deposit: {
         Args: {
           p_actually_paid: number
