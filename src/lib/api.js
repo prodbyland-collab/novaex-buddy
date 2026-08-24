@@ -252,13 +252,20 @@ export async function fetchAiSettings(userId) {
   if (error) throw error;
   if (data) return data;
 
-  const { data: created, error: insErr } = await supabase
+  const { data: created } = await supabase
     .from('ai_trading_settings')
-    .insert({ user_id: userId })
+    .upsert({ user_id: userId }, { onConflict: 'user_id', ignoreDuplicates: true })
     .select('*')
-    .single();
-  if (insErr) throw insErr;
-  return created;
+    .maybeSingle();
+  if (created) return created;
+
+  const { data: existing, error: reErr } = await supabase
+    .from('ai_trading_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (reErr) throw reErr;
+  return existing;
 }
 
 export async function setTradingMode(userId, mode) {
