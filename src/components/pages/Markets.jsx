@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { usePortfolio } from '@/lib/portfolio';
 import { MARKETS, formatUsd, formatNum } from '@/lib/markets';
-import { executeMarketOrder, createLimitOrder, fetchHoldings, ensureUsdBalance } from '@/lib/api';
+import { executeMarketOrder, createLimitOrder, fetchHoldings, ensureUsdBalance, fetchAiSettings } from '@/lib/api';
+import { Link } from '@tanstack/react-router';
 import Sparkline from '@/components/Sparkline';
 
 export default function Markets() {
@@ -15,6 +16,12 @@ export default function Markets() {
   const [limitPrice, setLimitPrice] = useState('');
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [aiOn, setAiOn] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchAiSettings(user.id).then(s => setAiOn(!!s?.enabled)).catch(() => {});
+  }, [user]);
 
   const market = MARKETS.find(m => m.symbol === selected);
   const currentPrice = prices[selected]?.price ?? market?.price ?? 0;
@@ -116,7 +123,20 @@ export default function Markets() {
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="trade-panel">
+          {aiOn && (
+            <div className="trade-summary" style={{ marginBottom: 16 }}>
+              <div style={{ display: 'block' }}>
+                <b>AI trading is on.</b>
+                <div className="muted-2" style={{ fontSize: 12, marginTop: 4 }}>
+                  The AI is managing your balance. Switch to{' '}
+                  <Link to="/app/ai" style={{ color: 'var(--teal, #14b8a6)' }}>manual trading</Link>{' '}
+                  to place your own orders.
+                </div>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="trade-panel" style={{ opacity: aiOn ? 0.5 : 1, pointerEvents: aiOn ? 'none' : 'auto' }}>
             <div className="trade-tabs">
               <button type="button" className={`trade-tab ${orderType === 'market' ? 'active' : ''}`} onClick={() => setOrderType('market')}>Market</button>
               <button type="button" className={`trade-tab ${orderType === 'limit' ? 'active' : ''}`} onClick={() => setOrderType('limit')}>Limit</button>

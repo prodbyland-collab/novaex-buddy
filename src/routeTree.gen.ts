@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app.ai'
 import { Route as AuthenticatedAppMarketsRouteImport } from './routes/_authenticated/app.markets'
 import { Route as AuthenticatedAppOrdersRouteImport } from './routes/_authenticated/app.orders'
 import { Route as AuthenticatedAppRecurringRouteImport } from './routes/_authenticated/app.recurring'
@@ -43,6 +44,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppAiRoute = AuthenticatedAppAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAppMarketsRoute = AuthenticatedAppMarketsRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/markets': typeof AuthenticatedAppMarketsRoute
   '/app/orders': typeof AuthenticatedAppOrdersRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/markets': typeof AuthenticatedAppMarketsRoute
   '/app/orders': typeof AuthenticatedAppOrdersRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
   '/_authenticated/app/markets': typeof AuthenticatedAppMarketsRoute
   '/_authenticated/app/orders': typeof AuthenticatedAppOrdersRoute
   '/_authenticated/app/recurring': typeof AuthenticatedAppRecurringRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app'
+    | '/app/ai'
     | '/app/markets'
     | '/app/orders'
     | '/app/recurring'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/app/ai'
     | '/app/markets'
     | '/app/orders'
     | '/app/recurring'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/app'
+    | '/_authenticated/app/ai'
     | '/_authenticated/app/markets'
     | '/_authenticated/app/orders'
     | '/_authenticated/app/recurring'
@@ -199,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/ai': {
+      id: '/_authenticated/app/ai'
+      path: '/ai'
+      fullPath: '/app/ai'
+      preLoaderRoute: typeof AuthenticatedAppAiRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/markets': {
       id: '/_authenticated/app/markets'
       path: '/markets'
@@ -245,6 +264,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
   AuthenticatedAppMarketsRoute: typeof AuthenticatedAppMarketsRoute
   AuthenticatedAppOrdersRoute: typeof AuthenticatedAppOrdersRoute
   AuthenticatedAppRecurringRoute: typeof AuthenticatedAppRecurringRoute
@@ -254,6 +274,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
   AuthenticatedAppMarketsRoute: AuthenticatedAppMarketsRoute,
   AuthenticatedAppOrdersRoute: AuthenticatedAppOrdersRoute,
   AuthenticatedAppRecurringRoute: AuthenticatedAppRecurringRoute,

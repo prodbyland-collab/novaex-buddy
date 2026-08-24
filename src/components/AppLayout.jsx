@@ -12,6 +12,7 @@ export default function AppLayout({ children }) {
   const navItems = [
     { to: '/app', label: 'Portfolio', exact: true },
     { to: '/app/markets', label: 'Markets' },
+    { to: '/app/ai', label: 'AI Trading' },
     { to: '/app/orders', label: 'Orders' },
     { to: '/app/recurring', label: 'Recurring' },
     { to: '/app/security', label: 'Security' },

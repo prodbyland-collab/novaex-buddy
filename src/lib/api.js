@@ -240,3 +240,63 @@ export async function createWithdrawal(userId, symbol, amount, address, usdValue
   if (error) throw error;
   return data;
 }
+
+// ---- AI trading mode ----
+
+export async function fetchAiSettings(userId) {
+  const { data, error } = await supabase
+    .from('ai_trading_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (data) return data;
+
+  const { data: created } = await supabase
+    .from('ai_trading_settings')
+    .upsert({ user_id: userId }, { onConflict: 'user_id', ignoreDuplicates: true })
+    .select('*')
+    .maybeSingle();
+  if (created) return created;
+
+  const { data: existing, error: reErr } = await supabase
+    .from('ai_trading_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (reErr) throw reErr;
+  return existing;
+}
+
+export async function setTradingMode(userId, mode) {
+  const enabled = mode === 'ai';
+  const settings = await fetchAiSettings(userId);
+  const fields = enabled
+    ? { enabled: true, started_at: new Date().toISOString(), last_accrued_at: new Date().toISOString() }
+    : { enabled: false };
+  const { data, error } = await supabase
+    .from('ai_trading_settings')
+    .update(fields)
+    .eq('id', settings.id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function accrueAiProfit() {
+  const { data, error } = await supabase.rpc('accrue_ai_trading_profit');
+  if (error) throw error;
+  return Number(data) || 0;
+}
+
+export async function fetchAiTrades(userId, limit = 20) {
+  const { data, error } = await supabase
+    .from('ai_trades')
+    .select('id, symbol, side, amount, price, profit, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
