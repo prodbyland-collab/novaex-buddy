@@ -77,24 +77,26 @@ export default function AiTrading() {
   return (
     <div className="fade-up">
       <h1 className="page-title">Trading mode</h1>
-      <p className="page-sub">Let the AI trade your cash balance for you, or trade everything yourself.</p>
+      <p className="page-sub">AI trading is on by default. Switch to manual any time to trade yourself.</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
         <div className="card" style={{ border: aiOn ? '1px solid rgba(20,184,166,0.55)' : undefined }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700 }}>AI trading</h3>
-            {aiOn && <span className="badge badge-teal">Active</span>}
+            <h3 style={{ fontSize: 18, fontWeight: 700 }}>AI trading <span className="muted-2" style={{ fontSize: 12, fontWeight: 500 }}>(default)</span></h3>
+            {aiOn && <span className="badge badge-teal">{boosted ? 'Boosted' : 'Active'}</span>}
           </div>
           <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>
             The AI places trades for you around the clock and targets a steady
-            <b> {dailyPct}% per day</b> on your cash balance. Profit is credited continuously
-            while it is switched on.
+            <b> {dailyPct}% per day</b> on your cash balance. Profit is credited once a day,
+            at the end of the day (23:55 UTC).
           </p>
           <div className="trade-summary" style={{ marginTop: 16 }}>
             <div><span>Cash under management</span><span>{formatUsd(usdBalance)}</span></div>
             <div><span>Target profit / day</span><span className="gain">+{formatUsd(projectedDaily)}</span></div>
             <div><span>Earned so far</span><span className="gain">+{formatUsd(settings?.total_profit ?? 0)}</span></div>
+            <div><span>Last payout</span><span>{settings?.last_payout_date ?? '—'}</span></div>
           </div>
+
           <button
             className="btn"
             style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
