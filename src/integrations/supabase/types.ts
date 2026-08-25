@@ -49,6 +49,7 @@ export type Database = {
       }
       ai_trading_settings: {
         Row: {
+          boost_date: string | null
           created_at: string
           daily_rate: number
           enabled: boolean
@@ -61,6 +62,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          boost_date?: string | null
           created_at?: string
           daily_rate?: number
           enabled?: boolean
@@ -73,6 +75,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          boost_date?: string | null
           created_at?: string
           daily_rate?: number
           enabled?: boolean
@@ -131,6 +134,27 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      daily_ai_codes: {
+        Row: {
+          code: string
+          code_date: string
+          created_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          code: string
+          code_date: string
+          created_at?: string
+          sent_at?: string | null
+        }
+        Update: {
+          code?: string
+          code_date?: string
+          created_at?: string
+          sent_at?: string | null
         }
         Relationships: []
       }
@@ -303,6 +327,9 @@ export type Database = {
         }
         Returns: undefined
       }
+      ensure_daily_ai_code: { Args: never; Returns: string }
+      mark_daily_ai_code_sent: { Args: never; Returns: undefined }
+      redeem_ai_code: { Args: { p_code: string }; Returns: Json }
       run_daily_ai_trading_payout: { Args: never; Returns: number }
     }
     Enums: {
