@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -12,19 +11,18 @@ export const Route = createFileRoute("/api/public/hooks/daily-ai-code")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const anonKey = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
+        const anonKey =
+          process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_ANON_KEY"];
         const provided = request.headers.get("apikey");
         if (!anonKey || !provided || provided !== anonKey) {
           return json({ error: "Unauthorized" }, 401);
         }
 
-        const supabase = createClient(
-          process.env["SUPABASE_URL"]!,
-          process.env["SUPABASE_SERVICE_ROLE_KEY"]!,
-          { auth: { persistSession: false, autoRefreshToken: false } },
-        );
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const supabase = supabaseAdmin;
 
         const { data: code, error } = await supabase.rpc("ensure_daily_ai_code");
+
         if (error || !code) {
           console.error("ensure_daily_ai_code failed", error);
           return json({ error: error?.message ?? "No code" }, 500);
