@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { usePortfolio } from '@/lib/portfolio';
 import { formatUsd, formatNum } from '@/lib/markets';
-import { fetchAiSettings, setTradingMode, accrueAiProfit, fetchAiTrades } from '@/lib/api';
+import { fetchAiSettings, setTradingMode, fetchAiTrades, redeemAiCode } from '@/lib/api';
+
+function utcToday() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function AiTrading() {
   const { user } = useAuth();
@@ -10,6 +14,8 @@ export default function AiTrading() {
   const [settings, setSettings] = useState(null);
   const [trades, setTrades] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [code, setCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
   const [toast, setToast] = useState(null);
 
   const load = useCallback(async () => {
@@ -20,25 +26,6 @@ export default function AiTrading() {
   }, [user]);
 
   useEffect(() => { load(); }, [load]);
-
-  // While AI trading is on, credit accrued profit periodically.
-  useEffect(() => {
-    if (!settings?.enabled) return;
-    let cancelled = false;
-    async function tick() {
-      try {
-        const gained = await accrueAiProfit();
-        if (cancelled) return;
-        if (gained > 0) {
-          await reload();
-          await load();
-        }
-      } catch { /* ignore transient errors */ }
-    }
-    tick();
-    const id = setInterval(tick, 30000);
-    return () => { cancelled = true; clearInterval(id); };
-  }, [settings?.enabled, reload, load]);
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
@@ -59,9 +46,33 @@ export default function AiTrading() {
     }
   }
 
+  async function submitCode(e) {
+    e.preventDefault();
+    if (!code.trim()) return;
+    setRedeeming(true);
+    try {
+      const result = await redeemAiCode(code.trim());
+      if (result?.ok) {
+        setCode('');
+        await load();
+        await reload();
+        showToast(result.message || 'Boost unlocked: 5% for today');
+      } else {
+        showToast(result?.message || 'That code is not valid today', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Could not check that code', 'error');
+    } finally {
+      setRedeeming(false);
+    }
+  }
+
   const aiOn = !!settings?.enabled;
-  const dailyPct = ((settings?.daily_rate ?? 0.01) * 100).toFixed(2);
-  const projectedDaily = usdBalance * (settings?.daily_rate ?? 0.01);
+  const boosted = settings?.boost_date === utcToday();
+  const rate = boosted ? 0.05 : (settings?.daily_rate ?? 0.01);
+  const dailyPct = (rate * 100).toFixed(2);
+  const projectedDaily = usdBalance * rate;
+
 
   return (
     <div className="fade-up">
