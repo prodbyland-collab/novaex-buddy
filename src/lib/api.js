@@ -284,11 +284,12 @@ export async function setTradingMode(userId, mode) {
   return data;
 }
 
-export async function accrueAiProfit() {
-  const { data, error } = await supabase.rpc('accrue_ai_trading_profit');
+export async function redeemAiCode(code) {
+  const { data, error } = await supabase.rpc('redeem_ai_code', { p_code: code });
   if (error) throw error;
-  return Number(data) || 0;
+  return data;
 }
+
 
 export async function fetchAiTrades(userId, limit = 20) {
   const { data, error } = await supabase

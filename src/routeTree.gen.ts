@@ -21,6 +21,7 @@ import { Route as AuthenticatedAppRecurringRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppSecurityRouteImport } from './routes/_authenticated/app.security'
 import { Route as AuthenticatedAppWalletRouteImport } from './routes/_authenticated/app.wallet'
 import { Route as ApiPublicNowpaymentsWebhookRouteImport } from './routes/api/public/nowpayments-webhook'
+import { Route as ApiPublicHooksDailyAiCodeRouteImport } from './routes/api/public/hooks/daily-ai-code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -84,6 +85,12 @@ const ApiPublicNowpaymentsWebhookRoute =
     path: '/api/public/nowpayments-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksDailyAiCodeRoute =
+  ApiPublicHooksDailyAiCodeRouteImport.update({
+    id: '/api/public/hooks/daily-ai-code',
+    path: '/api/public/hooks/daily-ai-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/app/wallet': typeof AuthenticatedAppWalletRoute
   '/api/public/nowpayments-webhook': typeof ApiPublicNowpaymentsWebhookRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/daily-ai-code': typeof ApiPublicHooksDailyAiCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/app/wallet': typeof AuthenticatedAppWalletRoute
   '/api/public/nowpayments-webhook': typeof ApiPublicNowpaymentsWebhookRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/daily-ai-code': typeof ApiPublicHooksDailyAiCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/app/wallet': typeof AuthenticatedAppWalletRoute
   '/api/public/nowpayments-webhook': typeof ApiPublicNowpaymentsWebhookRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/daily-ai-code': typeof ApiPublicHooksDailyAiCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/app/wallet'
     | '/api/public/nowpayments-webhook'
     | '/app/'
+    | '/api/public/hooks/daily-ai-code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/app/wallet'
     | '/api/public/nowpayments-webhook'
     | '/app'
+    | '/api/public/hooks/daily-ai-code'
   id:
     | '__root__'
     | '/'
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/wallet'
     | '/api/public/nowpayments-webhook'
     | '/_authenticated/app/'
+    | '/api/public/hooks/daily-ai-code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -172,6 +185,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicNowpaymentsWebhookRoute: typeof ApiPublicNowpaymentsWebhookRoute
+  ApiPublicHooksDailyAiCodeRoute: typeof ApiPublicHooksDailyAiCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -260,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNowpaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/daily-ai-code': {
+      id: '/api/public/hooks/daily-ai-code'
+      path: '/api/public/hooks/daily-ai-code'
+      fullPath: '/api/public/hooks/daily-ai-code'
+      preLoaderRoute: typeof ApiPublicHooksDailyAiCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -302,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicNowpaymentsWebhookRoute: ApiPublicNowpaymentsWebhookRoute,
+  ApiPublicHooksDailyAiCodeRoute: ApiPublicHooksDailyAiCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
