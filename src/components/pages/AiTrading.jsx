@@ -127,6 +127,32 @@ export default function AiTrading() {
         </div>
       </div>
 
+      <div className="card" style={{ marginTop: 24, border: boosted ? '1px solid rgba(20,184,166,0.55)' : undefined }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700 }}>Daily boost code</h3>
+          {boosted && <span className="badge badge-teal">5% active today</span>}
+        </div>
+        <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>
+          A new code is generated every day and posted to our Telegram channel. Enter today&apos;s
+          code to lift your AI profit from 1% to 5% for that day. The boost resets after the
+          daily payout.
+        </p>
+        <form onSubmit={submitCode} style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+          <input
+            value={code}
+            onChange={e => setCode(e.target.value)}
+            placeholder="NOVA-XXXXXXXX"
+            style={{ flex: '1 1 200px', minWidth: 0 }}
+            disabled={redeeming || boosted}
+          />
+          <button className="btn" disabled={redeeming || boosted || !code.trim()}>
+            {boosted ? 'Boost applied' : redeeming ? 'Checking...' : 'Apply code'}
+          </button>
+        </form>
+      </div>
+
+
+
       <div className="card" style={{ marginTop: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>AI trade activity</h3>
         {trades.length === 0 ? (
