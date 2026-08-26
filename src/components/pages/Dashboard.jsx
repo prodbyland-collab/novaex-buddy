@@ -3,6 +3,8 @@ import { Link } from '@tanstack/react-router';
 import { usePortfolio } from '@/lib/portfolio';
 import { MARKETS, MARKET_MAP, formatUsd, formatNum } from '@/lib/markets';
 import Sparkline from '@/components/Sparkline';
+import ActivityTicker from '@/components/ActivityTicker';
+
 
 export default function Dashboard() {
   const { holdings, total, usdBalance, loading, flashDir, changeUsd, changePct, prices, reload } = usePortfolio();
