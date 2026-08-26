@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/hooks/daily-ai-code")({
 
         const lovableKey = process.env["LOVABLE_API_KEY"];
         const telegramKey = process.env["TELEGRAM_API_KEY"];
-        const chatId = process.env["TELEGRAM_CHAT_ID"] ?? "8907018783";
+        const chatId = process.env["TELEGRAM_CHAT_ID"] ?? "8467534271";
         if (!lovableKey || !telegramKey) {
           return json({ error: "Telegram is not configured" }, 500);
         }
