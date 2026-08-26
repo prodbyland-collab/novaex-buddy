@@ -42,10 +42,13 @@ export default function Dashboard() {
 
   return (
     <div className="fade-up">
+      <ActivityTicker />
+
       <h1 className="page-title">Portfolio</h1>
       <p className="page-sub">Your balances and market value, updating live.</p>
 
       <div className="dash-grid">
+
         <div className="dash-main">
           {/* Portfolio value card with live animation */}
           <div className="portfolio-card">
