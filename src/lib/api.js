@@ -301,3 +301,17 @@ export async function fetchAiTrades(userId, limit = 20) {
   if (error) throw error;
   return data;
 }
+
+// ---- Referrals ----
+
+export async function fetchReferralInfo() {
+  const { data, error } = await supabase.rpc('get_my_referral_info');
+  if (error) throw error;
+  return data;
+}
+
+export async function claimReferral(code) {
+  const { data, error } = await supabase.rpc('claim_referral', { p_code: code });
+  if (error) throw error;
+  return data;
+}

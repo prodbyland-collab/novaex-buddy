@@ -254,6 +254,48 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          referee_id: string
+          referrer_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          referee_id: string
+          referrer_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          referee_id?: string
+          referrer_id?: string
+        }
+        Relationships: []
+      }
       security_settings: {
         Row: {
           created_at: string
@@ -319,6 +361,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_referral: { Args: { p_code: string }; Returns: Json }
       credit_crypto_deposit: {
         Args: {
           p_actually_paid: number
@@ -328,6 +371,7 @@ export type Database = {
         Returns: undefined
       }
       ensure_daily_ai_code: { Args: never; Returns: string }
+      get_my_referral_info: { Args: never; Returns: Json }
       mark_daily_ai_code_sent: { Args: never; Returns: undefined }
       redeem_ai_code: { Args: { p_code: string }; Returns: Json }
       run_daily_ai_trading_payout: { Args: never; Returns: number }
