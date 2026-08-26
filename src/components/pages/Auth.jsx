@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth';
-import { ensureUsdBalance, ensureSecuritySettings } from '@/lib/api';
+import { ensureUsdBalance, ensureSecuritySettings, claimReferral } from '@/lib/api';
+
+const REF_KEY = 'novax_ref_code';
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
@@ -11,6 +13,19 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [refCode, setRefCode] = useState('');
+
+  // Pick up ?ref=CODE from an invite link and remember it through sign-up.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('ref');
+    const stored = window.localStorage.getItem(REF_KEY);
+    const code = (fromUrl || stored || '').trim().toUpperCase();
+    if (code) {
+      window.localStorage.setItem(REF_KEY, code);
+      setRefCode(code);
+      if (fromUrl) setMode('signup');
+    }
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -29,6 +44,13 @@ export default function Auth() {
         await ensureUsdBalance(userId);
         await ensureSecuritySettings(userId);
       }
+
+      const pending = refCode || window.localStorage.getItem(REF_KEY);
+      if (userId && pending) {
+        try { await claimReferral(pending); } catch { /* invite is optional */ }
+        window.localStorage.removeItem(REF_KEY);
+      }
+
       navigate({ to: '/app' });
     } catch (err) {
       setError(err.message || 'Something went wrong');
@@ -36,6 +58,7 @@ export default function Auth() {
       setLoading(false);
     }
   }
+
 
   return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '20px' }}>
