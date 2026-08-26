@@ -3,6 +3,8 @@ import { Link } from '@tanstack/react-router';
 import { usePortfolio } from '@/lib/portfolio';
 import { MARKETS, MARKET_MAP, formatUsd, formatNum } from '@/lib/markets';
 import Sparkline from '@/components/Sparkline';
+import ActivityTicker from '@/components/ActivityTicker';
+
 
 export default function Dashboard() {
   const { holdings, total, usdBalance, loading, flashDir, changeUsd, changePct, prices, reload } = usePortfolio();
@@ -40,10 +42,13 @@ export default function Dashboard() {
 
   return (
     <div className="fade-up">
+      <ActivityTicker />
+
       <h1 className="page-title">Portfolio</h1>
       <p className="page-sub">Your balances and market value, updating live.</p>
 
       <div className="dash-grid">
+
         <div className="dash-main">
           {/* Portfolio value card with live animation */}
           <div className="portfolio-card">
