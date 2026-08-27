@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { usePortfolio } from '@/lib/portfolio';
+import { useI18n } from '@/lib/i18n';
 import { formatUsd, formatNum } from '@/lib/markets';
-import { fetchAiSettings, setTradingMode, fetchAiTrades, redeemAiCode } from '@/lib/api';
+import { fetchAiSettings, setTradingMode, fetchAiTrades, redeemAiCode, fetchReferralInfo } from '@/lib/api';
 
 function utcToday() {
   return new Date().toISOString().slice(0, 10);
@@ -11,18 +12,26 @@ function utcToday() {
 export default function AiTrading() {
   const { user } = useAuth();
   const { usdBalance, reload } = usePortfolio();
+  const { t } = useI18n();
   const [settings, setSettings] = useState(null);
   const [trades, setTrades] = useState([]);
+  const [referral, setReferral] = useState(null);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState('');
   const [redeeming, setRedeeming] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null);
 
   const load = useCallback(async () => {
     if (!user) return;
-    const [s, t] = await Promise.all([fetchAiSettings(user.id), fetchAiTrades(user.id)]);
+    const [s, tr, r] = await Promise.all([
+      fetchAiSettings(user.id),
+      fetchAiTrades(user.id),
+      fetchReferralInfo().catch(() => null),
+    ]);
     setSettings(s);
-    setTrades(t);
+    setTrades(tr);
+    setReferral(r);
   }, [user]);
 
   useEffect(() => { load(); }, [load]);
@@ -38,9 +47,9 @@ export default function AiTrading() {
     try {
       const next = await setTradingMode(user.id, mode);
       setSettings(next);
-      showToast(mode === 'ai' ? 'AI trading activated' : 'Manual trading activated');
+      showToast(mode === 'ai' ? t('ai.aiActivated') : t('ai.manualActivated'));
     } catch (err) {
-      showToast(err.message || 'Could not update trading mode', 'error');
+      showToast(err.message || t('ai.modeError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -56,12 +65,12 @@ export default function AiTrading() {
         setCode('');
         await load();
         await reload();
-        showToast(result.message || 'Boost unlocked: 5% for today');
+        showToast(result.message || t('ai.codeUnlocked'));
       } else {
-        showToast(result?.message || 'That code is not valid today', 'error');
+        showToast(result?.message || t('ai.codeInvalid'), 'error');
       }
     } catch (err) {
-      showToast(err.message || 'Could not check that code', 'error');
+      showToast(err.message || t('ai.codeInvalid'), 'error');
     } finally {
       setRedeeming(false);
     }
@@ -69,32 +78,43 @@ export default function AiTrading() {
 
   const aiOn = !!settings?.enabled;
   const boosted = settings?.boost_date === utcToday();
-  const rate = boosted ? 0.05 : (settings?.daily_rate ?? 0.01);
+  const baseRate = boosted ? 0.05 : (settings?.daily_rate ?? 0.01);
+  const bonusRate = Number(referral?.bonus_rate ?? 0);
+  const rate = baseRate + bonusRate;
   const dailyPct = (rate * 100).toFixed(2);
   const projectedDaily = usdBalance * rate;
+  const refCount = Number(referral?.referrals ?? 0);
+  const inviteLink = referral?.code
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/auth?ref=${referral.code}`
+    : '';
 
+  async function copyLink() {
+    if (!inviteLink) return;
+    await navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  }
 
   return (
     <div className="fade-up">
-      <h1 className="page-title">Trading mode</h1>
-      <p className="page-sub">AI trading is on by default. Switch to manual any time to trade yourself.</p>
+      <h1 className="page-title">{t('ai.title')}</h1>
+      <p className="page-sub">{t('ai.sub')}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
         <div className="card" style={{ border: aiOn ? '1px solid rgba(20,184,166,0.55)' : undefined }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700 }}>AI trading <span className="muted-2" style={{ fontSize: 12, fontWeight: 500 }}>(default)</span></h3>
-            {aiOn && <span className="badge badge-teal">{boosted ? 'Boosted' : 'Active'}</span>}
+            <h3 style={{ fontSize: 18, fontWeight: 700 }}>{t('ai.aiTitle')} <span className="muted-2" style={{ fontSize: 12, fontWeight: 500 }}>{t('ai.default')}</span></h3>
+            {aiOn && <span className="badge badge-teal">{boosted ? t('ai.boosted') : t('ai.active')}</span>}
           </div>
           <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>
-            The AI places trades for you around the clock and targets a steady
-            <b> {dailyPct}% per day</b> on your cash balance. Profit is credited once a day,
-            at the end of the day (23:55 UTC).
+            {t('ai.aiDesc', { pct: dailyPct })}
           </p>
           <div className="trade-summary" style={{ marginTop: 16 }}>
-            <div><span>Cash under management</span><span>{formatUsd(usdBalance)}</span></div>
-            <div><span>Target profit / day</span><span className="gain">+{formatUsd(projectedDaily)}</span></div>
-            <div><span>Earned so far</span><span className="gain">+{formatUsd(settings?.total_profit ?? 0)}</span></div>
-            <div><span>Last payout</span><span>{settings?.last_payout_date ?? '—'}</span></div>
+            <div><span>{t('ai.cash')}</span><span>{formatUsd(usdBalance)}</span></div>
+            <div><span>{t('ai.target')}</span><span className="gain">+{formatUsd(projectedDaily)}</span></div>
+            <div><span>{t('ref.bonus')}</span><span className="gain">+{(bonusRate * 100).toFixed(2)}%</span></div>
+            <div><span>{t('ai.earned')}</span><span className="gain">+{formatUsd(settings?.total_profit ?? 0)}</span></div>
+            <div><span>{t('ai.lastPayout')}</span><span>{settings?.last_payout_date ?? '—'}</span></div>
           </div>
 
           <button
@@ -103,40 +123,33 @@ export default function AiTrading() {
             disabled={busy || aiOn}
             onClick={() => choose('ai')}
           >
-            {aiOn ? 'AI trading is on' : 'Enable AI trading'}
+            {aiOn ? t('ai.aiOn') : t('ai.enableAi')}
           </button>
         </div>
 
         <div className="card" style={{ border: !aiOn ? '1px solid rgba(20,184,166,0.55)' : undefined }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700 }}>Manual trading</h3>
-            {!aiOn && <span className="badge badge-teal">Active</span>}
+            <h3 style={{ fontSize: 18, fontWeight: 700 }}>{t('ai.manual')}</h3>
+            {!aiOn && <span className="badge badge-teal">{t('ai.active')}</span>}
           </div>
-          <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>
-            You stay in full control: place your own market and limit orders on the
-            Markets page, and manage recurring buys yourself. No automated trades are made.
-          </p>
+          <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>{t('ai.manualDesc')}</p>
           <button
             className="btn ghost"
             style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
             disabled={busy || !aiOn}
             onClick={() => choose('manual')}
           >
-            {!aiOn ? 'Manual trading is on' : 'Switch to manual trading'}
+            {!aiOn ? t('ai.manualOn') : t('ai.switchManual')}
           </button>
         </div>
       </div>
 
       <div className="card" style={{ marginTop: 24, border: boosted ? '1px solid rgba(20,184,166,0.55)' : undefined }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700 }}>Daily boost code</h3>
-          {boosted && <span className="badge badge-teal">5% active today</span>}
+          <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('ai.boostTitle')}</h3>
+          {boosted && <span className="badge badge-teal">{t('ai.boostBadge')}</span>}
         </div>
-        <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>
-          A new code is generated every day and posted to our Telegram channel. Enter today&apos;s
-          code to lift your AI profit from 1% to 5% for that day. The boost resets after the
-          daily payout.
-        </p>
+        <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>{t('ai.boostDesc')}</p>
         <form onSubmit={submitCode} style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
           <input
             value={code}
@@ -146,29 +159,52 @@ export default function AiTrading() {
             disabled={redeeming || boosted}
           />
           <button className="btn" disabled={redeeming || boosted || !code.trim()}>
-            {boosted ? 'Boost applied' : redeeming ? 'Checking...' : 'Apply code'}
+            {boosted ? t('ai.boostApplied') : redeeming ? t('ai.checking') : t('ai.applyCode')}
           </button>
         </form>
       </div>
 
+      <div className="card" style={{ marginTop: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('ref.title')}</h3>
+          {bonusRate >= 0.05 && <span className="badge badge-teal">{t('ref.max')}</span>}
+        </div>
+        <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>{t('ref.desc')}</p>
 
+        <label className="address-label" style={{ marginTop: 14, display: 'block' }}>{t('ref.link')}</label>
+        <div className="address-box">
+          <span>{inviteLink || '—'}</span>
+          {inviteLink && (
+            <button className="btn small ghost" type="button" onClick={copyLink}>
+              {copied ? t('common.copied') : t('common.copy')}
+            </button>
+          )}
+        </div>
+
+        <div className="trade-summary" style={{ marginTop: 16 }}>
+          <div><span>{t('ref.code')}</span><span>{referral?.code ?? '—'}</span></div>
+          <div><span>{t('ref.invited')}</span><span>{refCount}</span></div>
+          <div><span>{t('ref.bonus')}</span><span className="gain">+{(bonusRate * 100).toFixed(2)}%</span></div>
+          <div><span>{t('ref.effective')}</span><span className="gain">{dailyPct}%</span></div>
+        </div>
+      </div>
 
       <div className="card" style={{ marginTop: 24 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>AI trade activity</h3>
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('ai.activity')}</h3>
         {trades.length === 0 ? (
-          <p className="muted-2" style={{ fontSize: 13 }}>No AI trades yet. Enable AI trading to get started.</p>
+          <p className="muted-2" style={{ fontSize: 13 }}>{t('ai.noTrades')}</p>
         ) : (
           <div className="market-table">
             <div className="table-head">
-              <span>Asset</span><span>Side</span><span>Size</span><span>Price</span><span>Profit</span>
+              <span>{t('ai.asset')}</span><span>{t('ai.side')}</span><span>{t('ai.size')}</span><span>{t('ai.price')}</span><span>{t('ai.profit')}</span>
             </div>
-            {trades.map(t => (
-              <div className="table-row" key={t.id}>
-                <span>{t.symbol}</span>
-                <span className={t.side === 'buy' ? 'gain' : 'loss'}>{t.side.toUpperCase()}</span>
-                <span>{formatNum(t.amount, 6)}</span>
-                <span>{formatUsd(t.price)}</span>
-                <span className="gain">+{formatUsd(t.profit)}</span>
+            {trades.map(tr => (
+              <div className="table-row" key={tr.id}>
+                <span>{tr.symbol}</span>
+                <span className={tr.side === 'buy' ? 'gain' : 'loss'}>{tr.side.toUpperCase()}</span>
+                <span>{formatNum(tr.amount, 6)}</span>
+                <span>{formatUsd(tr.price)}</span>
+                <span className="gain">+{formatUsd(tr.profit)}</span>
               </div>
             ))}
           </div>
