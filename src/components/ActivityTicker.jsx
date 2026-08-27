@@ -8,17 +8,20 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function makeUser() {
-  const name = `${pick(FIRST)}${Math.random() < 0.6 ? pick(LAST) : ''}`;
-  const mask = name.length > 4 ? name.slice(0, name.length - 2) + '**' : name + '**';
-  return mask;
+function makeUser(id) {
+  const base = `${pick(FIRST)}${Math.random() < 0.6 ? pick(LAST) : ''}`;
+  // The event ID guarantees a fresh, masked handle even when a name is picked twice.
+  return `${base.slice(0, Math.min(base.length, 5))}••${id.toString(36)}`;
 }
 
 function makeEvent(id) {
-  const kind = Math.random() < 0.55 ? 'deposit' : 'withdraw';
+  const kind = Math.random() < 0.6 ? 'deposit' : 'withdraw';
   const symbol = pick(MARKETS).symbol;
-  const amount = Math.round((Math.random() ** 2.2) * 48000 + 120);
-  return { id, kind, symbol, amount, user: makeUser() };
+  // Keep the simulated feed within believable everyday transaction sizes.
+  const amount = kind === 'deposit'
+    ? Math.round(Math.random() * 850 + 50)
+    : Math.round(Math.random() * 420 + 30);
+  return { id, kind, symbol, amount, user: makeUser(id) };
 }
 
 export default function ActivityTicker() {
