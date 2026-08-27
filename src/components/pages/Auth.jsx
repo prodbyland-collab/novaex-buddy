@@ -64,7 +64,7 @@ export default function Auth() {
       <div className="grid-glow" />
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '420px' }}>
         <Link className="brand" to="/" style={{ justifyContent: 'center', marginBottom: 32 }}>
-          <span className="brand-mark"><span>N</span></span>NOVAX
+          <span className="brand-mark"><span>G</span></span>GNG
         </Link>
         <div className="card fade-up">
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>

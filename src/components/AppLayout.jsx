@@ -16,7 +16,6 @@ export default function AppLayout({ children }) {
     { to: '/app', label: t('nav.portfolio'), exact: true },
     { to: '/app/markets', label: t('nav.markets') },
     { to: '/app/ai', label: t('nav.aiTrading') },
-    { to: '/app/orders', label: t('nav.orders') },
     { to: '/app/recurring', label: t('nav.referrals') },
     { to: '/app/security', label: t('nav.security') },
     { to: '/app/wallet', label: t('nav.wallet') }
@@ -39,7 +38,7 @@ export default function AppLayout({ children }) {
     <div>
       <header className="app-header">
         <Link className="brand" to="/app">
-          <span className="brand-mark"><span>N</span></span>NOVAX
+          <span className="brand-mark"><span>G</span></span>GNG
         </Link>
         <nav className="app-nav">
           {navItems.map(item => (

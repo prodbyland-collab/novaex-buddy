@@ -23,7 +23,7 @@ export default function Landing() {
     <>
       <div className="grid-glow" />
       <header className="site-header">
-        <Link className="brand" to="/"><span className="brand-mark"><span>N</span></span>NOVAX</Link>
+        <Link className="brand" to="/"><span className="brand-mark"><span>G</span></span>GNG</Link>
         <button className="menu-button" onClick={() => setMenuOpen(o => !o)}>{menuOpen ? t('common.close') : t('common.menu')}</button>
         <nav className={`nav-links ${menuOpen ? 'open' : ''}`}>
           <a href="#markets">{t('nav.markets')}</a>
@@ -162,9 +162,9 @@ export default function Landing() {
         </section>
       </main>
       <footer className="footer">
-        <Link className="brand" to="/"><span className="brand-mark"><span>N</span></span>NOVAX</Link>
+        <Link className="brand" to="/"><span className="brand-mark"><span>G</span></span>GNG</Link>
         <p>{t('landing.footer')}</p>
-        <span>© 2026 NOVAX</span>
+        <span>© 2026 GNG</span>
       </footer>
     </>
   );
