@@ -4,19 +4,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const DEPOSIT_COLUMNS =
   "id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at";
 
-const ALLOWED = new Set(["btc", "eth", "sol", "usdttrc20"]);
-
-type DepositInput = { currency: string; amountUsd: number };
+ type DepositInput = { currency: string; amountUsd: number };
 
 export const getMinDeposits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const apiKey = process.env["NOWPAYMENTS_API_KEY"];
-    const { fetchAllMinDeposits, FALLBACK_MIN_USD, DEPOSIT_CURRENCIES } = await import("@/lib/deposits.server");
-    if (!apiKey) {
-      return { minimums: DEPOSIT_CURRENCIES.map((c) => ({ currency: c, minUsd: FALLBACK_MIN_USD, minAmount: null })) };
-    }
-    return { minimums: await fetchAllMinDeposits(apiKey) };
+    const { fetchSupportedDepositCurrencies } = await import("@/lib/deposits.server");
+    if (!apiKey) return { currencies: [] };
+    return { currencies: await fetchSupportedDepositCurrencies(apiKey) };
   });
 
 export const createDeposit = createServerFn({ method: "POST" })
@@ -25,15 +21,19 @@ export const createDeposit = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const currency = String(data.currency ?? "").toLowerCase();
     const amount = Number(data.amountUsd);
-    if (!ALLOWED.has(currency) || !Number.isFinite(amount) || amount > 100000) {
-      throw new Error("Choose a supported currency and a deposit up to $100,000");
+    if (!Number.isFinite(amount) || amount > 100000) {
+      throw new Error("Choose a deposit up to $100,000");
     }
 
     const apiKey = process.env["NOWPAYMENTS_API_KEY"];
     const siteUrl = process.env["PUBLIC_SITE_URL"] ?? "";
     if (!apiKey) throw new Error("Deposit service is not configured");
 
-    const { fetchMinDeposit } = await import("@/lib/deposits.server");
+    const { fetchMinDeposit, fetchSupportedDepositCurrencies } = await import("@/lib/deposits.server");
+    const supported = await fetchSupportedDepositCurrencies(apiKey);
+    if (!supported.some((item) => item.currency === currency)) {
+      throw new Error("This currency or network is not currently supported by NOWPayments");
+    }
     const { minUsd } = await fetchMinDeposit(currency, apiKey);
     if (amount < minUsd) {
       throw new Error(`Minimum deposit for ${currency.toUpperCase()} is $${minUsd}`);
@@ -72,7 +72,7 @@ export const createDeposit = createServerFn({ method: "POST" })
         price_currency: "usd",
         pay_currency: currency,
         order_id: draft.id,
-        order_description: `NOVAX deposit ${draft.id}`,
+        order_description: `GNG deposit ${draft.id}`,
         ...(callbackBase
           ? { ipn_callback_url: `${callbackBase.replace(/\/$/, "")}/api/public/nowpayments-webhook` }
           : {}),

@@ -4,13 +4,6 @@ import { useI18n } from '@/lib/i18n';
 import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals, fetchMinDeposits, WITHDRAWAL_FEE_PCT } from '@/lib/api';
 import { usePortfolio } from '@/lib/portfolio';
 
-const currencies = [
-  { value: 'btc', label: 'Bitcoin', symbol: 'BTC' },
-  { value: 'eth', label: 'Ethereum', symbol: 'ETH' },
-  { value: 'sol', label: 'Solana', symbol: 'SOL' },
-  { value: 'usdttrc20', label: 'Tether', symbol: 'USDT TRC20' },
-];
-
 function formatAmount(value) {
   return Number(value).toLocaleString('en-US', { maximumFractionDigits: 8 });
 }
@@ -31,7 +24,7 @@ export default function Wallet() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [copied, setCopied] = useState('');
-  const [minimums, setMinimums] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
   const [minsLoading, setMinsLoading] = useState(true);
   const { holdings, prices, reload } = usePortfolio();
   const [withdrawals, setWithdrawals] = useState([]);
@@ -64,8 +57,11 @@ export default function Wallet() {
     let alive = true;
     (async () => {
       try {
-        const mins = await fetchMinDeposits();
-        if (alive) setMinimums(mins);
+        const result = await fetchMinDeposits();
+        if (alive) {
+          setCurrencies(result);
+          if (result.length && !result.some(item => item.currency === currency)) setCurrency(result[0].currency);
+        }
       } catch {
         /* fall back to the default minimum */
       } finally {
@@ -76,8 +72,7 @@ export default function Wallet() {
   }, []);
 
   const minUsd = useMemo(() => {
-    const found = minimums.find(m => m.currency === currency);
-    return found?.minUsd ?? 10;
+    return 10;
   }, [minimums, currency]);
 
   useEffect(() => {
@@ -162,7 +157,7 @@ export default function Wallet() {
             <div className="field">
               <label>{t('wallet.currency')}</label>
               <select value={currency} onChange={e => setCurrency(e.target.value)}>
-                {currencies.map(item => <option key={item.value} value={item.value}>{item.label} ({item.symbol})</option>)}
+                {currencies.map(item => <option key={item.currency} value={item.currency}>{item.currency.toUpperCase()}</option>)}
               </select>
             </div>
             <div className="field">
@@ -172,7 +167,7 @@ export default function Wallet() {
                 {minsLoading ? t('wallet.minLoading') : t('wallet.minMax', { min: minUsd })}
               </span>
             </div>
-            <button className="btn" disabled={creating || minsLoading} style={{ width: '100%', justifyContent: 'center' }}>
+            <button className="btn" disabled={creating || minsLoading || !currencies.length} style={{ width: '100%', justifyContent: 'center' }}>
               {creating ? t('wallet.creating') : t('wallet.createAddress')}
             </button>
           </form>

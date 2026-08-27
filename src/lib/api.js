@@ -201,7 +201,7 @@ export async function createCryptoDeposit(currency, amountUsd) {
 
 export async function fetchMinDeposits() {
   const result = await getMinDeposits();
-  return result?.minimums ?? [];
+  return result?.currencies ?? [];
 }
 
 // ---- Withdrawals (simulated: balances change, no funds ever leave) ----
