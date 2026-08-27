@@ -8,19 +8,37 @@ const ALLOWED = new Set(["btc", "eth", "sol", "usdttrc20"]);
 
 type DepositInput = { currency: string; amountUsd: number };
 
+export const getMinDeposits = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const apiKey = process.env["NOWPAYMENTS_API_KEY"];
+    const { fetchAllMinDeposits, FALLBACK_MIN_USD, DEPOSIT_CURRENCIES } = await import("@/lib/deposits.server");
+    if (!apiKey) {
+      return { minimums: DEPOSIT_CURRENCIES.map((c) => ({ currency: c, minUsd: FALLBACK_MIN_USD, minAmount: null })) };
+    }
+    return { minimums: await fetchAllMinDeposits(apiKey) };
+  });
+
 export const createDeposit = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: DepositInput) => input)
   .handler(async ({ data, context }) => {
     const currency = String(data.currency ?? "").toLowerCase();
     const amount = Number(data.amountUsd);
-    if (!ALLOWED.has(currency) || !Number.isFinite(amount) || amount < 10 || amount > 100000) {
-      throw new Error("Choose a supported currency and a deposit between $10 and $100,000");
+    if (!ALLOWED.has(currency) || !Number.isFinite(amount) || amount > 100000) {
+      throw new Error("Choose a supported currency and a deposit up to $100,000");
     }
 
     const apiKey = process.env["NOWPAYMENTS_API_KEY"];
     const siteUrl = process.env["PUBLIC_SITE_URL"] ?? "";
     if (!apiKey) throw new Error("Deposit service is not configured");
+
+    const { fetchMinDeposit } = await import("@/lib/deposits.server");
+    const { minUsd } = await fetchMinDeposit(currency, apiKey);
+    if (amount < minUsd) {
+      throw new Error(`Minimum deposit for ${currency.toUpperCase()} is $${minUsd}`);
+    }
+
 
     const userId = context.userId;
 

@@ -328,7 +328,10 @@ export type Database = {
           address: string
           amount: number
           created_at: string
+          fee_amount: number
+          fee_pct: number
           id: string
+          net_amount: number
           status: string
           symbol: string
           usd_value: number
@@ -338,7 +341,10 @@ export type Database = {
           address: string
           amount: number
           created_at?: string
+          fee_amount?: number
+          fee_pct?: number
           id?: string
+          net_amount?: number
           status?: string
           symbol: string
           usd_value?: number
@@ -348,7 +354,10 @@ export type Database = {
           address?: string
           amount?: number
           created_at?: string
+          fee_amount?: number
+          fee_pct?: number
           id?: string
+          net_amount?: number
           status?: string
           symbol?: string
           usd_value?: number
