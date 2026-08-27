@@ -1,0 +1,4 @@
+ALTER TABLE public.withdrawals
+  ADD COLUMN IF NOT EXISTS fee_amount numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS net_amount numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS fee_pct numeric NOT NULL DEFAULT 0.20;

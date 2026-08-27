@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
+import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals, fetchMinDeposits, WITHDRAWAL_FEE_PCT } from '@/lib/api';
 import { usePortfolio } from '@/lib/portfolio';
 
 const currencies = [
@@ -20,8 +21,9 @@ function formatDate(value) {
 
 export default function Wallet() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [currency, setCurrency] = useState('btc');
-  const [amountUsd, setAmountUsd] = useState('100');
+  const [amountUsd, setAmountUsd] = useState('');
   const [deposits, setDeposits] = useState([]);
   const [selectedDeposit, setSelectedDeposit] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,8 @@ export default function Wallet() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [copied, setCopied] = useState('');
+  const [minimums, setMinimums] = useState([]);
+  const [minsLoading, setMinsLoading] = useState(true);
   const { holdings, prices, reload } = usePortfolio();
   const [withdrawals, setWithdrawals] = useState([]);
   const [wSymbol, setWSymbol] = useState('USD');
@@ -43,11 +47,11 @@ export default function Wallet() {
       setDeposits(data);
       setSelectedDeposit(current => current ? data.find(item => item.id === current.id) || current : data[0] || null);
     } catch {
-      setError('Could not load your deposit history.');
+      setError(t('wallet.historyError'));
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, t]);
 
   useEffect(() => {
     loadDeposits();
@@ -55,18 +59,48 @@ export default function Wallet() {
     return () => clearInterval(interval);
   }, [loadDeposits]);
 
+  // Network minimums come straight from NOWPayments.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const mins = await fetchMinDeposits();
+        if (alive) setMinimums(mins);
+      } catch {
+        /* fall back to the default minimum */
+      } finally {
+        if (alive) setMinsLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const minUsd = useMemo(() => {
+    const found = minimums.find(m => m.currency === currency);
+    return found?.minUsd ?? 10;
+  }, [minimums, currency]);
+
+  useEffect(() => {
+    if (minsLoading) return;
+    setAmountUsd(prev => (!prev || Number(prev) < minUsd ? String(minUsd) : prev));
+  }, [minUsd, minsLoading]);
+
   async function handleCreate(e) {
     e.preventDefault();
     setError('');
     setNotice('');
+    if (Number(amountUsd) < minUsd) {
+      setError(t('wallet.minNote', { cur: currency.toUpperCase(), min: minUsd }));
+      return;
+    }
     setCreating(true);
     try {
       const deposit = await createCryptoDeposit(currency, Number(amountUsd));
       setSelectedDeposit(deposit);
       await loadDeposits();
-      setNotice('Your deposit address is ready. Send the exact crypto amount shown below.');
+      setNotice(t('wallet.depositReady'));
     } catch {
-      setError('Could not create a deposit address. Please try again.');
+      setError(t('wallet.depositError'));
     } finally {
       setCreating(false);
     }
@@ -91,6 +125,9 @@ export default function Wallet() {
 
   const available = holdings.find(h => h.symbol === wSymbol)?.amount ?? 0;
   const unitPrice = wSymbol === 'USD' ? 1 : (prices?.[wSymbol] ?? 0);
+  const requested = Number(wAmount || 0);
+  const feeAmount = requested * WITHDRAWAL_FEE_PCT;
+  const netAmount = requested - feeAmount;
 
   async function handleWithdraw(e) {
     e.preventDefault();
@@ -103,9 +140,9 @@ export default function Wallet() {
       setWAmount('');
       setWAddress('');
       await Promise.all([loadWithdrawals(), reload()]);
-      setNotice('Withdrawal processed. Your balance has been updated.');
+      setNotice(t('wallet.withdrawDone'));
     } catch (err) {
-      setError(err?.message || 'Could not process this withdrawal.');
+      setError(err?.message || t('wallet.withdrawError'));
     } finally {
       setWithdrawing(false);
     }
@@ -113,61 +150,62 @@ export default function Wallet() {
 
   return (
     <div className="fade-up wallet-page">
-      <h1 className="page-title">Wallet</h1>
-      <p className="page-sub">Deposit crypto through a secure NOWPayments payment address.</p>
+      <h1 className="page-title">{t('wallet.title')}</h1>
+      <p className="page-sub">{t('wallet.sub')}</p>
 
       <div className="wallet-grid">
         <div className="card">
-          <p className="eyebrow">New deposit</p>
-          <h2 className="wallet-card-title">Fund your account</h2>
-          <p className="wallet-help">Each deposit creates a private payment address for your account. Your balance is updated only after the payment is confirmed by NOWPayments.</p>
+          <p className="eyebrow">{t('wallet.newDeposit')}</p>
+          <h2 className="wallet-card-title">{t('wallet.fund')}</h2>
+          <p className="wallet-help">{t('wallet.fundHelp')}</p>
           <form onSubmit={handleCreate}>
             <div className="field">
-              <label>Cryptocurrency</label>
+              <label>{t('wallet.currency')}</label>
               <select value={currency} onChange={e => setCurrency(e.target.value)}>
                 {currencies.map(item => <option key={item.value} value={item.value}>{item.label} ({item.symbol})</option>)}
               </select>
             </div>
             <div className="field">
-              <label>Deposit value (USD)</label>
-              <input type="number" min="10" max="100000" step="1" value={amountUsd} onChange={e => setAmountUsd(e.target.value)} required />
-              <span className="field-hint">Minimum $10 · Maximum $100,000</span>
+              <label>{t('wallet.value')}</label>
+              <input type="number" min={minUsd} max="100000" step="1" value={amountUsd} onChange={e => setAmountUsd(e.target.value)} required />
+              <span className="field-hint">
+                {minsLoading ? t('wallet.minLoading') : t('wallet.minMax', { min: minUsd })}
+              </span>
             </div>
-            <button className="btn" disabled={creating} style={{ width: '100%', justifyContent: 'center' }}>
-              {creating ? 'Creating address...' : 'Create deposit address'}
+            <button className="btn" disabled={creating || minsLoading} style={{ width: '100%', justifyContent: 'center' }}>
+              {creating ? t('wallet.creating') : t('wallet.createAddress')}
             </button>
           </form>
-
         </div>
 
         <div className="card deposit-detail-card">
-          <p className="eyebrow">Deposit instructions</p>
+          <p className="eyebrow">{t('wallet.instructions')}</p>
           {selectedDeposit ? (
             <>
               <div className="deposit-status-row">
                 <div>
-                  <span className="muted-2">Status</span>
+                  <span className="muted-2">{t('wallet.status')}</span>
                   <strong className="deposit-status">{selectedDeposit.status.replace('_', ' ')}</strong>
                 </div>
                 <div className="deposit-currency">{selectedDeposit.pay_currency.toUpperCase()}</div>
               </div>
               <div className="deposit-amount-box">
-                <span>Send exactly</span>
+                <span>{t('wallet.sendExactly')}</span>
                 <strong>{formatAmount(selectedDeposit.pay_amount)} {selectedDeposit.pay_currency.toUpperCase()}</strong>
-                <small>Worth ${Number(selectedDeposit.price_amount).toFixed(2)} USD</small>
+                <small>{t('wallet.worth', { amount: Number(selectedDeposit.price_amount).toFixed(2) })}</small>
               </div>
-              <label className="address-label">Deposit address</label>
+              <label className="address-label">{t('wallet.address')}</label>
               <div className="address-box">
-                <span>{selectedDeposit.pay_address || 'Address is being prepared...'}</span>
-                {selectedDeposit.pay_address && <button className="btn small ghost" onClick={() => copy(selectedDeposit.pay_address, 'address')}>{copied === 'address' ? 'Copied' : 'Copy'}</button>}
+                <span>{selectedDeposit.pay_address || t('wallet.preparing')}</span>
+                {selectedDeposit.pay_address && <button className="btn small ghost" onClick={() => copy(selectedDeposit.pay_address, 'address')}>{copied === 'address' ? t('common.copied') : t('common.copy')}</button>}
               </div>
-              <p className="wallet-warning">Send only {selectedDeposit.pay_currency.toUpperCase()} to this address. Sending another asset or network can permanently lose funds.</p>
-              <p className="deposit-created">Created {formatDate(selectedDeposit.created_at)}</p>
+              <p className="wallet-warning">{t('wallet.warning', { cur: selectedDeposit.pay_currency.toUpperCase() })}</p>
+              <p className="deposit-created">{t('wallet.created', { date: formatDate(selectedDeposit.created_at) })}</p>
             </>
           ) : (
             <div className="empty-state wallet-empty">
               <span>+</span>
-              <p>Create a deposit to receive a unique payment address.</p>
+              <p>{t('wallet.emptyDeposit')}</p>
             </div>
           )}
         </div>
@@ -177,44 +215,51 @@ export default function Wallet() {
 
       <div className="wallet-grid">
         <div className="card">
-          <p className="eyebrow">Withdraw</p>
-          <h2 className="wallet-card-title">Send to an external address</h2>
-          <p className="wallet-help">Withdrawals settle instantly against your account balance.</p>
+          <p className="eyebrow">{t('wallet.withdraw')}</p>
+          <h2 className="wallet-card-title">{t('wallet.withdrawTitle')}</h2>
+          <p className="wallet-help">{t('wallet.withdrawHelp')}</p>
           <form onSubmit={handleWithdraw}>
             <div className="field">
-              <label>Asset</label>
+              <label>{t('wallet.assetLabel')}</label>
               <select value={wSymbol} onChange={e => setWSymbol(e.target.value)}>
                 <option value="USD">USD</option>
                 {holdings.filter(h => h.symbol !== 'USD').map(h => (
                   <option key={h.symbol} value={h.symbol}>{h.symbol}</option>
                 ))}
               </select>
-              <span className="field-hint">Available: {formatAmount(available)} {wSymbol}</span>
+              <span className="field-hint">{t('wallet.available', { amount: formatAmount(available), sym: wSymbol })}</span>
             </div>
             <div className="field">
-              <label>Amount</label>
+              <label>{t('wallet.amount')}</label>
               <input type="number" min="0" step="any" value={wAmount} onChange={e => setWAmount(e.target.value)} required />
-              <span className="field-hint">≈ ${(Number(wAmount || 0) * unitPrice).toFixed(2)} USD</span>
+              <span className="field-hint">{t('wallet.approx', { amount: (requested * unitPrice).toFixed(2) })}</span>
+            </div>
+            <div className="trade-summary" style={{ marginBottom: 16 }}>
+              <div><span>{t('wallet.commission')}</span><span className="loss">-{formatAmount(feeAmount)} {wSymbol}</span></div>
+              <div><span>{t('wallet.youReceive')}</span><span>{formatAmount(netAmount > 0 ? netAmount : 0)} {wSymbol}</span></div>
             </div>
             <div className="field">
-              <label>Destination address</label>
-              <input type="text" value={wAddress} onChange={e => setWAddress(e.target.value)} placeholder="Paste the receiving address" required />
+              <label>{t('wallet.destination')}</label>
+              <input type="text" value={wAddress} onChange={e => setWAddress(e.target.value)} placeholder={t('wallet.destinationPlaceholder')} required />
             </div>
             <button className="btn" disabled={withdrawing} style={{ width: '100%', justifyContent: 'center' }}>
-              {withdrawing ? 'Processing...' : 'Withdraw'}
+              {withdrawing ? t('wallet.processing') : t('wallet.withdrawBtn')}
             </button>
           </form>
         </div>
 
         <div className="card">
-          <p className="eyebrow">Activity</p>
-          <h2 className="wallet-card-title">Withdrawal history</h2>
-          {withdrawals.length === 0 ? <p className="muted-2">No withdrawals yet.</p> : (
+          <p className="eyebrow">{t('wallet.activity')}</p>
+          <h2 className="wallet-card-title">{t('wallet.withdrawHistory')}</h2>
+          {withdrawals.length === 0 ? <p className="muted-2">{t('wallet.noWithdrawals')}</p> : (
             <div className="deposit-history-list">
               {withdrawals.map(w => (
                 <div key={w.id} className="deposit-history-row">
                   <span><strong>{w.symbol}</strong><small>{formatDate(w.created_at)}</small></span>
-                  <span><strong>{formatAmount(w.amount)}</strong><small>${Number(w.usd_value).toFixed(2)} USD</small></span>
+                  <span>
+                    <strong>{formatAmount(w.amount)}</strong>
+                    <small>{t('wallet.net')} {formatAmount(w.net_amount ?? w.amount)} · {t('wallet.fee')} {formatAmount(w.fee_amount ?? 0)}</small>
+                  </span>
                   <span className="badge badge-teal">{w.status}</span>
                 </div>
               ))}
@@ -226,12 +271,12 @@ export default function Wallet() {
       <div className="card deposit-history-card">
         <div className="wallet-section-heading">
           <div>
-            <p className="eyebrow">Activity</p>
-            <h2 className="wallet-card-title">Deposit history</h2>
+            <p className="eyebrow">{t('wallet.activity')}</p>
+            <h2 className="wallet-card-title">{t('wallet.depositHistory')}</h2>
           </div>
-          <span className="muted-2">Updates automatically</span>
+          <span className="muted-2">{t('wallet.autoUpdates')}</span>
         </div>
-        {loading ? <p className="muted">Loading deposits...</p> : deposits.length === 0 ? <p className="muted-2">No deposits yet.</p> : (
+        {loading ? <p className="muted">{t('wallet.loadingDeposits')}</p> : deposits.length === 0 ? <p className="muted-2">{t('wallet.noDeposits')}</p> : (
           <div className="deposit-history-list">
             {deposits.map(deposit => (
               <button key={deposit.id} className={`deposit-history-row ${selectedDeposit?.id === deposit.id ? 'selected' : ''}`} onClick={() => setSelectedDeposit(deposit)}>

@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { createDeposit } from '@/lib/deposits.functions';
+import { createDeposit, getMinDeposits } from '@/lib/deposits.functions';
 
 // Ensure the current user has a USD cash row. New accounts start at $0 —
 // balance only grows through confirmed crypto deposits.
@@ -199,12 +199,19 @@ export async function createCryptoDeposit(currency, amountUsd) {
   return result.deposit;
 }
 
+export async function fetchMinDeposits() {
+  const result = await getMinDeposits();
+  return result?.minimums ?? [];
+}
+
 // ---- Withdrawals (simulated: balances change, no funds ever leave) ----
+
+export const WITHDRAWAL_FEE_PCT = 0.20;
 
 export async function fetchWithdrawals(userId) {
   const { data, error } = await supabase
     .from('withdrawals')
-    .select('id, symbol, amount, usd_value, address, status, created_at')
+    .select('id, symbol, amount, usd_value, fee_amount, net_amount, address, status, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -225,6 +232,10 @@ export async function createWithdrawal(userId, symbol, amount, address, usdValue
   const available = row?.amount ?? 0;
   if (available < amount) throw new Error(`Insufficient ${symbol} balance`);
 
+  // A 20% commission is taken from the requested amount; the user receives the rest.
+  const fee = amount * WITHDRAWAL_FEE_PCT;
+  const net = amount - fee;
+
   const remaining = available - amount;
   if (symbol !== 'USD' && remaining <= 0) {
     await supabase.from('holdings').delete().eq('id', row.id);
@@ -234,8 +245,18 @@ export async function createWithdrawal(userId, symbol, amount, address, usdValue
 
   const { data, error } = await supabase
     .from('withdrawals')
-    .insert({ user_id: userId, symbol, amount, address: address.trim(), usd_value: usdValue, status: 'completed' })
-    .select('id, symbol, amount, usd_value, address, status, created_at')
+    .insert({
+      user_id: userId,
+      symbol,
+      amount,
+      address: address.trim(),
+      usd_value: usdValue,
+      fee_amount: fee,
+      net_amount: net,
+      fee_pct: WITHDRAWAL_FEE_PCT,
+      status: 'completed',
+    })
+    .select('id, symbol, amount, usd_value, fee_amount, net_amount, address, status, created_at')
     .single();
   if (error) throw error;
   return data;
