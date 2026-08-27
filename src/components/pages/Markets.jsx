@@ -5,9 +5,12 @@ import { MARKETS, formatUsd, formatNum } from '@/lib/markets';
 import { executeMarketOrder, createLimitOrder, fetchHoldings, ensureUsdBalance, fetchAiSettings } from '@/lib/api';
 import { Link } from '@tanstack/react-router';
 import Sparkline from '@/components/Sparkline';
+import { useLanguage } from '@/lib/language';
 
 export default function Markets() {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const ka = language === 'ka';
   const { prices, holdings, reload } = usePortfolio();
   const [selected, setSelected] = useState('BTC');
   const [side, setSide] = useState('buy');
@@ -66,15 +69,15 @@ export default function Markets() {
 
   return (
     <div className="fade-up">
-      <h1 className="page-title">Markets</h1>
-      <p className="page-sub">Trade spot or set limit orders on live prices.</p>
+      <h1 className="page-title">{ka ? 'ბაზრები' : 'Markets'}</h1>
+      <p className="page-sub">{ka ? 'ივაჭრე სპოტზე ან განათავსე ლიმიტ ორდერები ცოცხალი ფასებით.' : 'Trade spot or set limit orders on live prices.'}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24 }}>
         {/* Markets table with sparklines */}
         <div className="card">
           <div className="market-table">
             <div className="table-head">
-              <span>Asset</span><span>Price</span><span>Trend</span><span>24h</span><span></span>
+              <span>{ka ? 'აქტივი' : 'Asset'}</span><span>{ka ? 'ფასი' : 'Price'}</span><span>{ka ? 'ტენდენცია' : 'Trend'}</span><span>24სთ</span><span></span>
             </div>
             {MARKETS.map(m => {
               const p = prices[m.symbol];
@@ -99,7 +102,7 @@ export default function Markets() {
                   <span className={up ? 'gain' : 'loss'} style={{ transition: 'color 0.3s', fontWeight: 600 }}>{formatUsd(p?.price ?? m.price)}</span>
                   <span>{p?.history?.length > 2 && <Sparkline points={p.history} color={up ? '#34d399' : '#f87171'} width={70} height={24} />}</span>
                   <span className={p?.change >= 0 ? 'gain' : 'loss'}>{p?.change >= 0 ? '+' : ''}{(p?.change ?? m.change).toFixed(2)}%</span>
-                  <span className="badge badge-teal" style={{ justifySelf: 'end' }}>{isSelected ? 'Selected' : ''}</span>
+                  <span className="badge badge-teal" style={{ justifySelf: 'end' }}>{isSelected ? (ka ? 'არჩეული' : 'Selected') : ''}</span>
                 </div>
               );
             })}
@@ -126,7 +129,7 @@ export default function Markets() {
           {aiOn && (
             <div className="trade-summary" style={{ marginBottom: 16 }}>
               <div style={{ display: 'block' }}>
-                <b>AI trading is on.</b>
+                <b>{ka ? 'AI ტრეიდინგი ჩართულია.' : 'AI trading is on.'}</b>
                 <div className="muted-2" style={{ fontSize: 12, marginTop: 4 }}>
                   The AI is managing your balance. Switch to{' '}
                   <Link to="/app/ai" style={{ color: 'var(--teal, #14b8a6)' }}>manual trading</Link>{' '}
@@ -138,13 +141,13 @@ export default function Markets() {
 
           <form onSubmit={handleSubmit} className="trade-panel" style={{ opacity: aiOn ? 0.5 : 1, pointerEvents: aiOn ? 'none' : 'auto' }}>
             <div className="trade-tabs">
-              <button type="button" className={`trade-tab ${orderType === 'market' ? 'active' : ''}`} onClick={() => setOrderType('market')}>Market</button>
-              <button type="button" className={`trade-tab ${orderType === 'limit' ? 'active' : ''}`} onClick={() => setOrderType('limit')}>Limit</button>
+              <button type="button" className={`trade-tab ${orderType === 'market' ? 'active' : ''}`} onClick={() => setOrderType('market')}>{ka ? 'საბაზრო' : 'Market'}</button>
+              <button type="button" className={`trade-tab ${orderType === 'limit' ? 'active' : ''}`} onClick={() => setOrderType('limit')}>{ka ? 'ლიმიტი' : 'Limit'}</button>
             </div>
 
             <div className="side-toggle">
-              <button type="button" className={`side-btn buy ${side === 'buy' ? 'active' : ''}`} onClick={() => setSide('buy')}>Buy</button>
-              <button type="button" className={`side-btn sell ${side === 'sell' ? 'active' : ''}`} onClick={() => setSide('sell')}>Sell</button>
+              <button type="button" className={`side-btn buy ${side === 'buy' ? 'active' : ''}`} onClick={() => setSide('buy')}>{ka ? 'ყიდვა' : 'Buy'}</button>
+              <button type="button" className={`side-btn sell ${side === 'sell' ? 'active' : ''}`} onClick={() => setSide('sell')}>{ka ? 'გაყიდვა' : 'Sell'}</button>
             </div>
 
             {orderType === 'limit' && (
