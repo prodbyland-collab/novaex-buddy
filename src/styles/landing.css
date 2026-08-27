@@ -302,3 +302,13 @@
   .footer { gap: 15px; flex-wrap: wrap; }
   .dashboard-card { left: 5%; }
 }
+
+
+@media (max-width: 760px) {
+  .site-header { padding: 0 5%; }
+  .site-header .header-actions { display: flex; gap: 8px; }
+  .site-header .header-actions .login,
+  .site-header .header-actions .btn { display: none; }
+  .site-header .lang-switch { display: inline-flex; }
+  .footer { padding-left: 7%; padding-right: 7%; }
+}

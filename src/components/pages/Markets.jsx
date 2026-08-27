@@ -72,7 +72,7 @@ export default function Markets() {
       <h1 className="page-title">{ka ? 'ბაზრები' : 'Markets'}</h1>
       <p className="page-sub">{ka ? 'ივაჭრე სპოტზე ან განათავსე ლიმიტ ორდერები ცოცხალი ფასებით.' : 'Trade spot or set limit orders on live prices.'}</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24 }}>
+      <div className="markets-layout">
         {/* Markets table with sparklines */}
         <div className="card">
           <div className="market-table">
