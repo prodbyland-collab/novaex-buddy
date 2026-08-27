@@ -1,22 +1,25 @@
 import { Link, useNavigate, useLocation } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth';
+import { useLanguage } from '@/lib/language';
 import { usePortfolio } from '@/lib/portfolio';
 import { formatUsd } from '@/lib/markets';
+import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function AppLayout({ children }) {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const { total, changeUsd, changePct, flashDir } = usePortfolio();
   const navigate = useNavigate();
   const location = useLocation();
 
   const navItems = [
-    { to: '/app', label: 'Portfolio', exact: true },
-    { to: '/app/markets', label: 'Markets' },
-    { to: '/app/ai', label: 'AI Trading' },
-    { to: '/app/orders', label: 'Orders' },
-    { to: '/app/recurring', label: 'Recurring' },
-    { to: '/app/security', label: 'Security' },
-    { to: '/app/wallet', label: 'Wallet' }
+    { to: '/app', label: t('nav.portfolio'), exact: true },
+    { to: '/app/markets', label: t('nav.markets') },
+    { to: '/app/ai', label: t('nav.aiTrading') },
+    { to: '/app/orders', label: t('nav.orders') },
+    { to: '/app/recurring', label: t('nav.recurring') },
+    { to: '/app/security', label: t('nav.security') },
+    { to: '/app/wallet', label: t('nav.wallet') }
   ];
 
   function isActive(item) {
@@ -46,7 +49,7 @@ export default function AppLayout({ children }) {
           ))}
         </nav>
         <div className="header-balance" data-flash={flashDir}>
-          <div className="header-balance-label">Portfolio</div>
+          <div className="header-balance-label">{t('common.portfolio')}</div>
           <div className={`header-balance-value ${flashDir === 'up' ? 'flash-up' : flashDir === 'down' ? 'flash-down' : ''}`}>
             {formatUsd(total)}
           </div>
@@ -55,9 +58,10 @@ export default function AppLayout({ children }) {
           </div>
         </div>
         <div className="user-area">
+          <LanguageSwitch />
           <span className="user-email">{user?.email}</span>
           <div className="user-avatar">{initials}</div>
-          <button className="btn small ghost" onClick={handleSignOut}>Sign out</button>
+          <button className="btn small ghost" onClick={handleSignOut}>{t('common.signOut')}</button>
         </div>
       </header>
       <div className="app-body">

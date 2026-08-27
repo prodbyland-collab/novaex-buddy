@@ -1,12 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth';
+import { useLanguage } from '@/lib/language';
 import { useLivePrices } from '@/lib/useLivePrices';
 import { formatUsd } from '@/lib/markets';
 import { MARKETS } from '@/lib/markets';
+import LanguageSwitch from '@/components/LanguageSwitch';
+
+function LocalizedTitle({ value }) {
+  const [first, second] = value.split('|');
+  return <>{first}<br /><em>{second}</em></>;
+}
 
 export default function Landing() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const prices = useLivePrices();
@@ -16,19 +24,20 @@ export default function Landing() {
       <div className="grid-glow" />
       <header className="site-header">
         <Link className="brand" to="/"><span className="brand-mark"><span>N</span></span>NOVAX</Link>
-        <button className="menu-button" onClick={() => setMenuOpen(o => !o)}>{menuOpen ? 'Close' : 'Menu'}</button>
+        <button className="menu-button" onClick={() => setMenuOpen(o => !o)}>{menuOpen ? t('common.close') : t('common.menu')}</button>
         <nav className={`nav-links ${menuOpen ? 'open' : ''}`}>
-          <a href="#markets">Markets</a>
-          <a href="#features">Why NOVAX</a>
-          <a href="#security">Security</a>
+          <a href="#markets">{t('nav.markets')}</a>
+          <a href="#features">{t('nav.whyNovax')}</a>
+          <a href="#security">{t('nav.security')}</a>
         </nav>
         <div className="header-actions">
+          <LanguageSwitch />
           {user ? (
-            <button className="btn small" onClick={() => navigate({ to: '/app' })}>Go to dashboard →</button>
+            <button className="btn small" onClick={() => navigate({ to: '/app' })}>{t('common.dashboard')}</button>
           ) : (
             <>
-              <Link className="login" to="/auth">Log in</Link>
-              <Link className="btn small" to="/auth">Create account</Link>
+              <Link className="login" to="/auth">{t('common.login')}</Link>
+              <Link className="btn small" to="/auth">{t('common.signUp')}</Link>
             </>
           )}
         </div>
@@ -37,24 +46,24 @@ export default function Landing() {
       <main>
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow">The calm way to trade</p>
-            <h1>Move with the market.<br /><em>Stay in control.</em></h1>
-            <p className="hero-text">A thoughtful home for digital assets, built for people who want a clear view and a faster next move.</p>
+            <p className="eyebrow">{t('landing.heroEyebrow')}</p>
+            <h1><LocalizedTitle value={t('landing.heroTitle')} /></h1>
+            <p className="hero-text">{t('landing.heroText')}</p>
             <div className="hero-actions">
-              <Link className="btn" to={user ? '/app' : '/auth'}>Start exploring <b>→</b></Link>
-              <a className="text-link" href="#features">See how it works</a>
+              <Link className="btn" to={user ? '/app' : '/auth'}>{t('landing.startExploring')} <b>→</b></Link>
+              <a className="text-link" href="#features">{t('landing.seeHow')}</a>
             </div>
             <div className="trust-row">
-              <div><strong>24/7</strong><span>market access</span></div>
-              <div><strong>0.1%</strong><span>spot fee from</span></div>
-              <div><strong>150+</strong><span>trade pairs</span></div>
+              <div><strong>24/7</strong><span>{t('landing.marketAccess')}</span></div>
+              <div><strong>0.1%</strong><span>{t('landing.spotFee')}</span></div>
+              <div><strong>150+</strong><span>{t('landing.tradePairs')}</span></div>
             </div>
           </div>
           <div className="hero-art" aria-label="Abstract trading dashboard illustration">
             <div className="orb orb-one"></div>
             <div className="orb orb-two"></div>
             <div className="dashboard-card">
-              <div className="dash-head"><span className="tiny-logo">N</span><span>Portfolio value</span><i></i></div>
+              <div className="dash-head"><span className="tiny-logo">N</span><span>{t('landing.portfolioValue')}</span><i></i></div>
               <strong>$24,610.80</strong>
               <small>+ $1,284.42 <b>↗ 5.51%</b></small>
               <svg viewBox="0 0 360 120" role="img" aria-label="Rising price chart">
@@ -80,8 +89,8 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="ticker" aria-label="Live market highlights">
-          <p><span className="pulse-dot"></span> Live market snapshot</p>
+        <section className="ticker" aria-label={t('landing.liveSnapshot')}>
+          <p><span className="pulse-dot"></span> {t('landing.liveSnapshot')}</p>
           <div className="ticker-items">
             {MARKETS.slice(0, 4).map(m => {
               const p = prices[m.symbol];
@@ -95,14 +104,14 @@ export default function Landing() {
         <section className="section" id="markets">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Market overview</p>
-              <h2>See what's moving.</h2>
+              <p className="eyebrow">{t('landing.marketOverview')}</p>
+              <h2>{t('landing.whatsMoving')}</h2>
             </div>
-            <Link className="text-link" to={user ? '/app/markets' : '/auth'}>Trade now →</Link>
+            <Link className="text-link" to={user ? '/app/markets' : '/auth'}>{t('landing.tradeNow')}</Link>
           </div>
           <div className="market-table">
             <div className="table-head">
-              <span>Asset</span><span>Last price</span><span>24h change</span><span>Market cap</span><span></span>
+              <span>{t('landing.asset')}</span><span>{t('landing.lastPrice')}</span><span>{t('landing.change24h')}</span><span>{t('landing.marketCap')}</span><span></span>
             </div>
             {MARKETS.map(m => {
               const p = prices[m.symbol];
@@ -115,7 +124,7 @@ export default function Landing() {
                   <span>{formatUsd(p?.price ?? m.price)}</span>
                   <span className={p?.change >= 0 ? 'gain' : 'loss'}>{p?.change >= 0 ? '+' : ''}{(p?.change ?? m.change).toFixed(2)}%</span>
                   <span className="muted">{m.cap}</span>
-                  <Link className="trade-btn" to={user ? '/app/markets' : '/auth'}>Trade</Link>
+                  <Link className="trade-btn" to={user ? '/app/markets' : '/auth'}>{t('landing.trade')}</Link>
                 </div>
               );
             })}
@@ -123,38 +132,38 @@ export default function Landing() {
         </section>
 
         <section className="section features" id="features">
-          <p className="eyebrow">Built around you</p>
-          <h2>Everything you need.<br /><em>Nothing in your way.</em></h2>
+          <p className="eyebrow">{t('landing.builtAroundYou')}</p>
+          <h2><LocalizedTitle value={t('landing.everythingTitle')} /></h2>
           <div className="feature-grid">
             <article>
               <span>01</span>
-              <h3>Simple by design</h3>
-              <p>See balances, orders, and market movement at a glance without the clutter.</p>
+              <h3>{t('landing.simpleTitle')}</h3>
+              <p>{t('landing.simpleText')}</p>
             </article>
             <article>
               <span>02</span>
-              <h3>Trade your way</h3>
-              <p>Spot, recurring buys, and advanced orders all live in one focused workspace.</p>
+              <h3>{t('landing.yourWayTitle')}</h3>
+              <p>{t('landing.yourWayText')}</p>
             </article>
             <article id="security">
               <span>03</span>
-              <h3>Security first</h3>
-              <p>Layered protection and transparent controls help keep your account in your hands.</p>
+              <h3>{t('landing.securityTitle')}</h3>
+              <p>{t('landing.securityText')}</p>
             </article>
           </div>
         </section>
 
         <section className="cta">
           <div>
-            <p className="eyebrow">Ready when you are</p>
-            <h2>Your next move<br />starts <em>here.</em></h2>
+            <p className="eyebrow">{t('landing.ready')}</p>
+            <h2><LocalizedTitle value={t('landing.ctaTitle')} /></h2>
           </div>
-          <Link className="btn" to={user ? '/app' : '/auth'}>Open your account <b>→</b></Link>
+          <Link className="btn" to={user ? '/app' : '/auth'}>{t('landing.openAccount')} <b>→</b></Link>
         </section>
       </main>
       <footer className="footer">
         <Link className="brand" to="/"><span className="brand-mark"><span>N</span></span>NOVAX</Link>
-        <p>Original exchange landing page concept.</p>
+        <p>{t('landing.footer')}</p>
         <span>© 2026 NOVAX</span>
       </footer>
     </>

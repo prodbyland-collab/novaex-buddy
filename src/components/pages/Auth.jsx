@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth';
+import { useLanguage } from '@/lib/language';
 import { ensureUsdBalance, ensureSecuritySettings, claimReferral } from '@/lib/api';
 
 const REF_KEY = 'novax_ref_code';
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
@@ -15,7 +17,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [refCode, setRefCode] = useState('');
 
-  // Pick up ?ref=CODE from an invite link and remember it through sign-up.
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('ref');
     const stored = window.localStorage.getItem(REF_KEY);
@@ -38,7 +39,6 @@ export default function Auth() {
 
       if (result.error) throw result.error;
 
-      // After sign-up, seed demo balance + security settings
       const userId = result.data.user?.id;
       if (userId && mode === 'signup') {
         await ensureUsdBalance(userId);
@@ -53,12 +53,11 @@ export default function Auth() {
 
       navigate({ to: '/app' });
     } catch (err) {
-      setError(err.message || 'Something went wrong');
+      setError(err.message || t('auth.genericError'));
     } finally {
       setLoading(false);
     }
   }
-
 
   return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '20px' }}>
@@ -69,25 +68,25 @@ export default function Auth() {
         </Link>
         <div className="card fade-up">
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+            {mode === 'login' ? t('auth.welcome') : t('auth.createAccount')}
           </h1>
           <p className="muted" style={{ fontSize: 14, marginBottom: 28 }}>
-            {mode === 'login' ? 'Sign in to access your portfolio.' : 'Start trading in under a minute.'}
+            {mode === 'login' ? t('auth.loginSubtitle') : t('auth.signupSubtitle')}
           </p>
 
           <div className="trade-tabs" style={{ marginBottom: 24 }}>
-            <button className={`trade-tab ${mode === 'login' ? 'active' : ''}`} onClick={() => setMode('login')}>Log in</button>
-            <button className={`trade-tab ${mode === 'signup' ? 'active' : ''}`} onClick={() => setMode('signup')}>Sign up</button>
+            <button className={`trade-tab ${mode === 'login' ? 'active' : ''}`} onClick={() => setMode('login')}>{t('auth.login')}</button>
+            <button className={`trade-tab ${mode === 'signup' ? 'active' : ''}`} onClick={() => setMode('signup')}>{t('auth.signup')}</button>
           </div>
 
           <form onSubmit={handleSubmit}>
             <div className="field">
-              <label>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
+              <label>{t('common.email')}</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder={t('auth.emailPlaceholder')} />
             </div>
             <div className="field">
-              <label>Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="At least 6 characters" />
+              <label>{t('common.password')}</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder={t('auth.passwordPlaceholder')} />
             </div>
             {error && (
               <div style={{ background: 'rgba(240,97,109,0.1)', border: '1px solid rgba(240,97,109,0.3)', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: 'var(--red)', marginBottom: 16 }}>
@@ -95,16 +94,16 @@ export default function Auth() {
               </div>
             )}
             <button className="btn" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
-              {loading ? 'Please wait...' : mode === 'login' ? 'Log in →' : 'Create account →'}
+              {loading ? t('common.pleaseWait') : mode === 'login' ? t('auth.submitLogin') : t('auth.submitSignup')}
             </button>
           </form>
 
           <p className="muted-2" style={{ fontSize: 12, textAlign: 'center', marginTop: 20 }}>
-            New accounts start at $0 — fund your balance with a crypto deposit.
+            {t('auth.startingBalance')}
           </p>
         </div>
         <Link className="muted-2" to="/" style={{ display: 'block', textAlign: 'center', marginTop: 16, fontSize: 13 }}>
-          ← Back to home
+          {t('common.backHome')}
         </Link>
       </div>
     </div>
