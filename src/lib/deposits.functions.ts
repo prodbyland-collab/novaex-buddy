@@ -4,7 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const DEPOSIT_COLUMNS =
   "id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at";
 
- type DepositInput = { currency: string; amountUsd: number };
+type DepositInput = { currency: string; amountUsd: number };
+type MinimumInput = { currency: string };
 
 export const getMinDeposits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -13,6 +14,28 @@ export const getMinDeposits = createServerFn({ method: "GET" })
     const { fetchSupportedDepositCurrencies } = await import("@/lib/deposits.server");
     if (!apiKey) return { currencies: [] };
     return { currencies: await fetchSupportedDepositCurrencies(apiKey) };
+  });
+
+
+export const getDepositMinimum = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: MinimumInput) => input)
+  .handler(async ({ data }) => {
+    const currency = String(data.currency ?? "").toLowerCase();
+    const apiKey = process.env["NOWPAYMENTS_API_KEY"];
+    if (!apiKey) throw new Error("Deposit service is not configured");
+
+    const { fetchMinDeposit, fetchSupportedDepositCurrencies } = await import("@/lib/deposits.server");
+    const supported = await fetchSupportedDepositCurrencies(apiKey);
+    if (!supported.some((item) => item.currency === currency)) {
+      throw new Error("This currency or network is not currently supported by NOWPayments");
+    }
+
+    const minimum = await fetchMinDeposit(currency, apiKey);
+    if (minimum.minUsd === null) {
+      throw new Error("Could not retrieve the current NOWPayments minimum for this currency");
+    }
+    return minimum;
   });
 
 export const createDeposit = createServerFn({ method: "POST" })
@@ -35,6 +58,9 @@ export const createDeposit = createServerFn({ method: "POST" })
       throw new Error("This currency or network is not currently supported by NOWPayments");
     }
     const { minUsd } = await fetchMinDeposit(currency, apiKey);
+    if (minUsd === null) {
+      throw new Error("Could not retrieve the current NOWPayments minimum for this currency");
+    }
     if (amount < minUsd) {
       throw new Error(`Minimum deposit for ${currency.toUpperCase()} is $${minUsd}`);
     }
