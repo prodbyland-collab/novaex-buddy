@@ -71,9 +71,7 @@ export default function Wallet() {
     return () => { alive = false; };
   }, []);
 
-  const minUsd = useMemo(() => {
-    return 10;
-  }, [minimums, currency]);
+  const minUsd = useMemo(() => 10, [currency]);
 
   useEffect(() => {
     if (minsLoading) return;
