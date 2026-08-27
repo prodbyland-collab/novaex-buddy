@@ -10,6 +10,7 @@ const translations = {
       aiTrading: 'AI ვაჭრობა',
       orders: 'შეკვეთები',
       recurring: 'განმეორებადი',
+      referrals: 'რეფერალები',
       wallet: 'საფულე',
     },
     common: {
@@ -82,6 +83,7 @@ const translations = {
       aiTrading: 'AI Trading',
       orders: 'Orders',
       recurring: 'Recurring',
+      referrals: 'Referrals',
       wallet: 'Wallet',
     },
     common: {

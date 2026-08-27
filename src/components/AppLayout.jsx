@@ -17,7 +17,7 @@ export default function AppLayout({ children }) {
     { to: '/app/markets', label: t('nav.markets') },
     { to: '/app/ai', label: t('nav.aiTrading') },
     { to: '/app/orders', label: t('nav.orders') },
-    { to: '/app/recurring', label: t('nav.recurring') },
+    { to: '/app/recurring', label: t('nav.referrals') },
     { to: '/app/security', label: t('nav.security') },
     { to: '/app/wallet', label: t('nav.wallet') }
   ];
