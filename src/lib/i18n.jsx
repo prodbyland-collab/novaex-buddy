@@ -10,7 +10,7 @@ export const LANGUAGES = [
 ];
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState('en');
+  const [lang, setLang] = useState('ka');
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);

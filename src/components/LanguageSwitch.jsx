@@ -1,12 +1,15 @@
+import { useI18n } from '@/lib/i18n';
 import { useLanguage } from '@/lib/language';
 
 export default function LanguageSwitch() {
-  const { language, setLanguage, t } = useLanguage();
+  const { lang, setLang, t } = useI18n();
+  const { setLanguage } = useLanguage();
+  const changeLanguage = (next) => { setLang(next); setLanguage(next); };
 
   return (
-    <div className="lang-switch" role="group" aria-label={t('common.language')}>
-      <button type="button" className={language === 'ka' ? 'active' : ''} onClick={() => setLanguage('ka')}>ქარ</button>
-      <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')}>EN</button>
+    <div className="lang-switch" role="group" aria-label={t('common.language') || 'Language'}>
+      <button type="button" className={lang === 'ka' ? 'active' : ''} onClick={() => changeLanguage('ka')}>ქარ</button>
+      <button type="button" className={lang === 'en' ? 'active' : ''} onClick={() => changeLanguage('en')}>EN</button>
     </div>
   );
 }
