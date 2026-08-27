@@ -4,10 +4,12 @@ import { usePortfolio } from '@/lib/portfolio';
 import { MARKETS, MARKET_MAP, formatUsd, formatNum } from '@/lib/markets';
 import Sparkline from '@/components/Sparkline';
 import ActivityTicker from '@/components/ActivityTicker';
+import { useI18n } from '@/lib/i18n';
 
 
 export default function Dashboard() {
-  const { holdings, total, usdBalance, loading, flashDir, changeUsd, changePct, prices, reload } = usePortfolio();
+  const { holdings, total, usdBalance, loading, flashDir, changeUsd, changePct, prices } = usePortfolio();
+  const { t } = useI18n();
   const [animTotal, setAnimTotal] = useState(total);
 
   // Smooth number animation
@@ -44,24 +46,24 @@ export default function Dashboard() {
     <div className="fade-up">
       <ActivityTicker />
 
-      <h1 className="page-title">Portfolio</h1>
-      <p className="page-sub">Your balances and market value, updating live.</p>
+      <h1 className="page-title">{t('dashboard.title')}</h1>
+      <p className="page-sub">{t('dashboard.subtitle')}</p>
 
       <div className="dash-grid">
 
         <div className="dash-main">
           {/* Portfolio value card with live animation */}
           <div className="portfolio-card">
-            <p className="eyebrow">Total portfolio value</p>
+            <p className="eyebrow">{t('dashboard.totalValue')}</p>
             <div className={`portfolio-value ${flashDir === 'up' ? 'flash-up' : flashDir === 'down' ? 'flash-down' : ''}`} style={{ borderRadius: 8, padding: '2px 6px', display: 'inline-block' }}>
               {formatUsd(animTotal)}
             </div>
             <div className={`portfolio-change ${isGain ? 'gain' : 'loss'}`} style={{ fontSize: 15, marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span>{isGain ? '▲' : '▼'} {isGain ? '+' : ''}{formatUsd(Math.abs(changeUsd))} ({isGain ? '+' : ''}{changePct.toFixed(2)}%)</span>
-              <span className="muted-2" style={{ fontSize: 12 }}>since you started</span>
+              <span className="muted-2" style={{ fontSize: 12 }}>{t('dashboard.sinceStart')}</span>
             </div>
             <div className="muted-2" style={{ fontSize: 12, marginTop: 4 }}>
-              {formatUsd(usdBalance)} cash · {formatUsd(cryptoValue)} in crypto
+              {formatUsd(usdBalance)} {t('dashboard.cash')} · {formatUsd(cryptoValue)} {t('dashboard.inCrypto')}
             </div>
 
             {/* Allocation bar */}
@@ -93,16 +95,16 @@ export default function Dashboard() {
           {/* Holdings table with live values */}
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>Your holdings</h3>
-              <Link className="text-link" to="/app/markets">Trade →</Link>
+              <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('dashboard.holdings')}</h3>
+              <Link className="text-link" to="/app/markets">{t('dashboard.trade')}</Link>
             </div>
             {loading ? (
-              <p className="muted">Loading...</p>
+              <p className="muted">{t('dashboard.loading')}</p>
             ) : nonZero.length === 0 ? (
               <div className="empty-state">
                 <span>📊</span>
-                <p>No holdings yet. Start trading to build your portfolio.</p>
-                <Link className="btn small" to="/app/markets" style={{ marginTop: 16 }}>Go to Markets</Link>
+                <p>{t('dashboard.noHoldings')}</p>
+                <Link className="btn small" to="/app/markets" style={{ marginTop: 16 }}>{t('dashboard.goMarkets')}</Link>
               </div>
             ) : (
               nonZero.map(h => {
@@ -116,7 +118,7 @@ export default function Dashboard() {
                         {h.symbol === 'USD' ? '$' : (MARKET_MAP[h.symbol]?.icon || h.symbol[0])}
                       </b>
                       <div>
-                        <strong style={{ fontSize: 14 }}>{MARKET_MAP[h.symbol]?.name || 'US Dollar'}</strong>
+                        <strong style={{ fontSize: 14 }}>{MARKET_MAP[h.symbol]?.name || t('dashboard.usDollar')}</strong>
                         <div className="muted-2" style={{ fontSize: 11 }}>{h.symbol}</div>
                       </div>
                       {h.symbol !== 'USD' && p?.history?.length > 2 && (
@@ -139,40 +141,40 @@ export default function Dashboard() {
         {/* Side panel */}
         <div className="dash-side">
           <div className="card-2">
-            <p className="eyebrow" style={{ marginBottom: 14 }}>Available cash</p>
+            <p className="eyebrow" style={{ marginBottom: 14 }}>{t('dashboard.availableCash')}</p>
             <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1px' }}>{formatUsd(usdBalance)}</div>
-            <Link className="btn small" to="/app/markets" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}>Trade now</Link>
+            <Link className="btn small" to="/app/markets" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}>{t('dashboard.tradeNow')}</Link>
           </div>
 
           <div className="card-2">
-            <p className="eyebrow" style={{ marginBottom: 14 }}>Quick actions</p>
+            <p className="eyebrow" style={{ marginBottom: 14 }}>{t('dashboard.quickActions')}</p>
             <div className="quick-actions">
               <Link className="quick-action" to="/app/markets">
                 <span>↗</span>
-                <strong>Spot trade</strong>
-                <small>Buy or sell instantly</small>
+                <strong>{t('dashboard.spotTrade')}</strong>
+                <small>{t('dashboard.spotDesc')}</small>
               </Link>
               <Link className="quick-action" to="/app/orders">
                 <span>⏱</span>
-                <strong>Limit order</strong>
-                <small>Set your price</small>
+                <strong>{t('dashboard.limitOrder')}</strong>
+                <small>{t('dashboard.limitDesc')}</small>
               </Link>
               <Link className="quick-action" to="/app/recurring">
                 <span>↻</span>
-                <strong>Recurring</strong>
-                <small>Automate buys</small>
+                <strong>{t('dashboard.recurring')}</strong>
+                <small>{t('dashboard.recurringDesc')}</small>
               </Link>
               <Link className="quick-action" to="/app/security">
                 <span>🛡</span>
-                <strong>Security</strong>
-                <small>Review settings</small>
+                <strong>{t('dashboard.security')}</strong>
+                <small>{t('dashboard.securityDesc')}</small>
               </Link>
             </div>
           </div>
 
-          {/* Watchlist with sparklines */}
+          {/* {t('dashboard.watchlist')} with sparklines */}
           <div className="card-2">
-            <p className="eyebrow" style={{ marginBottom: 14 }}>Watchlist</p>
+            <p className="eyebrow" style={{ marginBottom: 14 }}>{t('dashboard.watchlist')}</p>
             {MARKETS.slice(0, 5).map(m => {
               const p = prices[m.symbol];
               const up = (p?.price ?? m.price) >= (p?.prevPrice ?? m.price);
