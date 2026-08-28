@@ -2,9 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const DEPOSIT_COLUMNS =
-  "id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at";
+  "id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at, purpose, plan_id";
 
-type DepositInput = { currency: string; amountUsd: number };
+type DepositInput = { currency: string; amountUsd: number; planId?: string };
 type MinimumInput = { currency: string };
 
 export const getMinDeposits = createServerFn({ method: "GET" })
@@ -43,7 +43,13 @@ export const createDeposit = createServerFn({ method: "POST" })
   .inputValidator((input: DepositInput) => input)
   .handler(async ({ data, context }) => {
     const currency = String(data.currency ?? "").toLowerCase();
-    const amount = Number(data.amountUsd);
+    const { getBotPlan } = await import("@/lib/plans");
+    const plan = data.planId ? getBotPlan(String(data.planId)) : undefined;
+    if (data.planId && (!plan || plan.price <= 0)) {
+      throw new Error("Unknown bot plan");
+    }
+    const purpose = plan ? "plan" : "balance";
+    const amount = plan ? plan.price : Number(data.amountUsd);
     if (!Number.isFinite(amount) || amount > 100000) {
       throw new Error("Choose a deposit up to $100,000");
     }
@@ -74,6 +80,7 @@ export const createDeposit = createServerFn({ method: "POST" })
       .select(DEPOSIT_COLUMNS)
       .eq("user_id", userId)
       .eq("pay_currency", currency)
+      .eq("purpose", purpose)
       .in("status", ["creating", "waiting", "confirming", "partially_paid"])
       .order("created_at", { ascending: false })
       .limit(1)
@@ -84,7 +91,13 @@ export const createDeposit = createServerFn({ method: "POST" })
 
     const { data: draft, error: draftError } = await supabaseAdmin
       .from("crypto_deposits")
-      .insert({ user_id: userId, pay_currency: currency, price_amount: amount })
+      .insert({
+        user_id: userId,
+        pay_currency: currency,
+        price_amount: amount,
+        purpose,
+        plan_id: plan ? plan.id : null,
+      })
       .select("id")
       .single();
     if (draftError || !draft) throw new Error("Could not start deposit");
