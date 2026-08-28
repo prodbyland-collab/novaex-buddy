@@ -1,12 +1,170 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLanguage } from '@/lib/language';
-const KEY='gng_sandbox_bots', DAY=86400000;
-const PLANS=[{id:'free',rate:.01,price:0,name:'Free AI Trader'},{id:'pro',rate:.03,price:150,name:'Pro AI Trader'},{id:'elite',rate:.05,price:250,name:'Elite AI Trader'}];
-function load(){try{return JSON.parse(localStorage.getItem(KEY))||{balance:1000,unlocked:['free'],active:'free',last:Date.now()}}catch{return {balance:1000,unlocked:['free'],active:'free',last:Date.now()}}}
-export default function BotPlans(){
- const {language}=useLanguage(),[state,setState]=useState(load),[notice,setNotice]=useState(''),active=useMemo(()=>PLANS.find(p=>p.id===state.active)||PLANS[0],[state.active]),ka=language==='ka';
- function save(next,message){setState(next);localStorage.setItem(KEY,JSON.stringify(next));setNotice(message)}
- useEffect(()=>{const days=Math.floor((Date.now()-state.last)/DAY);if(!days)return;const profit=Number((state.balance*active.rate*days).toFixed(2));save({...state,balance:state.balance+profit,last:state.last+days*DAY},ka?'დაემატა სიმულირებული მოგება: $'+profit.toFixed(2):'Simulated profit added: $'+profit.toFixed(2))},[]);
- function choose(plan){if(!state.unlocked.includes(plan.id)){if(state.balance<plan.price)return setNotice(ka?'საკმარისი სატესტო კრედიტი არ გაქვს.':'Not enough sandbox credits.');return save({...state,balance:state.balance-plan.price,unlocked:[...state.unlocked,plan.id],active:plan.id},ka?'ბოტი გაიხსნა და გააქტიურდა.':'Bot unlocked and activated.')}save({...state,active:plan.id},ka?'აქტიური ბოტი განახლდა.':'Active bot updated.')}
- return <div className="fade-up" style={{maxWidth:980}}><h1 className="page-title">{ka?'AI ბოტ-გეგმები':'AI Bot Plans'}</h1><p className="page-sub">{ka?'მხოლოდ ტესტირებისთვის — თანხა და მოგება სიმულირებულია.':'For testing only — all balances and returns are simulated.'}</p><div className="card" style={{marginTop:24,marginBottom:24}}><p className="eyebrow">{ka?'სატესტო საფულე':'Sandbox wallet'}</p><div style={{fontSize:30,fontWeight:800}}>{'$'}{state.balance.toFixed(2)}</div><p className="muted-2">{ka?'აქტიური ბოტი: ':'Active bot: '}{active.name} · {(active.rate*100).toFixed(0)}% {ka?'დღეში':'per day'}</p></div><div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))',gap:18}}>{PLANS.map(plan=>{const unlocked=state.unlocked.includes(plan.id),current=plan.id===state.active;return <div className="card" key={plan.id} style={{border:current?'1px solid var(--teal)':undefined}}><h2 style={{fontSize:18}}>{plan.name}</h2><div className="gain" style={{fontSize:28,fontWeight:800,margin:'14px 0'}}>{(plan.rate*100).toFixed(0)}% <small>{ka?'დღეში':'per day'}</small></div><p className="muted-2">{ka?'სიმულირებული ყოველდღიური შედეგი':'Simulated daily return'}</p><p style={{margin:'16px 0',fontWeight:700}}>{plan.price?'$'+plan.price+' '+(ka?'სატესტო კრედიტი':'sandbox credits'):(ka?'უფასო':'Free')}</p><button className={current?'btn ghost':'btn'} style={{width:'100%',justifyContent:'center'}} onClick={()=>choose(plan)} disabled={current}>{current?(ka?'აქტიური':'Active'):unlocked?(ka?'გააქტიურება':'Activate'):(ka?'გახსნა':'Unlock')}</button></div>})}</div>{notice&&<div className="toast success">{notice}</div>}</div>
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n';
+import { BOT_PLANS } from '@/lib/plans';
+import { fetchAiSettings, fetchMinDeposits, createPlanPurchase, fetchCryptoDeposits } from '@/lib/api';
+
+const PENDING = ['creating', 'waiting', 'confirming', 'partially_paid'];
+
+function formatDate(value) {
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+
+export default function BotPlans() {
+  const { user } = useAuth();
+  const { lang } = useI18n();
+  const ka = lang === 'ka';
+
+  const [settings, setSettings] = useState(null);
+  const [currencies, setCurrencies] = useState([]);
+  const [currency, setCurrency] = useState('btc');
+  const [payments, setPayments] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [busy, setBusy] = useState('');
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState('');
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    try {
+      const [s, p] = await Promise.all([fetchAiSettings(user.id), fetchCryptoDeposits(user.id, 'plan')]);
+      setSettings(s);
+      setPayments(p || []);
+    } catch {
+      setError(ka ? 'მონაცემების ჩატვირთვა ვერ მოხერხდა.' : 'Could not load your plan.');
+    }
+  }, [user, ka]);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    let alive = true;
+    fetchMinDeposits()
+      .then(list => { if (alive && list.length) { setCurrencies(list); if (!list.some(i => i.currency === 'btc')) setCurrency(list[0].currency); } })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const activeId = settings?.plan_id ?? 'free';
+  const activeRate = Number(settings?.plan_rate ?? 0.01);
+  const pending = useMemo(() => payments.filter(p => PENDING.includes(p.status)), [payments]);
+
+  const names = {
+    free: ka ? 'უფასო AI ტრეიდერი' : 'Free AI Trader',
+    pro: ka ? 'Pro AI ტრეიდერი' : 'Pro AI Trader',
+    elite: ka ? 'Elite AI ტრეიდერი' : 'Elite AI Trader',
+  };
+
+  async function buy(plan) {
+    setError('');
+    setBusy(plan.id);
+    try {
+      const deposit = await createPlanPurchase(currency, plan.id);
+      setSelected(deposit);
+      await load();
+    } catch (err) {
+      setError(err?.message || (ka ? 'გადახდის შექმნა ვერ მოხერხდა.' : 'Could not start the payment.'));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function copy(value, label) {
+    await navigator.clipboard.writeText(value);
+    setCopied(label);
+    setTimeout(() => setCopied(''), 1800);
+  }
+
+  return (
+    <div className="fade-up" style={{ maxWidth: 1040 }}>
+      <h1 className="page-title">{ka ? 'ბოტ-გეგმები' : 'Bot Plans'}</h1>
+      <p className="page-sub">
+        {ka
+          ? 'აირჩიე AI ბოტის დონე. გადახდა ხდება კრიპტოთი ცალკე — ბალანსიდან თანხა არ ჩამოიჭრება.'
+          : 'Pick your AI bot tier. Plans are paid in crypto separately — nothing is taken from your trading balance.'}
+      </p>
+
+      <div className="card" style={{ marginTop: 24 }}>
+        <p className="eyebrow">{ka ? 'აქტიური გეგმა' : 'Active plan'}</p>
+        <div style={{ fontSize: 26, fontWeight: 800 }}>{names[activeId] || names.free}</div>
+        <p className="muted-2">{(activeRate * 100).toFixed(0)}% {ka ? 'დღეში' : 'per day'}</p>
+      </div>
+
+      <div className="field" style={{ maxWidth: 320, marginTop: 24 }}>
+        <label>{ka ? 'გადახდის ვალუტა' : 'Pay with'}</label>
+        <select value={currency} onChange={e => setCurrency(e.target.value)}>
+          {(currencies.length ? currencies : [{ currency: 'btc' }]).map(item => (
+            <option key={item.currency} value={item.currency}>{item.currency.toUpperCase()}</option>
+          ))}
+        </select>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 18, marginTop: 18 }}>
+        {BOT_PLANS.map(plan => {
+          const current = plan.id === activeId;
+          const owned = activeRate >= plan.rate;
+          return (
+            <div className="card" key={plan.id} style={{ border: current ? '1px solid var(--teal)' : undefined }}>
+              <h2 style={{ fontSize: 18 }}>{names[plan.id]}</h2>
+              <div className="gain" style={{ fontSize: 28, fontWeight: 800, margin: '14px 0' }}>
+                {(plan.rate * 100).toFixed(0)}% <small>{ka ? 'დღეში' : 'per day'}</small>
+              </div>
+              <p className="muted-2">{ka ? 'ყოველდღიური მოგება ბალანსზე' : 'Daily profit on your balance'}</p>
+              <p style={{ margin: '16px 0', fontWeight: 700 }}>
+                {plan.price ? `$${plan.price} ${ka ? 'კრიპტოთი' : 'in crypto'}` : (ka ? 'უფასო' : 'Free')}
+              </p>
+              <button
+                className={current || owned ? 'btn ghost' : 'btn'}
+                style={{ width: '100%', justifyContent: 'center' }}
+                disabled={!plan.price || owned || busy === plan.id}
+                onClick={() => buy(plan)}
+              >
+                {owned
+                  ? (ka ? 'აქტიური' : 'Active')
+                  : busy === plan.id
+                    ? (ka ? 'მიმდინარეობს...' : 'Starting...')
+                    : (ka ? 'ყიდვა კრიპტოთი' : 'Buy with crypto')}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {error && <div className="toast error" style={{ marginTop: 18 }}>{error}</div>}
+
+      {selected && (
+        <div className="card" style={{ marginTop: 24 }}>
+          <p className="eyebrow">{ka ? 'გადაიხადე ამ მისამართზე' : 'Send payment to'}</p>
+          <h2 style={{ fontSize: 18 }}>
+            {names[selected.plan_id] || ''} · {selected.pay_currency?.toUpperCase()}
+          </h2>
+          <p className="muted-2" style={{ wordBreak: 'break-all', marginTop: 12 }}>{selected.pay_address}</p>
+          <p style={{ fontWeight: 700, marginTop: 8 }}>
+            {selected.pay_amount} {selected.pay_currency?.toUpperCase()} (${Number(selected.price_amount).toFixed(2)})
+          </p>
+          <button className="btn ghost" style={{ marginTop: 12 }} onClick={() => copy(selected.pay_address, 'addr')}>
+            {copied === 'addr' ? (ka ? 'დაკოპირდა' : 'Copied') : (ka ? 'მისამართის კოპირება' : 'Copy address')}
+          </button>
+          <p className="muted-2" style={{ marginTop: 12 }}>
+            {ka
+              ? 'გადახდის დადასტურების შემდეგ გეგმა ავტომატურად გააქტიურდება.'
+              : 'Your plan activates automatically once the payment is confirmed.'}
+          </p>
+        </div>
+      )}
+
+      {pending.length > 0 && (
+        <div className="card" style={{ marginTop: 24 }}>
+          <p className="eyebrow">{ka ? 'მოლოდინში მყოფი გადახდები' : 'Pending plan payments'}</p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '12px 0 0' }}>
+            {pending.map(p => (
+              <li key={p.id} className="muted-2" style={{ padding: '8px 0', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+                {names[p.plan_id] || p.plan_id} · {p.pay_currency?.toUpperCase()} · ${Number(p.price_amount).toFixed(2)} · {p.status} · {formatDate(p.created_at)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
