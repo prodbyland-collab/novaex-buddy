@@ -18,12 +18,12 @@ function normalizeCurrencies(body: unknown): DepositCurrency[] {
   const root = body && typeof body === "object" ? body as Record<string, unknown> : {};
   const values = Array.isArray(body)
     ? body
-    : Array.isArray(root.currencies)
-      ? root.currencies
-      : Array.isArray(root.data)
-        ? root.data
-        : Array.isArray(root.result)
-          ? root.result
+    : Array.isArray(root["currencies"])
+      ? root["currencies"]
+      : Array.isArray(root["data"])
+        ? root["data"]
+        : Array.isArray(root["result"])
+          ? root["result"]
           : [];
 
   const currencies = values
