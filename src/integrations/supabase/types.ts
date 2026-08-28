@@ -56,6 +56,8 @@ export type Database = {
           id: string
           last_accrued_at: string | null
           last_payout_date: string | null
+          plan_id: string
+          plan_rate: number
           started_at: string | null
           total_profit: number
           updated_at: string
@@ -69,6 +71,8 @@ export type Database = {
           id?: string
           last_accrued_at?: string | null
           last_payout_date?: string | null
+          plan_id?: string
+          plan_rate?: number
           started_at?: string | null
           total_profit?: number
           updated_at?: string
@@ -82,6 +86,8 @@ export type Database = {
           id?: string
           last_accrued_at?: string | null
           last_payout_date?: string | null
+          plan_id?: string
+          plan_rate?: number
           started_at?: string | null
           total_profit?: number
           updated_at?: string
@@ -99,8 +105,10 @@ export type Database = {
           pay_amount: number | null
           pay_currency: string
           payment_id: string | null
+          plan_id: string | null
           price_amount: number
           price_currency: string
+          purpose: string
           status: string
           updated_at: string
           user_id: string
@@ -114,8 +122,10 @@ export type Database = {
           pay_amount?: number | null
           pay_currency: string
           payment_id?: string | null
+          plan_id?: string | null
           price_amount: number
           price_currency?: string
+          purpose?: string
           status?: string
           updated_at?: string
           user_id: string
@@ -129,8 +139,10 @@ export type Database = {
           pay_amount?: number | null
           pay_currency?: string
           payment_id?: string | null
+          plan_id?: string | null
           price_amount?: number
           price_currency?: string
+          purpose?: string
           status?: string
           updated_at?: string
           user_id?: string

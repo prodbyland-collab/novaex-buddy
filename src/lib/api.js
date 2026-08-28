@@ -183,11 +183,12 @@ export async function updateSecuritySettings(id, fields) {
   return data;
 }
 
-export async function fetchCryptoDeposits(userId) {
+export async function fetchCryptoDeposits(userId, purpose = 'balance') {
   const { data, error } = await supabase
     .from('crypto_deposits')
-    .select('id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at')
+    .select('id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at, purpose, plan_id')
     .eq('user_id', userId)
+    .eq('purpose', purpose)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;
@@ -198,6 +199,13 @@ export async function createCryptoDeposit(currency, amountUsd) {
   if (!result?.deposit) throw new Error('Could not create a deposit address');
   return result.deposit;
 }
+
+export async function createPlanPurchase(currency, planId) {
+  const result = await createDeposit({ data: { currency, amountUsd: 0, planId } });
+  if (!result?.deposit) throw new Error('Could not create a payment address');
+  return result.deposit;
+}
+
 
 export async function fetchMinDeposits() {
   const result = await getMinDeposits();

@@ -36,3 +36,15 @@ declare module "@/lib/markets" {
 declare module "@/lib/useLivePrices" {
   export const useLivePrices: any;
 }
+
+declare module "@/lib/language" {
+  export const LanguageProvider: any;
+  export const useLanguage: any;
+}
+
+declare module "@/lib/i18n" {
+  export const LanguageProvider: any;
+  export const useI18n: any;
+  export const LanguageSwitch: any;
+  export const LANGUAGES: any;
+}
