@@ -344,3 +344,26 @@ export async function claimReferral(code) {
   if (error) throw error;
   return data;
 }
+
+// ---- Cost basis: what the user actually put in vs what they hold now ----
+export async function fetchCostBasis(userId) {
+  const [deposits, withdrawals] = await Promise.all([
+    supabase
+      .from('crypto_deposits')
+      .select('price_amount, credited_at, purpose')
+      .eq('user_id', userId)
+      .eq('purpose', 'balance')
+      .not('credited_at', 'is', null),
+    supabase
+      .from('withdrawals')
+      .select('usd_value')
+      .eq('user_id', userId)
+      .neq('status', 'failed'),
+  ]);
+  if (deposits.error) throw deposits.error;
+  if (withdrawals.error) throw withdrawals.error;
+
+  const deposited = (deposits.data ?? []).reduce((sum, d) => sum + Number(d.price_amount || 0), 0);
+  const withdrawn = (withdrawals.data ?? []).reduce((sum, w) => sum + Number(w.usd_value || 0), 0);
+  return { deposited, withdrawn, netInvested: deposited - withdrawn };
+}

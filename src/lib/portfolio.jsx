@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useLivePrices } from '@/lib/useLivePrices';
 import { MARKET_MAP } from '@/lib/markets';
-import { ensureUsdBalance, fetchHoldings } from '@/lib/api';
+import { ensureUsdBalance, fetchHoldings, fetchCostBasis } from '@/lib/api';
 
 const PortfolioContext = createContext(null);
 
@@ -10,12 +10,17 @@ export function PortfolioProvider({ user, children }) {
   const [holdings, setHoldings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [prevTotal, setPrevTotal] = useState(null);
+  const [basis, setBasis] = useState({ deposited: 0, withdrawn: 0, netInvested: 0 });
 
   const load = useCallback(async () => {
     if (!user) return;
     await ensureUsdBalance(user.id);
-    const data = await fetchHoldings(user.id);
+    const [data, costBasis] = await Promise.all([
+      fetchHoldings(user.id),
+      fetchCostBasis(user.id).catch(() => ({ deposited: 0, withdrawn: 0, netInvested: 0 })),
+    ]);
     setHoldings(data);
+    setBasis(costBasis);
     setLoading(false);
   }, [user]);
 
@@ -39,17 +44,17 @@ export function PortfolioProvider({ user, children }) {
 
   const usdBalance = holdings.find(h => h.symbol === 'USD')?.amount ?? 0;
 
-  const baseTotal = holdings.reduce((sum, h) => {
-    const price = h.symbol === 'USD' ? 1 : (MARKET_MAP[h.symbol]?.price ?? 0);
-    return sum + h.amount * price;
-  }, 0);
-  const changeUsd = total - baseTotal;
-  const changePct = baseTotal > 0 ? (changeUsd / baseTotal) * 100 : 0;
+  // Profit since start = what you hold now minus what you actually put in
+  // (credited deposits less withdrawn value).
+  const netInvested = basis.netInvested;
+  const changeUsd = netInvested > 0 ? total - netInvested : 0;
+  const changePct = netInvested > 0 ? (changeUsd / netInvested) * 100 : 0;
 
   return (
     <PortfolioContext.Provider value={{
       holdings, total, usdBalance, loading, flashDir,
-      changeUsd, changePct, reload: load, prices,
+      changeUsd, changePct, netInvested, deposited: basis.deposited, withdrawn: basis.withdrawn,
+      reload: load, prices,
     }}>
       {children}
     </PortfolioContext.Provider>
