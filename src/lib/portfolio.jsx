@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useLivePrices } from '@/lib/useLivePrices';
 import { MARKET_MAP } from '@/lib/markets';
-import { ensureUsdBalance, fetchHoldings } from '@/lib/api';
+import { ensureUsdBalance, fetchHoldings, fetchCostBasis } from '@/lib/api';
 
 const PortfolioContext = createContext(null);
 
