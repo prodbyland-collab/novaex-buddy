@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from '@tanstack/react-router';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import { usePortfolio } from '@/lib/portfolio';
@@ -12,6 +14,21 @@ export default function AppLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    if (!user) { setIsAdmin(false); return; }
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle()
+      .then(({ data }) => { if (alive) setIsAdmin(!!data); });
+    return () => { alive = false; };
+  }, [user]);
+
   const navItems = [
     { to: '/app', label: t('nav.portfolio'), exact: true },
     { to: '/app/markets', label: t('nav.markets') },
@@ -19,7 +36,8 @@ export default function AppLayout({ children }) {
     { to: '/app/orders', label: t('nav.botPlans') },
     { to: '/app/recurring', label: t('nav.referrals') },
     { to: '/app/security', label: t('nav.security') },
-    { to: '/app/wallet', label: t('nav.wallet') }
+    { to: '/app/wallet', label: t('nav.wallet') },
+    ...(isAdmin ? [{ to: '/app/admin', label: 'Admin' }] : [])
   ];
 
   function isActive(item) {
