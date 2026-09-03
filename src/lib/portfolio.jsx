@@ -10,12 +10,17 @@ export function PortfolioProvider({ user, children }) {
   const [holdings, setHoldings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [prevTotal, setPrevTotal] = useState(null);
+  const [basis, setBasis] = useState({ deposited: 0, withdrawn: 0, netInvested: 0 });
 
   const load = useCallback(async () => {
     if (!user) return;
     await ensureUsdBalance(user.id);
-    const data = await fetchHoldings(user.id);
+    const [data, costBasis] = await Promise.all([
+      fetchHoldings(user.id),
+      fetchCostBasis(user.id).catch(() => ({ deposited: 0, withdrawn: 0, netInvested: 0 })),
+    ]);
     setHoldings(data);
+    setBasis(costBasis);
     setLoading(false);
   }, [user]);
 
