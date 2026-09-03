@@ -36,7 +36,8 @@ export default function AppLayout({ children }) {
     { to: '/app/orders', label: t('nav.botPlans') },
     { to: '/app/recurring', label: t('nav.referrals') },
     { to: '/app/security', label: t('nav.security') },
-    { to: '/app/wallet', label: t('nav.wallet') }
+    { to: '/app/wallet', label: t('nav.wallet') },
+    ...(isAdmin ? [{ to: '/app/admin', label: 'Admin' }] : [])
   ];
 
   function isActive(item) {
