@@ -473,3 +473,36 @@
   .holding-left > div { min-width: 0; }
   .asset-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 105px; }
 }
+
+/* --- Admin console --- */
+.admin-page { display: flex; flex-direction: column; gap: 18px; }
+.admin-page h1 { font-size: 26px; margin: 0 0 4px; }
+.admin-page h2 { font-size: 16px; margin: 0 0 12px; }
+.admin-page .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.admin-page .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.admin-page .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.admin-page .stat { display: flex; flex-direction: column; gap: 6px; }
+.admin-page .stat strong { font-size: 22px; }
+.admin-page .error { color: #f87171; margin: 0; }
+.admin-page .success-note { color: var(--teal-light); }
+.admin-page .tiny { font-size: 11px; color: var(--muted); }
+.admin-page .truncate { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-page .code-value { font-family: ui-monospace, monospace; font-size: 22px; letter-spacing: 1px; margin: 0 0 6px; }
+.admin-page .row-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.admin-page .input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: inherit;
+  padding: 9px 11px;
+  font-size: 12px;
+}
+.admin-page .tiny-input { width: 92px; }
+.admin-page .table-scroll { overflow-x: auto; }
+.admin-page .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 760px; }
+.admin-page .data-table th {
+  text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.admin-page .data-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
+.admin-page .data-table tr:last-child td { border-bottom: none; }
