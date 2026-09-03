@@ -44,17 +44,17 @@ export function PortfolioProvider({ user, children }) {
 
   const usdBalance = holdings.find(h => h.symbol === 'USD')?.amount ?? 0;
 
-  const baseTotal = holdings.reduce((sum, h) => {
-    const price = h.symbol === 'USD' ? 1 : (MARKET_MAP[h.symbol]?.price ?? 0);
-    return sum + h.amount * price;
-  }, 0);
-  const changeUsd = total - baseTotal;
-  const changePct = baseTotal > 0 ? (changeUsd / baseTotal) * 100 : 0;
+  // Profit since start = what you hold now minus what you actually put in
+  // (credited deposits less withdrawn value).
+  const netInvested = basis.netInvested;
+  const changeUsd = netInvested > 0 ? total - netInvested : 0;
+  const changePct = netInvested > 0 ? (changeUsd / netInvested) * 100 : 0;
 
   return (
     <PortfolioContext.Provider value={{
       holdings, total, usdBalance, loading, flashDir,
-      changeUsd, changePct, reload: load, prices,
+      changeUsd, changePct, netInvested, deposited: basis.deposited, withdrawn: basis.withdrawn,
+      reload: load, prices,
     }}>
       {children}
     </PortfolioContext.Provider>
