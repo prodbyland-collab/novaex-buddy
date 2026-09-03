@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from '@tanstack/react-router';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import { usePortfolio } from '@/lib/portfolio';
