@@ -63,10 +63,9 @@ export default function Wallet() {
           if (result.length && !result.some(item => item.currency === currency)) setCurrency(result[0].currency);
         }
       } catch {
-        /* fall back to the default minimum */
-      } finally {
-        if (alive) setMinsLoading(false);
+        /* currency list unavailable */
       }
+
     })();
     return () => { alive = false; };
   }, []);
