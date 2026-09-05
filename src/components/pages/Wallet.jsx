@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
-import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals, fetchMinDeposits, WITHDRAWAL_FEE_PCT } from '@/lib/api';
+import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals, fetchMinDeposits, fetchDepositMinimum, WITHDRAWAL_FEE_PCT } from '@/lib/api';
+
 import { usePortfolio } from '@/lib/portfolio';
 
 function formatAmount(value) {
@@ -63,29 +64,56 @@ export default function Wallet() {
           if (result.length && !result.some(item => item.currency === currency)) setCurrency(result[0].currency);
         }
       } catch {
-        /* fall back to the default minimum */
+        /* currency list unavailable */
+      }
+
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const [minUsd, setMinUsd] = useState(null);
+  const [minError, setMinError] = useState('');
+
+  // Fetch the live NOWPayments minimum for the selected currency.
+  useEffect(() => {
+    if (!currency) return;
+    let alive = true;
+    setMinsLoading(true);
+    setMinError('');
+    setMinUsd(null);
+    (async () => {
+      try {
+        const result = await fetchDepositMinimum(currency);
+        if (!alive) return;
+        setMinUsd(result?.minUsd ?? null);
+      } catch (err) {
+        if (alive) setMinError(err?.message || t('wallet.depositError'));
       } finally {
         if (alive) setMinsLoading(false);
       }
     })();
     return () => { alive = false; };
-  }, []);
-
-  const minUsd = useMemo(() => 10, [currency]);
+  }, [currency, t]);
 
   useEffect(() => {
-    if (minsLoading) return;
+    if (minsLoading || minUsd === null) return;
     setAmountUsd(prev => (!prev || Number(prev) < minUsd ? String(minUsd) : prev));
   }, [minUsd, minsLoading]);
+
 
   async function handleCreate(e) {
     e.preventDefault();
     setError('');
     setNotice('');
+    if (minUsd === null) {
+      setError(minError || t('wallet.minLoading'));
+      return;
+    }
     if (Number(amountUsd) < minUsd) {
       setError(t('wallet.minNote', { cur: currency.toUpperCase(), min: minUsd }));
       return;
     }
+
     setCreating(true);
     try {
       const deposit = await createCryptoDeposit(currency, Number(amountUsd));
@@ -160,12 +188,13 @@ export default function Wallet() {
             </div>
             <div className="field">
               <label>{t('wallet.value')}</label>
-              <input type="number" min={minUsd} max="100000" step="1" value={amountUsd} onChange={e => setAmountUsd(e.target.value)} required />
+              <input type="number" min={minUsd ?? 0} max="100000" step="1" value={amountUsd} onChange={e => setAmountUsd(e.target.value)} required />
               <span className="field-hint">
-                {minsLoading ? t('wallet.minLoading') : t('wallet.minMax', { min: minUsd })}
+                {minsLoading ? t('wallet.minLoading') : minError ? minError : minUsd === null ? t('wallet.minLoading') : t('wallet.minMax', { min: minUsd })}
               </span>
             </div>
-            <button className="btn" disabled={creating || minsLoading || !currencies.length} style={{ width: '100%', justifyContent: 'center' }}>
+            <button className="btn" disabled={creating || minsLoading || minUsd === null || !currencies.length} style={{ width: '100%', justifyContent: 'center' }}>
+
               {creating ? t('wallet.creating') : t('wallet.createAddress')}
             </button>
           </form>
