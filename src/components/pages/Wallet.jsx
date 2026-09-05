@@ -105,10 +105,15 @@ export default function Wallet() {
     e.preventDefault();
     setError('');
     setNotice('');
+    if (minUsd === null) {
+      setError(minError || t('wallet.minLoading'));
+      return;
+    }
     if (Number(amountUsd) < minUsd) {
       setError(t('wallet.minNote', { cur: currency.toUpperCase(), min: minUsd }));
       return;
     }
+
     setCreating(true);
     try {
       const deposit = await createCryptoDeposit(currency, Number(amountUsd));
