@@ -212,6 +212,12 @@ export async function fetchMinDeposits() {
   return result?.currencies ?? [];
 }
 
+// Live NOWPayments minimum for one currency (USD equivalent).
+export async function fetchDepositMinimum(currency) {
+  return await getDepositMinimum({ data: { currency } });
+}
+
+
 // ---- Withdrawals (simulated: balances change, no funds ever leave) ----
 
 export const WITHDRAWAL_FEE_PCT = 0.20;
