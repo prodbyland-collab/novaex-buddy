@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
-import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals, fetchMinDeposits, WITHDRAWAL_FEE_PCT } from '@/lib/api';
+import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals, fetchMinDeposits, fetchDepositMinimum, WITHDRAWAL_FEE_PCT } from '@/lib/api';
+
 import { usePortfolio } from '@/lib/portfolio';
 
 function formatAmount(value) {
