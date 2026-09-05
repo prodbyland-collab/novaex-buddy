@@ -78,9 +78,10 @@ export default function AiTrading() {
 
   const aiOn = !!settings?.enabled;
   const boosted = settings?.boost_date === utcToday();
-  const baseRate = boosted ? 0.05 : (settings?.daily_rate ?? 0.01);
+  const planRate = Number(settings?.plan_rate ?? settings?.daily_rate ?? 0.01);
+  const boostRate = boosted ? 0.05 : 0;
   const bonusRate = Number(referral?.bonus_rate ?? 0);
-  const rate = baseRate + bonusRate;
+  const rate = planRate + boostRate + bonusRate;
   const dailyPct = (rate * 100).toFixed(2);
   const projectedDaily = usdBalance * rate;
   const refCount = Number(referral?.referrals ?? 0);
