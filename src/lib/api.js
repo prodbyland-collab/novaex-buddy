@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { createDeposit, getMinDeposits } from '@/lib/deposits.functions';
+import { createDeposit, getMinDeposits, getDepositMinimum } from '@/lib/deposits.functions';
 
 // Ensure the current user has a USD cash row. New accounts start at $0 —
 // balance only grows through confirmed crypto deposits.
