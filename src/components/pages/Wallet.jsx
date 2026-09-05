@@ -71,12 +71,35 @@ export default function Wallet() {
     return () => { alive = false; };
   }, []);
 
-  const minUsd = useMemo(() => 10, [currency]);
+  const [minUsd, setMinUsd] = useState(null);
+  const [minError, setMinError] = useState('');
+
+  // Fetch the live NOWPayments minimum for the selected currency.
+  useEffect(() => {
+    if (!currency) return;
+    let alive = true;
+    setMinsLoading(true);
+    setMinError('');
+    setMinUsd(null);
+    (async () => {
+      try {
+        const result = await fetchDepositMinimum(currency);
+        if (!alive) return;
+        setMinUsd(result?.minUsd ?? null);
+      } catch (err) {
+        if (alive) setMinError(err?.message || t('wallet.depositError'));
+      } finally {
+        if (alive) setMinsLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [currency, t]);
 
   useEffect(() => {
-    if (minsLoading) return;
+    if (minsLoading || minUsd === null) return;
     setAmountUsd(prev => (!prev || Number(prev) < minUsd ? String(minUsd) : prev));
   }, [minUsd, minsLoading]);
+
 
   async function handleCreate(e) {
     e.preventDefault();
