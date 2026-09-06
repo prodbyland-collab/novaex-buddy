@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/public/hooks/daily-ai-code")({
           `<b>NovaEx daily AI boost code</b>\n` +
           `Date: ${today} (UTC)\n` +
           `Code: <code>${String(code)}</code>\n\n` +
-          `Enter it on the Trading mode page to lift today's AI profit from 1% to 5%.`;
+          `Valid for 1 hour only. Enter it on the Trading mode page to add +5% to today's AI profit.`;
 
         const response = await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
           method: "POST",
