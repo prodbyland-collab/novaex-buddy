@@ -1,4 +1,20 @@
-export const DEPOSIT_CURRENCIES = ["btc", "eth", "sol", "usdttrc20"] as const;
+// Coins we offer. Every entry is supported by NOWPayments; anything the
+// provider does not return live is filtered out.
+export const DEPOSIT_CURRENCIES = [
+  "btc",
+  "eth",
+  "sol",
+  "xrp",
+  "ltc",
+  "doge",
+  "trx",
+  "bnbbsc",
+  "usdttrc20",
+  "usdcsol",
+] as const;
+
+const ALLOWED = new Set<string>(DEPOSIT_CURRENCIES as readonly string[]);
+
 
 export type DepositCurrency = { currency: string };
 export type MinDeposit = { currency: string; minUsd: number | null; minAmount: number | null };
