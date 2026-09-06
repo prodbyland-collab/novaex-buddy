@@ -155,7 +155,7 @@ export default function AiTrading() {
           <input
             value={code}
             onChange={e => setCode(e.target.value)}
-            placeholder="NOVA-XXXXXXXX"
+            placeholder="GNG-XXXXXXXX"
             style={{ flex: '1 1 200px', minWidth: 0 }}
             disabled={redeeming || boosted}
           />

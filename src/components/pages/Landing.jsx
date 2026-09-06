@@ -63,7 +63,7 @@ export default function Landing() {
             <div className="orb orb-one"></div>
             <div className="orb orb-two"></div>
             <div className="dashboard-card">
-              <div className="dash-head"><span className="tiny-logo">N</span><span>{t('landing.portfolioValue')}</span><i></i></div>
+              <div className="dash-head"><span className="tiny-logo">G</span><span>{t('landing.portfolioValue')}</span><i></i></div>
               <strong>$24,610.80</strong>
               <small>+ $1,284.42 <b>↗ 5.51%</b></small>
               <svg viewBox="0 0 360 120" role="img" aria-label="Rising price chart">

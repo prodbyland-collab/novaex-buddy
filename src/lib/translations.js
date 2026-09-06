@@ -2,7 +2,7 @@ export const translations = {
   en: {
     // nav / shared
     'nav.markets': 'Markets',
-    'nav.why': 'Why NOVAX',
+    'nav.why': 'Why GNG',
     'nav.security': 'Security',
     'nav.portfolio': 'Portfolio',
     'nav.ai': 'AI Trading',
@@ -168,7 +168,7 @@ export const translations = {
 
   ka: {
     'nav.markets': 'ბაზრები',
-    'nav.why': 'რატომ NOVAX',
+    'nav.why': 'რატომ GNG',
     'nav.security': 'უსაფრთხოება',
     'nav.portfolio': 'პორტფელი',
     'nav.ai': 'AI ვაჭრობა',
