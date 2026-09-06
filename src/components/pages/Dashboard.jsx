@@ -38,7 +38,7 @@ export default function Dashboard() {
   const cryptoValue = total - usdBalance;
 
   const nonZero = portfolio.filter(h => h.value > 0.01);
-  const allocColors = { USD: '#34d399', BTC: '#ed941e', ETH: '#6179db', SOL: '#58ecbc', XRP: '#3b82f6', ADA: '#0a6cf5', AVAX: '#e84142', DOT: '#e6007a', LINK: '#2a5ada' };
+  const allocColors = { USD: '#34d399', BTC: '#ed941e', ETH: '#6179db', SOL: '#58ecbc', XRP: '#3b82f6', BNB: '#f3ba2f', LTC: '#94a3b8', DOGE: '#c2a633', TRX: '#e5342b', USDT: '#26a17b' };
 
   const isGain = changeUsd >= 0;
 
