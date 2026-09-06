@@ -45,10 +45,12 @@ function normalizeCurrencies(body: unknown): DepositCurrency[] {
   const currencies = values
     .map(getCurrencyCode)
     .filter((value): value is string => typeof value === "string" && /^[a-z0-9_:-]+$/i.test(value))
-    .map((currency) => ({ currency: currency.toLowerCase() }));
+    .map((currency) => ({ currency: currency.toLowerCase() }))
+    .filter((item) => ALLOWED.has(item.currency));
 
+  const order = (DEPOSIT_CURRENCIES as readonly string[]);
   return [...new Map(currencies.map((item) => [item.currency, item])).values()]
-    .sort((a, b) => a.currency.localeCompare(b.currency));
+    .sort((a, b) => order.indexOf(a.currency) - order.indexOf(b.currency));
 }
 
 export async function fetchSupportedDepositCurrencies(apiKey: string): Promise<DepositCurrency[]> {
