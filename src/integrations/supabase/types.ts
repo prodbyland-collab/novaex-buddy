@@ -422,6 +422,7 @@ export type Database = {
         Returns: boolean
       }
       mark_daily_ai_code_sent: { Args: never; Returns: undefined }
+      purge_expired_ai_codes: { Args: never; Returns: number }
       redeem_ai_code: { Args: { p_code: string }; Returns: Json }
       run_daily_ai_trading_payout: { Args: never; Returns: number }
     }
