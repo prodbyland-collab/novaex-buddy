@@ -45,10 +45,13 @@ export function PortfolioProvider({ user, children }) {
   const usdBalance = holdings.find(h => h.symbol === 'USD')?.amount ?? 0;
 
   // Profit since start = what you hold now minus what you actually put in
-  // (credited deposits less withdrawn value).
-  const netInvested = basis.netInvested;
-  const changeUsd = netInvested > 0 ? total - netInvested : 0;
-  const changePct = netInvested > 0 ? (changeUsd / netInvested) * 100 : 0;
+  // (credited deposits less withdrawn value). With no deposits yet, anything
+  // in the account (e.g. AI trading payouts) counts fully as profit.
+  const netInvested = Number(basis.netInvested) || 0;
+  const changeUsd = total - netInvested;
+  const changePct = netInvested > 0
+    ? (changeUsd / netInvested) * 100
+    : (total > 0 ? 100 : 0);
 
   return (
     <PortfolioContext.Provider value={{

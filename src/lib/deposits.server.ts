@@ -1,4 +1,20 @@
-export const DEPOSIT_CURRENCIES = ["btc", "eth", "sol", "usdttrc20"] as const;
+// Coins we offer. Every entry is supported by NOWPayments; anything the
+// provider does not return live is filtered out.
+export const DEPOSIT_CURRENCIES = [
+  "btc",
+  "eth",
+  "sol",
+  "xrp",
+  "ltc",
+  "doge",
+  "trx",
+  "bnbbsc",
+  "usdttrc20",
+  "usdcsol",
+] as const;
+
+const ALLOWED = new Set<string>(DEPOSIT_CURRENCIES as readonly string[]);
+
 
 export type DepositCurrency = { currency: string };
 export type MinDeposit = { currency: string; minUsd: number | null; minAmount: number | null };
@@ -29,10 +45,12 @@ function normalizeCurrencies(body: unknown): DepositCurrency[] {
   const currencies = values
     .map(getCurrencyCode)
     .filter((value): value is string => typeof value === "string" && /^[a-z0-9_:-]+$/i.test(value))
-    .map((currency) => ({ currency: currency.toLowerCase() }));
+    .map((currency) => ({ currency: currency.toLowerCase() }))
+    .filter((item) => ALLOWED.has(item.currency));
 
+  const order = (DEPOSIT_CURRENCIES as readonly string[]);
   return [...new Map(currencies.map((item) => [item.currency, item])).values()]
-    .sort((a, b) => a.currency.localeCompare(b.currency));
+    .sort((a, b) => order.indexOf(a.currency) - order.indexOf(b.currency));
 }
 
 export async function fetchSupportedDepositCurrencies(apiKey: string): Promise<DepositCurrency[]> {
