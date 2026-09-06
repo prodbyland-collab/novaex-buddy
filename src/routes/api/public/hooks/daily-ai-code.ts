@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/public/hooks/daily-ai-code")({
 
         const today = new Date().toISOString().slice(0, 10);
         const text =
-          `<b>NovaEx daily AI boost code</b>\n` +
+          `<b>GNG daily AI boost code</b>\n` +
           `Date: ${today} (UTC)\n` +
           `Code: <code>${String(code)}</code>\n\n` +
           `Valid for 1 hour only. Enter it on the Trading mode page to add +5% to today's AI profit.`;

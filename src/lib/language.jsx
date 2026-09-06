@@ -4,7 +4,7 @@ const translations = {
   ka: {
     nav: {
       markets: 'ბაზრები',
-      whyNovax: 'რატომ NOVAX',
+      whyNovax: 'რატომ GNG',
       security: 'უსაფრთხოება',
       portfolio: 'პორტფელი',
       aiTrading: 'AI ვაჭრობა',
@@ -79,7 +79,7 @@ const translations = {
   en: {
     nav: {
       markets: 'Markets',
-      whyNovax: 'Why NOVAX',
+      whyNovax: 'Why GNG',
       security: 'Security',
       portfolio: 'Portfolio',
       aiTrading: 'AI Trading',

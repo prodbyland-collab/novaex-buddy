@@ -4,13 +4,13 @@ import Landing from "@/components/pages/Landing";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "NOVAX — Calm crypto trading & portfolio" },
+      { title: "GNG — Calm crypto trading & portfolio" },
       {
         name: "description",
         content:
-          "NOVAX is a focused crypto exchange experience: live markets, spot and limit orders, crypto deposits and a clear portfolio view.",
+          "GNG is a focused crypto exchange experience: live markets, spot and limit orders, crypto deposits and a clear portfolio view.",
       },
-      { property: "og:title", content: "NOVAX — Calm crypto trading & portfolio" },
+      { property: "og:title", content: "GNG — Calm crypto trading & portfolio" },
       {
         property: "og:description",
         content: "Live markets, spot and limit orders, crypto deposits and a clear portfolio view.",
