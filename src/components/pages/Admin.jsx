@@ -98,8 +98,9 @@ export default function Admin() {
       <section className="stat-grid">
         <div className="card stat"><span className="muted">Users</span><strong>{data.totals.users}</strong></div>
         <div className="card stat"><span className="muted">Total USD held</span><strong>{usd(data.totals.usd)}</strong></div>
-        <div className="card stat"><span className="muted">Credited deposits</span><strong>{data.totals.deposits}</strong></div>
-        <div className="card stat"><span className="muted">Withdrawals</span><strong>{data.totals.withdrawals}</strong></div>
+        <div className="card stat"><span className="muted">Deposited (credited)</span><strong>{usd(data.totals.depositedUsd)}</strong><span className="muted tiny">{data.totals.deposits} deposits</span></div>
+        <div className="card stat"><span className="muted">Withdrawn</span><strong>{usd(data.totals.withdrawnUsd)}</strong><span className="muted tiny">{data.totals.withdrawals} withdrawals</span></div>
+        <div className="card stat"><span className="muted">AI enabled</span><strong>{data.totals.aiOn}</strong></div>
       </section>
 
       <section className="card">
