@@ -107,7 +107,7 @@ export default function Landing() {
               <p className="eyebrow">{t('landing.marketOverview')}</p>
               <h2>{t('landing.whatsMoving')}</h2>
             </div>
-            <Link className="text-link" to={user ? '/app/markets' : '/auth'}>{t('landing.tradeNow')}</Link>
+            <Link className="text-link" to={user ? '/app/ai' : '/auth'}>{t('landing.tradeNow')}</Link>
           </div>
           <div className="market-table">
             <div className="table-head">
@@ -124,7 +124,7 @@ export default function Landing() {
                   <span>{formatUsd(p?.price ?? m.price)}</span>
                   <span className={p?.change >= 0 ? 'gain' : 'loss'}>{p?.change >= 0 ? '+' : ''}{(p?.change ?? m.change).toFixed(2)}%</span>
                   <span className="muted">{m.cap}</span>
-                  <Link className="trade-btn" to={user ? '/app/markets' : '/auth'}>{t('landing.trade')}</Link>
+                  <Link className="trade-btn" to={user ? '/app/ai' : '/auth'}>{t('landing.trade')}</Link>
                 </div>
               );
             })}
