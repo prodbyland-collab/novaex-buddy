@@ -16,7 +16,7 @@ export const adminOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
 
-    const [usersRes, holdings, settings, deposits, withdrawals, referrals, code] = await Promise.all([
+    const [usersRes, holdings, settings, deposits, withdrawals, referrals, code, roles] = await Promise.all([
       admin.auth.admin.listUsers({ page: 1, perPage: 200 }),
       admin.from("holdings").select("user_id, symbol, amount"),
       admin.from("ai_trading_settings").select("*"),
@@ -24,11 +24,13 @@ export const adminOverview = createServerFn({ method: "GET" })
       admin.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
       admin.from("referrals").select("referrer_id"),
       admin.from("daily_ai_codes").select("*").order("code_date", { ascending: false }).limit(1),
+      admin.from("user_roles").select("user_id, role"),
     ]);
 
     const holdingRows = holdings.data ?? [];
     const settingRows = settings.data ?? [];
     const referralRows = referrals.data ?? [];
+    const roleRows = roles.data ?? [];
 
     const users = (usersRes.data?.users ?? []).map((u) => {
       const own = holdingRows.filter((h: any) => h.user_id === u.id);
