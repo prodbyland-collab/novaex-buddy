@@ -49,6 +49,7 @@ export const adminOverview = createServerFn({ method: "GET" })
         totalProfit: Number(setting?.total_profit ?? 0),
         lastPayout: setting?.last_payout_date ?? null,
         boostDate: setting?.boost_date ?? null,
+        isAdmin: roleRows.some((r: any) => r.user_id === u.id && r.role === "admin"),
         referrals: referralRows.filter((r: any) => r.referrer_id === u.id).length,
       };
     });
