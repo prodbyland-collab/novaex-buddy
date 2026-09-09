@@ -67,7 +67,14 @@ export const adminOverview = createServerFn({ method: "GET" })
         users: users.length,
         usd: users.reduce((sum, u) => sum + u.usd, 0),
         deposits: (deposits.data ?? []).filter((d: any) => d.credited_at).length,
+        depositedUsd: (deposits.data ?? [])
+          .filter((d: any) => d.credited_at)
+          .reduce((sum: number, d: any) => sum + Number(d.price_amount ?? 0), 0),
         withdrawals: (withdrawals.data ?? []).length,
+        withdrawnUsd: (withdrawals.data ?? [])
+          .filter((w: any) => w.status !== "failed")
+          .reduce((sum: number, w: any) => sum + Number(w.usd_value ?? 0), 0),
+        aiOn: users.filter((u) => u.aiEnabled).length,
       },
     };
   });
