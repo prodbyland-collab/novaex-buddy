@@ -120,51 +120,80 @@ export default function Admin() {
 
       <section className="card">
         <div className="card-head">
-          <h2>Users</h2>
-          <input
-            className="input"
-            placeholder="Search email"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-          />
+          <h2>Users ({users.length})</h2>
+          <div className="row-actions">
+            <input
+              className="input"
+              placeholder="Search email"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+            <select className="input tiny-input" value={filter} onChange={e => setFilter(e.target.value)}>
+              <option value="all">All</option>
+              <option value="funded">Funded</option>
+              <option value="paid">Paid plan</option>
+              <option value="boosted">Boosted today</option>
+              <option value="admin">Admins</option>
+            </select>
+          </div>
         </div>
         <div className="table-scroll">
           <table className="data-table">
             <thead>
               <tr>
                 <th>Email</th><th>USD</th><th>Assets</th><th>Plan</th><th>AI</th>
-                <th>Profit</th><th>Refs</th><th>Last payout</th><th>Actions</th>
+                <th>Profit</th><th>Refs</th><th>Boost</th><th>Last payout</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map(u => {
                 const draft = drafts[u.id] ?? {};
+                const amt = Number(draft.amount);
+                const hasAmt = draft.amount !== undefined && draft.amount !== '' && Number.isFinite(amt);
+                const boostedToday = u.boostDate === today;
                 return (
                   <tr key={u.id}>
-                    <td>{u.email}<div className="muted tiny">{when(u.createdAt)}</div></td>
+                    <td>
+                      {u.email}{u.isAdmin && <span className="badge badge-teal" style={{ marginLeft: 6 }}>admin</span>}
+                      <div className="muted tiny">{when(u.createdAt)}</div>
+                    </td>
                     <td>{usd(u.usd)}</td>
                     <td className="tiny">{u.assets.length ? u.assets.map(a => `${a.amount} ${a.symbol}`).join(', ') : '—'}</td>
                     <td>{u.planId} ({(u.planRate * 100).toFixed(0)}%)</td>
                     <td>{u.aiEnabled ? 'on' : 'off'}</td>
                     <td>{usd(u.totalProfit)}</td>
                     <td>{u.referrals}</td>
+                    <td className="tiny">{boostedToday ? 'today' : '—'}</td>
                     <td className="tiny">{u.lastPayout ?? '—'}</td>
                     <td>
                       <div className="row-actions">
                         <input
                           className="input tiny-input"
                           type="number"
-                          min="0"
                           placeholder="USD"
                           value={draft.amount ?? ''}
                           onChange={e => setDrafts(d => ({ ...d, [u.id]: { ...draft, amount: e.target.value } }))}
                         />
                         <button
                           className="btn small ghost"
-                          disabled={busy === `bal-${u.id}` || draft.amount === undefined || draft.amount === ''}
-                          onClick={() => run(`bal-${u.id}`, () => setBalance({ data: { userId: u.id, symbol: 'USD', amount: Number(draft.amount) } }), `Balance updated for ${u.email}.`)}
+                          disabled={busy === `bal-${u.id}` || !hasAmt}
+                          onClick={() => run(`bal-${u.id}`, () => setBalance({ data: { userId: u.id, symbol: 'USD', amount: Math.abs(amt) } }), `Balance set for ${u.email}.`)}
                         >
                           Set
+                        </button>
+                        <button
+                          className="btn small ghost"
+                          disabled={busy === `add-${u.id}` || !hasAmt}
+                          onClick={() => run(`add-${u.id}`, () => adjustBalance({ data: { userId: u.id, symbol: 'USD', delta: Math.abs(amt) } }), `Added ${usd(Math.abs(amt))} to ${u.email}.`)}
+                        >
+                          +
+                        </button>
+                        <button
+                          className="btn small ghost"
+                          disabled={busy === `sub-${u.id}` || !hasAmt}
+                          onClick={() => run(`sub-${u.id}`, () => adjustBalance({ data: { userId: u.id, symbol: 'USD', delta: -Math.abs(amt) } }), `Removed ${usd(Math.abs(amt))} from ${u.email}.`)}
+                        >
+                          −
                         </button>
                         <select
                           className="input tiny-input"
@@ -180,11 +209,36 @@ export default function Admin() {
                         >
                           {u.aiEnabled ? 'Disable AI' : 'Enable AI'}
                         </button>
+                        <button
+                          className="btn small ghost"
+                          disabled={busy === `boost-${u.id}`}
+                          onClick={() => run(`boost-${u.id}`, () => setBoost({ data: { userId: u.id, grant: !boostedToday } }), `Boost ${boostedToday ? 'cleared' : 'granted'} for ${u.email}.`)}
+                        >
+                          {boostedToday ? 'Clear boost' : 'Give boost'}
+                        </button>
+                        <button
+                          className="btn small ghost"
+                          disabled={busy === `role-${u.id}`}
+                          onClick={() => run(`role-${u.id}`, () => setAdminRole({ data: { userId: u.id, makeAdmin: !u.isAdmin } }), `Admin access ${u.isAdmin ? 'removed from' : 'granted to'} ${u.email}.`)}
+                        >
+                          {u.isAdmin ? 'Revoke admin' : 'Make admin'}
+                        </button>
+                        <button
+                          className="btn small ghost danger"
+                          disabled={busy === `del-${u.id}`}
+                          onClick={() => {
+                            if (!window.confirm(`Delete ${u.email}? This cannot be undone.`)) return;
+                            run(`del-${u.id}`, () => deleteUser({ data: { userId: u.id } }), `${u.email} deleted.`);
+                          }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
                 );
               })}
+              {!users.length && <tr><td colSpan={10} className="muted">No users match this filter.</td></tr>}
             </tbody>
           </table>
         </div>
