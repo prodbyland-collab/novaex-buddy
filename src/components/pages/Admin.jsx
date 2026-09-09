@@ -40,6 +40,7 @@ export default function Admin() {
   const [busy, setBusy] = useState('');
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
   const [drafts, setDrafts] = useState({});
 
   const load = useCallback(async () => {
@@ -71,7 +72,15 @@ export default function Admin() {
   if (error && !data) return <main className="page"><div className="card"><p className="error">{error}</p></div></main>;
   if (!data) return <main className="page"><div className="card"><p className="muted">Loading admin console…</p></div></main>;
 
-  const users = data.users.filter(u => !query || u.email.toLowerCase().includes(query.toLowerCase()));
+  const today = new Date().toISOString().slice(0, 10);
+  const users = data.users.filter(u => {
+    if (query && !u.email.toLowerCase().includes(query.toLowerCase())) return false;
+    if (filter === 'funded') return u.usd > 0;
+    if (filter === 'paid') return u.planId !== 'free';
+    if (filter === 'boosted') return u.boostDate === today;
+    if (filter === 'admin') return u.isAdmin;
+    return true;
+  });
 
   return (
     <main className="page admin-page">
