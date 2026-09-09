@@ -16,7 +16,7 @@ export const adminOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
 
-    const [usersRes, holdings, settings, deposits, withdrawals, referrals, code] = await Promise.all([
+    const [usersRes, holdings, settings, deposits, withdrawals, referrals, code, roles] = await Promise.all([
       admin.auth.admin.listUsers({ page: 1, perPage: 200 }),
       admin.from("holdings").select("user_id, symbol, amount"),
       admin.from("ai_trading_settings").select("*"),
@@ -24,11 +24,13 @@ export const adminOverview = createServerFn({ method: "GET" })
       admin.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
       admin.from("referrals").select("referrer_id"),
       admin.from("daily_ai_codes").select("*").order("code_date", { ascending: false }).limit(1),
+      admin.from("user_roles").select("user_id, role"),
     ]);
 
     const holdingRows = holdings.data ?? [];
     const settingRows = settings.data ?? [];
     const referralRows = referrals.data ?? [];
+    const roleRows = roles.data ?? [];
 
     const users = (usersRes.data?.users ?? []).map((u) => {
       const own = holdingRows.filter((h: any) => h.user_id === u.id);
@@ -47,6 +49,7 @@ export const adminOverview = createServerFn({ method: "GET" })
         totalProfit: Number(setting?.total_profit ?? 0),
         lastPayout: setting?.last_payout_date ?? null,
         boostDate: setting?.boost_date ?? null,
+        isAdmin: roleRows.some((r: any) => r.user_id === u.id && r.role === "admin"),
         referrals: referralRows.filter((r: any) => r.referrer_id === u.id).length,
       };
     });
@@ -64,7 +67,14 @@ export const adminOverview = createServerFn({ method: "GET" })
         users: users.length,
         usd: users.reduce((sum, u) => sum + u.usd, 0),
         deposits: (deposits.data ?? []).filter((d: any) => d.credited_at).length,
+        depositedUsd: (deposits.data ?? [])
+          .filter((d: any) => d.credited_at)
+          .reduce((sum: number, d: any) => sum + Number(d.price_amount ?? 0), 0),
         withdrawals: (withdrawals.data ?? []).length,
+        withdrawnUsd: (withdrawals.data ?? [])
+          .filter((w: any) => w.status !== "failed")
+          .reduce((sum: number, w: any) => sum + Number(w.usd_value ?? 0), 0),
+        aiOn: users.filter((u) => u.aiEnabled).length,
       },
     };
   });
@@ -163,4 +173,77 @@ export const adminRunPayout = createServerFn({ method: "POST" })
     const { data, error } = await admin.rpc("run_daily_ai_trading_payout");
     if (error) throw new Error(error.message);
     return { paid: Number(data ?? 0) };
+  });
+
+export const adminAdjustBalance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; symbol?: string; delta: number }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    const symbol = (data.symbol ?? "USD").toUpperCase();
+    const delta = Number(data.delta);
+    if (!Number.isFinite(delta) || delta === 0) throw new Error("Invalid amount");
+    const { data: row } = await admin
+      .from("holdings")
+      .select("amount")
+      .eq("user_id", data.userId)
+      .eq("symbol", symbol)
+      .maybeSingle();
+    const next = Math.max(Number(row?.amount ?? 0) + delta, 0);
+    const { error } = await admin
+      .from("holdings")
+      .upsert({ user_id: data.userId, symbol, amount: next }, { onConflict: "user_id,symbol" });
+    if (error) throw new Error(error.message);
+    return { ok: true, amount: next };
+  });
+
+export const adminSetAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; makeAdmin: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    if (data.userId === context.userId && !data.makeAdmin) {
+      throw new Error("You cannot remove your own admin access");
+    }
+    if (data.makeAdmin) {
+      const { error } = await admin
+        .from("user_roles")
+        .upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await admin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminSetBoost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; grant: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await admin
+      .from("ai_trading_settings")
+      .upsert(
+        { user_id: data.userId, boost_date: data.grant ? today : null },
+        { onConflict: "user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    if (data.userId === context.userId) throw new Error("You cannot delete your own account");
+    const { error } = await admin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

@@ -16,7 +16,6 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app.ai'
-import { Route as AuthenticatedAppMarketsRouteImport } from './routes/_authenticated/app.markets'
 import { Route as AuthenticatedAppOrdersRouteImport } from './routes/_authenticated/app.orders'
 import { Route as AuthenticatedAppRecurringRouteImport } from './routes/_authenticated/app.recurring'
 import { Route as AuthenticatedAppSecurityRouteImport } from './routes/_authenticated/app.security'
@@ -56,11 +55,6 @@ const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
 const AuthenticatedAppAiRoute = AuthenticatedAppAiRouteImport.update({
   id: '/ai',
   path: '/ai',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppMarketsRoute = AuthenticatedAppMarketsRouteImport.update({
-  id: '/markets',
-  path: '/markets',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAppOrdersRoute = AuthenticatedAppOrdersRouteImport.update({
@@ -104,7 +98,6 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
-  '/app/markets': typeof AuthenticatedAppMarketsRoute
   '/app/orders': typeof AuthenticatedAppOrdersRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/app/security': typeof AuthenticatedAppSecurityRoute
@@ -118,7 +111,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
-  '/app/markets': typeof AuthenticatedAppMarketsRoute
   '/app/orders': typeof AuthenticatedAppOrdersRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/app/security': typeof AuthenticatedAppSecurityRoute
@@ -135,7 +127,6 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
-  '/_authenticated/app/markets': typeof AuthenticatedAppMarketsRoute
   '/_authenticated/app/orders': typeof AuthenticatedAppOrdersRoute
   '/_authenticated/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/_authenticated/app/security': typeof AuthenticatedAppSecurityRoute
@@ -152,7 +143,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/admin'
     | '/app/ai'
-    | '/app/markets'
     | '/app/orders'
     | '/app/recurring'
     | '/app/security'
@@ -166,7 +156,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/admin'
     | '/app/ai'
-    | '/app/markets'
     | '/app/orders'
     | '/app/recurring'
     | '/app/security'
@@ -182,7 +171,6 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/ai'
-    | '/_authenticated/app/markets'
     | '/_authenticated/app/orders'
     | '/_authenticated/app/recurring'
     | '/_authenticated/app/security'
@@ -251,13 +239,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAiRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/app/markets': {
-      id: '/_authenticated/app/markets'
-      path: '/markets'
-      fullPath: '/app/markets'
-      preLoaderRoute: typeof AuthenticatedAppMarketsRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
     '/_authenticated/app/orders': {
       id: '/_authenticated/app/orders'
       path: '/orders'
@@ -306,7 +287,6 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
-  AuthenticatedAppMarketsRoute: typeof AuthenticatedAppMarketsRoute
   AuthenticatedAppOrdersRoute: typeof AuthenticatedAppOrdersRoute
   AuthenticatedAppRecurringRoute: typeof AuthenticatedAppRecurringRoute
   AuthenticatedAppSecurityRoute: typeof AuthenticatedAppSecurityRoute
@@ -317,7 +297,6 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
-  AuthenticatedAppMarketsRoute: AuthenticatedAppMarketsRoute,
   AuthenticatedAppOrdersRoute: AuthenticatedAppOrdersRoute,
   AuthenticatedAppRecurringRoute: AuthenticatedAppRecurringRoute,
   AuthenticatedAppSecurityRoute: AuthenticatedAppSecurityRoute,

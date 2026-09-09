@@ -32,7 +32,7 @@ export default function Referrals() {
           <div><span>{t('ref.code')}</span><span>{referral?.code ?? '—'}</span></div>
           <div><span>{t('ref.invited')}</span><span>{Number(referral?.referrals ?? 0)}</span></div>
           <div><span>{t('ref.bonus')}</span><span className="gain">+{(Number(referral?.bonus_rate ?? 0) * 100).toFixed(2)}%</span></div>
-          <div><span>{t('ref.effective')}</span><span className="gain">{(Number(referral?.effective_rate ?? 0) * 100).toFixed(2)}%</span></div>
+          
         </div>
       </div>
     </div>
