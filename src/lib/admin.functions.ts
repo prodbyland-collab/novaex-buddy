@@ -174,3 +174,76 @@ export const adminRunPayout = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { paid: Number(data ?? 0) };
   });
+
+export const adminAdjustBalance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; symbol?: string; delta: number }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    const symbol = (data.symbol ?? "USD").toUpperCase();
+    const delta = Number(data.delta);
+    if (!Number.isFinite(delta) || delta === 0) throw new Error("Invalid amount");
+    const { data: row } = await admin
+      .from("holdings")
+      .select("amount")
+      .eq("user_id", data.userId)
+      .eq("symbol", symbol)
+      .maybeSingle();
+    const next = Math.max(Number(row?.amount ?? 0) + delta, 0);
+    const { error } = await admin
+      .from("holdings")
+      .upsert({ user_id: data.userId, symbol, amount: next }, { onConflict: "user_id,symbol" });
+    if (error) throw new Error(error.message);
+    return { ok: true, amount: next };
+  });
+
+export const adminSetAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; makeAdmin: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    if (data.userId === context.userId && !data.makeAdmin) {
+      throw new Error("You cannot remove your own admin access");
+    }
+    if (data.makeAdmin) {
+      const { error } = await admin
+        .from("user_roles")
+        .upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await admin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminSetBoost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; grant: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await admin
+      .from("ai_trading_settings")
+      .upsert(
+        { user_id: data.userId, boost_date: data.grant ? today : null },
+        { onConflict: "user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    if (data.userId === context.userId) throw new Error("You cannot delete your own account");
+    const { error } = await admin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
