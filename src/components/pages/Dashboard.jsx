@@ -96,7 +96,7 @@ export default function Dashboard() {
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('dashboard.holdings')}</h3>
-              <Link className="text-link" to="/app/markets">{t('dashboard.trade')}</Link>
+              <Link className="text-link" to="/app/ai">{t('nav.aiTrading')}</Link>
             </div>
             {loading ? (
               <p className="muted">{t('dashboard.loading')}</p>
@@ -104,7 +104,7 @@ export default function Dashboard() {
               <div className="empty-state">
                 <span>📊</span>
                 <p>{t('dashboard.noHoldings')}</p>
-                <Link className="btn small" to="/app/markets" style={{ marginTop: 16 }}>{t('dashboard.goMarkets')}</Link>
+                <Link className="btn small" to="/app/wallet" style={{ marginTop: 16 }}>{t('nav.wallet')}</Link>
               </div>
             ) : (
               nonZero.map(h => {
@@ -143,25 +143,25 @@ export default function Dashboard() {
           <div className="card-2">
             <p className="eyebrow" style={{ marginBottom: 14 }}>{t('dashboard.availableCash')}</p>
             <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1px' }}>{formatUsd(usdBalance)}</div>
-            <Link className="btn small" to="/app/markets" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}>{t('dashboard.tradeNow')}</Link>
+            <Link className="btn small" to="/app/ai" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}>{t('nav.aiTrading')}</Link>
           </div>
 
           <div className="card-2">
             <p className="eyebrow" style={{ marginBottom: 14 }}>{t('dashboard.quickActions')}</p>
             <div className="quick-actions">
-              <Link className="quick-action" to="/app/markets">
-                <span>↗</span>
-                <strong>{t('dashboard.spotTrade')}</strong>
+              <Link className="quick-action" to="/app/ai">
+                <span>🤖</span>
+                <strong>{t('nav.aiTrading')}</strong>
                 <small>{t('dashboard.spotDesc')}</small>
               </Link>
               <Link className="quick-action" to="/app/orders">
                 <span>⏱</span>
-                <strong>{t('dashboard.limitOrder')}</strong>
+                <strong>{t('nav.botPlans')}</strong>
                 <small>{t('dashboard.limitDesc')}</small>
               </Link>
               <Link className="quick-action" to="/app/recurring">
                 <span>↻</span>
-                <strong>{t('dashboard.recurring')}</strong>
+                <strong>{t('nav.referrals')}</strong>
                 <small>{t('dashboard.recurringDesc')}</small>
               </Link>
               <Link className="quick-action" to="/app/security">
