@@ -8,6 +8,10 @@ import {
   adminUpdateWithdrawal,
   adminRotateDailyCode,
   adminRunPayout,
+  adminAdjustBalance,
+  adminSetAdminRole,
+  adminSetBoost,
+  adminDeleteUser,
 } from '@/lib/admin.functions';
 import { BOT_PLANS } from '@/lib/plans';
 
@@ -26,6 +30,10 @@ export default function Admin() {
   const updateWithdrawal = useServerFn(adminUpdateWithdrawal);
   const rotateCode = useServerFn(adminRotateDailyCode);
   const runPayout = useServerFn(adminRunPayout);
+  const adjustBalance = useServerFn(adminAdjustBalance);
+  const setAdminRole = useServerFn(adminSetAdminRole);
+  const setBoost = useServerFn(adminSetBoost);
+  const deleteUser = useServerFn(adminDeleteUser);
 
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
