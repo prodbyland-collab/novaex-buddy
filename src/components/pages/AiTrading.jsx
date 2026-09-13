@@ -101,10 +101,10 @@ export default function AiTrading() {
       <h1 className="page-title">{t('ai.title')}</h1>
       <p className="page-sub">{t('ai.sub')}</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
         <div className="card" style={{ border: aiOn ? '1px solid rgba(20,184,166,0.55)' : undefined }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700 }}>{t('ai.aiTitle')} <span className="muted-2" style={{ fontSize: 12, fontWeight: 500 }}>{t('ai.default')}</span></h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700 }}>{t('ai.aiTitle')}</h3>
             {aiOn && <span className="badge badge-teal">{boosted ? t('ai.boosted') : t('ai.active')}</span>}
           </div>
           <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>
@@ -118,30 +118,16 @@ export default function AiTrading() {
             <div><span>{t('ai.lastPayout')}</span><span>{settings?.last_payout_date ?? '—'}</span></div>
           </div>
 
-          <button
-            className="btn"
-            style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
-            disabled={busy || aiOn}
-            onClick={() => choose('ai')}
-          >
-            {aiOn ? t('ai.aiOn') : t('ai.enableAi')}
-          </button>
-        </div>
-
-        <div className="card" style={{ border: !aiOn ? '1px solid rgba(20,184,166,0.55)' : undefined }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700 }}>{t('ai.manual')}</h3>
-            {!aiOn && <span className="badge badge-teal">{t('ai.active')}</span>}
-          </div>
-          <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>{t('ai.manualDesc')}</p>
-          <button
-            className="btn ghost"
-            style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
-            disabled={busy || !aiOn}
-            onClick={() => choose('manual')}
-          >
-            {!aiOn ? t('ai.manualOn') : t('ai.switchManual')}
-          </button>
+          {!aiOn && (
+            <button
+              className="btn"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
+              disabled={busy}
+              onClick={() => choose('ai')}
+            >
+              {t('ai.enableAi')}
+            </button>
+          )}
         </div>
       </div>
 
