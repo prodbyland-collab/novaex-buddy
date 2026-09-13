@@ -42,7 +42,8 @@ const supplementalTranslations = {
   },
 };
 
-const STORAGE_KEY = 'novax_lang';
+const STORAGE_KEY = 'novax_language';
+const LEGACY_STORAGE_KEY = 'novax_lang';
 const I18nContext = createContext(null);
 
 export const LANGUAGES = [
@@ -54,7 +55,7 @@ export function LanguageProvider({ children }) {
   const [lang, setLang] = useState('ka');
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = window.localStorage.getItem(STORAGE_KEY) || window.localStorage.getItem(LEGACY_STORAGE_KEY);
     if (stored === 'en' || stored === 'ka') {
       setLang(stored);
       return;
@@ -71,7 +72,7 @@ export function LanguageProvider({ children }) {
 
   const t = useCallback((key, vars) => {
     const dict = translations[lang] || {};
-    let value = supplementalTranslations[lang]?.[key] ?? dict[key] ?? supplementalTranslations.en[key] ?? translations.en[key] ?? key;
+    let value = flattened[lang]?.[key] ?? supplementalTranslations[lang]?.[key] ?? dict[key] ?? flattened.en[key] ?? supplementalTranslations.en[key] ?? translations.en[key] ?? key;
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {
         value = value.replaceAll(`{${k}}`, String(v));
