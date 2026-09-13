@@ -1,5 +1,20 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { translations } from '@/lib/translations';
+import { nestedTranslations } from '@/lib/language-dict';
+
+// Flatten the shared nested dictionary into dotted keys so every component
+// resolves labels from one place regardless of which hook it uses.
+function flatten(obj, prefix = '') {
+  const out = {};
+  for (const [k, v] of Object.entries(obj || {})) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === 'object') Object.assign(out, flatten(v, key));
+    else out[key] = v;
+  }
+  return out;
+}
+const flattened = { en: flatten(nestedTranslations.en), ka: flatten(nestedTranslations.ka) };
+
 
 
 const supplementalTranslations = {
