@@ -31,9 +31,10 @@ export default function Referrals() {
         <div className="trade-summary" style={{ marginTop: 20 }}>
           <div><span>{t('ref.code')}</span><span>{referral?.code ?? '—'}</span></div>
           <div><span>{t('ref.invited')}</span><span>{Number(referral?.referrals ?? 0)}</span></div>
+          <div><span>{t('ref.active')}</span><span>{Number(referral?.active_referrals ?? 0)}</span></div>
           <div><span>{t('ref.bonus')}</span><span className="gain">+{(Number(referral?.bonus_rate ?? 0) * 100).toFixed(2)}%</span></div>
-          
         </div>
+        <p className="page-sub" style={{ marginTop: 14, fontSize: 13 }}>{t('ref.pendingNote')}</p>
       </div>
     </div>
   );
