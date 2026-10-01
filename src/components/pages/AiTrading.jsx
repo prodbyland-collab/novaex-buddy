@@ -154,7 +154,7 @@ export default function AiTrading() {
       <div className="card" style={{ marginTop: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('ref.title')}</h3>
-          {bonusRate >= 0.05 && <span className="badge badge-teal">{t('ref.max')}</span>}
+          {bonusRate >= 0.01 && <span className="badge badge-teal">{t('ref.max')}</span>}
         </div>
         <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>{t('ref.desc')}</p>
 
