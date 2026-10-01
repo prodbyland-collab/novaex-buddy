@@ -109,14 +109,16 @@ export const translations = {
 
     // referrals
     'ref.title': 'Invite friends, earn more',
-    'ref.desc': 'Every friend who signs up with your link adds +0.5% to your daily AI profit rate, up to +1%. The bonus applies automatically at the next daily payout.',
+    'ref.desc': 'Every friend who signs up with your link and makes a deposit adds +0.5% to your daily AI profit rate, up to +1%. The bonus activates only after their first deposit is credited.',
     'ref.link': 'Your invite link',
     'ref.code': 'Your code',
     'ref.invited': 'Friends invited',
+    'ref.active': 'Active (deposited)',
     'ref.bonus': 'Referral bonus / day',
     'ref.effective': 'Effective rate today',
     'ref.max': 'Max bonus reached',
     'ref.share': 'Share link',
+    'ref.pendingNote': 'A friend counts only after their first deposit is credited.',
 
     // wallet
     'wallet.title': 'Wallet',
@@ -274,14 +276,16 @@ export const translations = {
     'ai.asset': 'აქტივი',
 
     'ref.title': 'მოიწვიე მეგობრები და მიიღე მეტი',
-    'ref.desc': 'ყოველი მეგობარი, ვინც შენი ბმულით დარეგისტრირდება, დღიურ AI მოგებას +0.5%-ს ამატებს, მაქსიმუმ +1%-მდე. ბონუსი ავტომატურად აისახება შემდეგ დარიცხვაზე.',
+    'ref.desc': 'ყოველი მეგობარი, ვინც შენი ბმულით დარეგისტრირდება და დეპოზიტს განათავსებს, დღიურ AI მოგებას +0.5%-ს ამატებს, მაქსიმუმ +1%-მდე. ბონუსი მხოლოდ მათი პირველი დეპოზიტის დარიცხვის შემდეგ უნვდება.',
     'ref.link': 'შენი მოსაწვევი ბმული',
     'ref.code': 'შენი კოდი',
     'ref.invited': 'მოწვეული მეგობარი',
+    'ref.active': 'აქტიური (დეპოზიტით)',
     'ref.bonus': 'მოწვევის ბონუსი დღეში',
     'ref.effective': 'დღევანდელი რეალური განაკვეთი',
     'ref.max': 'მაქსიმალური ბონუსი მიღწეულია',
     'ref.share': 'ბმულის გაზიარება',
+    'ref.pendingNote': 'მეგობარი მხოლოდ მაშინ ითვლება, როცა მისი პირველი დეპოზიტი დარიცხული იქნება.',
 
     'wallet.title': 'საფულე',
     'wallet.sub': 'შეიტანე კრიპტო NOWPayments-ის უსაფრთხო მისამართზე.',
