@@ -8,6 +8,13 @@
       "when": 1790828256892,
       "tag": "0000_referral_bonus_cap_1pct",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790828415613,
+      "tag": "0001_referral_requires_deposit",
+      "breakpoints": true
     }
   ]
 }
