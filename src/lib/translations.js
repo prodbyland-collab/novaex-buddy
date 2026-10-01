@@ -109,7 +109,7 @@ export const translations = {
 
     // referrals
     'ref.title': 'Invite friends, earn more',
-    'ref.desc': 'Every friend who signs up with your link adds +0.5% to your daily AI profit rate, up to +5%. The bonus applies automatically at the next daily payout.',
+    'ref.desc': 'Every friend who signs up with your link adds +0.5% to your daily AI profit rate, up to +1%. The bonus applies automatically at the next daily payout.',
     'ref.link': 'Your invite link',
     'ref.code': 'Your code',
     'ref.invited': 'Friends invited',
@@ -274,7 +274,7 @@ export const translations = {
     'ai.asset': 'აქტივი',
 
     'ref.title': 'მოიწვიე მეგობრები და მიიღე მეტი',
-    'ref.desc': 'ყოველი მეგობარი, ვინც შენი ბმულით დარეგისტრირდება, დღიურ AI მოგებას +0.5%-ს ამატებს, მაქსიმუმ +5%-მდე. ბონუსი ავტომატურად აისახება შემდეგ დარიცხვაზე.',
+    'ref.desc': 'ყოველი მეგობარი, ვინც შენი ბმულით დარეგისტრირდება, დღიურ AI მოგებას +0.5%-ს ამატებს, მაქსიმუმ +1%-მდე. ბონუსი ავტომატურად აისახება შემდეგ დარიცხვაზე.',
     'ref.link': 'შენი მოსაწვევი ბმული',
     'ref.code': 'შენი კოდი',
     'ref.invited': 'მოწვეული მეგობარი',
