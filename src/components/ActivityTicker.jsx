@@ -49,7 +49,7 @@ function makeEvent(id, prices) {
 }
 
 export default function ActivityTicker() {
-  const { prices } = useLivePrices();
+  const prices = useLivePrices();
   const pricesRef = useRef(prices);
   pricesRef.current = prices;
   const [events, setEvents] = useState([]);
