@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { createCryptoDeposit, fetchCryptoDeposits, createWithdrawal, fetchWithdrawals, fetchMinDeposits, fetchDepositMinimum, WITHDRAWAL_FEE_PCT } from '@/lib/api';
+import { syncMyDeposits } from '@/lib/deposits.functions';
 
 import { usePortfolio } from '@/lib/portfolio';
 
@@ -37,6 +38,8 @@ export default function Wallet() {
   const loadDeposits = useCallback(async () => {
     if (!user) return;
     try {
+      const sync = await syncMyDeposits().catch(() => null);
+      if (sync?.updated) reload?.();
       const data = await fetchCryptoDeposits(user.id);
       setDeposits(data);
       setSelectedDeposit(current => current ? data.find(item => item.id === current.id) || current : data[0] || null);

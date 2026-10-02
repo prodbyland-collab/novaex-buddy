@@ -55,7 +55,7 @@ export const createDeposit = createServerFn({ method: "POST" })
     }
 
     const apiKey = process.env["NOWPAYMENTS_API_KEY"];
-    const siteUrl = process.env["PUBLIC_SITE_URL"] ?? "";
+    const siteUrl = process.env["PUBLIC_SITE_URL"] || "https://teamgng.lovable.app";
     if (!apiKey) throw new Error("Deposit service is not configured");
 
     const { fetchMinDeposit, fetchSupportedDepositCurrencies } = await import("@/lib/deposits.server");
@@ -156,4 +156,45 @@ export const createDeposit = createServerFn({ method: "POST" })
     if (updateError || !deposit) throw new Error("Could not save deposit details");
 
     return { deposit };
+  });
+
+// Poll NOWPayments directly for the user's open deposits and credit them.
+// Works even when the provider's webhook can't reach the app.
+export const syncMyDeposits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const apiKey = process.env["NOWPAYMENTS_API_KEY"];
+    if (!apiKey) return { updated: 0 };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: open } = await supabaseAdmin
+      .from("crypto_deposits")
+      .select("payment_id, status")
+      .eq("user_id", context.userId)
+      .is("credited_at", null)
+      .not("payment_id", "is", null)
+      .not("status", "in", "(failed,expired,refunded)")
+      .gte("created_at", new Date(Date.now() - 7 * 864e5).toISOString())
+      .limit(10);
+    let updated = 0;
+    for (const row of open ?? []) {
+      try {
+        const res = await fetch(`https://api.nowpayments.io/v1/payment/${row.payment_id}`, {
+          headers: { "x-api-key": apiKey },
+        });
+        if (!res.ok) continue;
+        const p = (await res.json()) as { payment_status?: string; actually_paid?: number | string };
+        const raw = p.payment_status ?? "";
+        const status = raw === "sending" ? "confirming" : raw;
+        if (!status || status === row.status) continue;
+        await supabaseAdmin.rpc("credit_crypto_deposit", {
+          p_payment_id: String(row.payment_id),
+          p_status: status,
+          p_actually_paid: Math.max(Number(p.actually_paid ?? 0) || 0, 0),
+        });
+        updated++;
+      } catch {
+        // ignore one failed lookup
+      }
+    }
+    return { updated };
   });
