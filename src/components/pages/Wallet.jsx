@@ -42,7 +42,16 @@ export default function Wallet() {
       if (sync?.updated) reload?.();
       const data = await fetchCryptoDeposits(user.id);
       setDeposits(data);
-      setSelectedDeposit(current => current ? data.find(item => item.id === current.id) || current : data[0] || null);
+      // Completed deposits live only in the history list; the instructions
+      // card shows pending deposits only.
+      const active = data.filter(d => !['finished', 'credited'].includes(d.status));
+      setSelectedDeposit(current => {
+        if (current) {
+          const still = active.find(item => item.id === current.id);
+          if (still) return still;
+        }
+        return active[0] || null;
+      });
     } catch {
       setError(t('wallet.historyError'));
     } finally {
@@ -303,13 +312,16 @@ export default function Wallet() {
         </div>
         {loading ? <p className="muted">{t('wallet.loadingDeposits')}</p> : deposits.length === 0 ? <p className="muted-2">{t('wallet.noDeposits')}</p> : (
           <div className="deposit-history-list">
-            {deposits.map(deposit => (
-              <button key={deposit.id} className={`deposit-history-row ${selectedDeposit?.id === deposit.id ? 'selected' : ''}`} onClick={() => setSelectedDeposit(deposit)}>
-                <span><strong>{deposit.pay_currency.toUpperCase()}</strong><small>{formatDate(deposit.created_at)}</small></span>
-                <span><strong>{formatAmount(deposit.pay_amount || 0)}</strong><small>${Number(deposit.price_amount).toFixed(2)} USD</small></span>
-                <span className="badge badge-teal">{deposit.status.replace('_', ' ')}</span>
-              </button>
-            ))}
+            {deposits.map(deposit => {
+              const done = ['finished', 'credited'].includes(deposit.status);
+              return (
+                <button key={deposit.id} className={`deposit-history-row ${selectedDeposit?.id === deposit.id ? 'selected' : ''}`} onClick={() => !done && setSelectedDeposit(deposit)}>
+                  <span><strong>{deposit.pay_currency.toUpperCase()}</strong><small>{formatDate(deposit.created_at)}</small></span>
+                  <span><strong>{formatAmount(deposit.pay_amount || 0)}</strong><small>${Number(deposit.price_amount).toFixed(2)} USD</small></span>
+                  <span className="badge badge-teal">{deposit.status.replace('_', ' ')}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
