@@ -42,7 +42,16 @@ export default function Wallet() {
       if (sync?.updated) reload?.();
       const data = await fetchCryptoDeposits(user.id);
       setDeposits(data);
-      setSelectedDeposit(current => current ? data.find(item => item.id === current.id) || current : data[0] || null);
+      // Completed deposits live only in the history list; the instructions
+      // card shows pending deposits only.
+      const active = data.filter(d => !['finished', 'credited'].includes(d.status));
+      setSelectedDeposit(current => {
+        if (current) {
+          const still = active.find(item => item.id === current.id);
+          if (still) return still;
+        }
+        return active[0] || null;
+      });
     } catch {
       setError(t('wallet.historyError'));
     } finally {

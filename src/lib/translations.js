@@ -142,7 +142,7 @@ export const translations = {
     'wallet.warning': 'Send only {cur} to this address. Sending another asset or network can permanently lose funds.',
     'wallet.created': 'Created {date}',
     'wallet.emptyDeposit': 'Create a deposit to receive a unique payment address.',
-    'wallet.depositReady': 'Your deposit address is ready. Send the exact crypto amount shown below.',
+    'wallet.depositReady': 'Your deposit address is ready. Send the crypto amount shown below or more.',
     'wallet.depositError': 'Could not create a deposit address. Please try again.',
     'wallet.historyError': 'Could not load your deposit history.',
     'wallet.withdraw': 'Withdraw',
