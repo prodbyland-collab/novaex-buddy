@@ -137,9 +137,7 @@ export default function AiTrading() {
           {boosted && <span className="badge badge-teal">{t('ai.boostBadge')}</span>}
         </div>
         <p className="muted-2" style={{ fontSize: 13, lineHeight: 1.6 }}>{t('ai.boostDesc')}</p>
-        <a className="btn small ghost" href="https://t.me/+w5Z5qyeKyOwxYzVi" target="_blank" rel="noopener noreferrer" style={{ marginTop: 14 }}>
-          {t('ai.joinTelegram')}
-        </a>
+        <a className="btn small ghost" href="/app/group" style={{ marginTop: 14 }}>{t('ai.openGroup')}</a>
         <form onSubmit={submitCode} style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
           <input
             value={code}

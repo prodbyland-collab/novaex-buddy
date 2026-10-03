@@ -7,7 +7,7 @@ export const supportText = {
     intro: 'Hi! I answer questions about the site’s rules. I cannot access your account or process payments. Please do not share passwords, private keys, or sensitive account details.',
     note: 'Automatic answers · General website help',
     fallback: `I could not find a matching website rule. For account-specific help, email ${LEGAL_CONTACT_EMAIL}. I cannot verify payments, recover funds, or change accounts.`,
-    suggestions: ['What is the minimum deposit?', 'What do the bot plans cost?', 'How does the Telegram code work?', 'How do withdrawals work?'],
+    suggestions: ['What is the minimum deposit?', 'What do the bot plans cost?', 'How does the daily code work?', 'How do withdrawals work?'],
     ruleLink: 'Read the rules', human: 'Email support',
   },
   ka: {
@@ -16,7 +16,7 @@ export const supportText = {
     intro: 'გამარჯობა! ვპასუხობ საიტის წესებთან დაკავშირებულ კითხვებს. თქვენს ანგარიშზე წვდომა არ მაქვს და გადახდებს ვერ ვასრულებ. არ გააზიაროთ პაროლი, პირადი გასაღები ან ანგარიშის მგრძნობიარე მონაცემები.',
     note: 'ავტომატური პასუხები · საიტის შესახებ დახმარება',
     fallback: `თქვენს კითხვაზე შესაბამისი წესი ვერ ვიპოვე. ანგარიშთან დაკავშირებული დახმარებისთვის მოგვწერეთ: ${LEGAL_CONTACT_EMAIL}. ვერ ვამოწმებ გადახდებს, ვერ ვაბრუნებ თანხას და ვერ ვცვლი ანგარიშებს.`,
-    suggestions: ['რამდენია მინიმალური დეპოზიტი?', 'რა ღირს ბოტის პაკეტები?', 'როგორ მუშაობს Telegram კოდი?', 'როგორ ხდება თანხის გატანა?'],
+    suggestions: ['რამდენია მინიმალური დეპოზიტი?', 'რა ღირს ბოტის პაკეტები?', 'როგორ მუშაობს დღიური კოდი?', 'როგორ ხდება თანხის გატანა?'],
     ruleLink: 'წესების ნახვა', human: 'მიწერა მხარდაჭერასთან',
   },
 };
@@ -33,9 +33,9 @@ const topics = [
     ka: 'ბალანსის შესავსები მინიმალური დეპოზიტია $500; გადახდის პროვაიდერს შესაძლოა უფრო მაღალი მინიმუმი ჰქონდეს. საფულეში აირჩიეთ ვალუტა/ქსელი და თანხა, შემდეგ მიჰყევით NOWPayments-ის ინსტრუქციას. დადასტურების შემდეგ თანხა შიდა USD ბალანსზე აისახება. ყურადღებით გადაამოწმეთ მისამართი და ქსელი. გადახდის მიღებას ვერ ვამოწმებ; დაკარგულ ან დაგვიანებულ დეპოზიტზე დაუკავშირდით მხარდაჭერას.',
   },
   {
-    id: 'telegram', keywords: ['telegram', 'daily code', 'code', 'boost', 'expired code', 'code expired', 'ტელეგრამ', 'კოდი', 'დღიური კოდ', 'დღის კოდ', 'ბონუს კოდ', 'კოდის ვადა'], link: '/terms',
-    en: 'The daily Telegram code adds 1 percentage point to the daily programmed rate, on top of the bot plan and referral bonus. Redeem it on the Trading mode page within 1 hour of issue/sending. It applies to that day’s payout, so redeem each new daily code. I cannot generate, reveal, or renew a code.',
-    ka: 'Telegram-ის დღიური კოდი პროგრამულ დღიურ განაკვეთს 1 პროცენტულ პუნქტს ამატებს ბოტის პაკეტისა და მოწვევის ბონუსის გარდა. გაააქტიურეთ ვაჭრობის რეჟიმის გვერდზე შექმნიდან/გაგზავნიდან 1 საათში. ის შესაბამისი დღის დარიცხვაზე მოქმედებს, ამიტომ ყოველდღე ახალი კოდი უნდა გაააქტიუროთ. კოდს ვერ ვქმნი, ვერ ვამჟღავნებ და ვადას ვერ ვუხანგრძლივებ.',
+    id: 'telegram', keywords: ['telegram', 'daily code', 'code', 'boost', 'expired code', 'code expired', 'ტელეგრამ', 'კოდი', 'დღიური კოდ', 'დღის კოდ', 'ბონუს კოდ', 'კოდის ვადა', 'chat group', 'announcement', 'news', 'ჩატის ჯგუფ', 'სიახლ'], link: '/app/group',
+    en: 'The site bot posts the daily code in the read-only Chat group at 20:00 Georgian time. Only administrators can post news there. The daily code adds 1 percentage point to the daily programmed rate, on top of the bot plan and referral bonus. Redeem it on the Trading mode page within 1 hour of issue/sending. It applies to that day’s payout, so redeem each new daily code. I cannot generate, reveal, or renew a code.',
+    ka: 'საიტის ბოტი დღიურ კოდს მხოლოდ წაკითხვად ჩატის ჯგუფში საქართველოს დროით 20:00-ზე აქვეყნებს. სიახლეებს მხოლოდ ადმინისტრატორები აქვეყნებენ. დღიური კოდი პროგრამულ დღიურ განაკვეთს 1 პროცენტულ პუნქტს ამატებს ბოტის პაკეტისა და მოწვევის ბონუსის გარდა. გაააქტიურეთ ვაჭრობის რეჟიმის გვერდზე შექმნიდან/გაგზავნიდან 1 საათში. ის შესაბამისი დღის დარიცხვაზე მოქმედებს, ამიტომ ყოველდღე ახალი კოდი უნდა გაააქტიუროთ. კოდს ვერ ვქმნი, ვერ ვამჟღავნებ და ვადას ვერ ვუხანგრძლივებ.',
   },
   {
     id: 'plans', keywords: ['bot plan', 'plan', 'tier', 'pro', 'elite', 'free bot', 'ბოტ', 'პაკეტ', 'გეგმ'], link: '/terms',

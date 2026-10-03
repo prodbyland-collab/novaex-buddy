@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test:support": "node --test tests/support.test.js",
+    "test:group": "node --test tests/group.test.js",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",

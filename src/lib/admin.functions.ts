@@ -159,9 +159,7 @@ export const adminRotateDailyCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
-    const today = new Date().toISOString().slice(0, 10);
-    await admin.from("daily_ai_codes").delete().eq("code_date", today);
-    const { data, error } = await admin.rpc("ensure_daily_ai_code");
+    const { data, error } = await (admin as any).rpc("rotate_daily_group_code");
     if (error) throw new Error(error.message);
     return { code: data as string };
   });
