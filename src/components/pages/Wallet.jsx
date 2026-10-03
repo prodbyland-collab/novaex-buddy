@@ -202,7 +202,7 @@ export default function Wallet() {
               <label>{t('wallet.value')}</label>
               <input
                 type="number"
-                min={minUsd ?? 200}
+                min={minUsd ?? 500}
                 max="100000"
                 step="1"
                 value={amountUsd}

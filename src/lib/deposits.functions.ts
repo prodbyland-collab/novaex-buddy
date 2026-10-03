@@ -35,7 +35,7 @@ export const getDepositMinimum = createServerFn({ method: "GET" })
     if (minimum.minUsd === null) {
       throw new Error("Could not retrieve the current NOWPayments minimum for this currency");
     }
-    return { ...minimum, minUsd: Math.max(minimum.minUsd, 200) };
+    return { ...minimum, minUsd: Math.max(minimum.minUsd, 500) };
   });
 
 export const createDeposit = createServerFn({ method: "POST" })
@@ -53,8 +53,8 @@ export const createDeposit = createServerFn({ method: "POST" })
     if (!Number.isFinite(amount) || amount > 100000) {
       throw new Error("Choose a deposit up to $100,000");
     }
-    if (!plan && amount < 200) {
-      throw new Error("Minimum deposit is $200");
+    if (!plan && amount < 500) {
+      throw new Error("Minimum deposit is $500");
     }
 
     const apiKey = process.env["NOWPAYMENTS_API_KEY"];
@@ -67,7 +67,7 @@ export const createDeposit = createServerFn({ method: "POST" })
       throw new Error("This currency or network is not currently supported by NOWPayments");
     }
     const { minUsd: minUsdRaw } = await fetchMinDeposit(currency, apiKey);
-    const minUsd = Math.max(minUsdRaw ?? 0, 200);
+    const minUsd = Math.max(minUsdRaw ?? 0, plan ? 0 : 500);
     if (minUsdRaw === null) {
       throw new Error("Could not retrieve the current NOWPayments minimum for this currency");
     }

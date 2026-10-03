@@ -6,8 +6,8 @@ export type BotPlan = {
 
 export const BOT_PLANS: BotPlan[] = [
   { id: "free", rate: 0.01, price: 0 },
-  { id: "pro", rate: 0.03, price: 150 },
-  { id: "elite", rate: 0.05, price: 250 },
+  { id: "pro", rate: 0.03, price: 250 },
+  { id: "elite", rate: 0.05, price: 400 },
 ];
 
 export function getBotPlan(id: string): BotPlan | undefined {
