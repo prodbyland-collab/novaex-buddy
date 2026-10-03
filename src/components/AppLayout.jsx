@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/language';
 import { usePortfolio } from '@/lib/portfolio';
 import { formatUsd } from '@/lib/markets';
 import LanguageSwitch from '@/components/LanguageSwitch';
+import LegalLinks from '@/components/LegalLinks';
 
 export default function AppLayout({ children }) {
   const { user, signOut } = useAuth();
@@ -85,6 +86,7 @@ export default function AppLayout({ children }) {
       <div className="app-body">
         {children}
       </div>
+      <footer className="legal-footer"><LegalLinks /></footer>
     </div>
   );
 }

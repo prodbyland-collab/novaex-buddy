@@ -3,12 +3,15 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import { ensureUsdBalance, ensureSecuritySettings, claimReferral } from '@/lib/api';
+import LegalLinks from '@/components/LegalLinks';
+import { legalLabels } from '@/lib/legal';
 
 const REF_KEY = 'novax_ref_code';
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const legal = legalLabels[language] || legalLabels.en;
   const navigate = useNavigate();
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
@@ -16,6 +19,7 @@ export default function Auth() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [refCode, setRefCode] = useState('');
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
 
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('ref');
@@ -31,11 +35,15 @@ export default function Auth() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    if (mode === 'signup' && !acceptedLegal) {
+      setError(legal.required);
+      return;
+    }
     setLoading(true);
     try {
       const result = mode === 'login'
         ? await signIn(email, password)
-        : await signUp(email, password);
+        : await signUp(email, password, acceptedLegal);
 
       if (result.error) throw result.error;
 
@@ -88,12 +96,23 @@ export default function Auth() {
               <label>{t('common.password')}</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder={t('auth.passwordPlaceholder')} />
             </div>
+            {mode === 'signup' && (
+              <div className="legal-consent">
+                <div className="legal-consent-row">
+                  <input id="accept-legal" type="checkbox" required checked={acceptedLegal} onChange={e => setAcceptedLegal(e.target.checked)} aria-describedby="legal-risk" />
+                  <label htmlFor="accept-legal">
+                    {legal.agree} <a href="/terms" target="_blank" rel="noopener noreferrer">{legal.terms}</a> {legal.acknowledge} <a href="/privacy" target="_blank" rel="noopener noreferrer">{legal.privacy}</a>.
+                  </label>
+                </div>
+                <p id="legal-risk" className="muted-2">{legal.risk}</p>
+              </div>
+            )}
             {error && (
               <div style={{ background: 'rgba(240,97,109,0.1)', border: '1px solid rgba(240,97,109,0.3)', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: 'var(--red)', marginBottom: 16 }}>
                 {error}
               </div>
             )}
-            <button className="btn" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
+            <button className="btn" style={{ width: '100%', justifyContent: 'center' }} disabled={loading || (mode === 'signup' && !acceptedLegal)}>
               {loading ? t('common.pleaseWait') : mode === 'login' ? t('auth.submitLogin') : t('auth.submitSignup')}
             </button>
           </form>
@@ -105,6 +124,7 @@ export default function Auth() {
         <Link className="muted-2" to="/" style={{ display: 'block', textAlign: 'center', marginTop: 16, fontSize: 13 }}>
           {t('common.backHome')}
         </Link>
+        <footer className="legal-footer"><LegalLinks /></footer>
       </div>
     </div>
   );

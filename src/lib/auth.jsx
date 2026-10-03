@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createLegalAcceptance } from '@/lib/legal';
 
 const AuthContext = createContext(null);
 
@@ -24,8 +25,14 @@ export function AuthProvider({ children }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  async function signUp(email, password) {
-    return supabase.auth.signUp({ email, password });
+  async function signUp(email, password, acceptedLegal = false) {
+    return supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: createLegalAcceptance(acceptedLegal),
+      },
+    });
   }
 
   async function signIn(email, password) {

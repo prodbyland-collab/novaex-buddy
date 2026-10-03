@@ -6,6 +6,7 @@ import { useLivePrices } from '@/lib/useLivePrices';
 import { formatUsd } from '@/lib/markets';
 import { MARKETS } from '@/lib/markets';
 import LanguageSwitch from '@/components/LanguageSwitch';
+import LegalLinks from '@/components/LegalLinks';
 
 function LocalizedTitle({ value }) {
   const [first, second] = value.split('|');
@@ -164,6 +165,7 @@ export default function Landing() {
       <footer className="footer">
         <Link className="brand" to="/"><span className="brand-mark"><span>G</span></span>GNG</Link>
         <p>{t('landing.footer')}</p>
+        <LegalLinks />
         <span>© 2026 GNG</span>
       </footer>
     </>
