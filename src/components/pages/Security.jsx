@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import { fetchSecuritySettings, ensureSecuritySettings, updateSecuritySettings } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
+import { parseWhitelist } from '@/lib/withdrawal-whitelist';
 
 export default function Security() {
   const { user } = useAuth();
@@ -10,6 +12,10 @@ export default function Security() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+  const [addresses, setAddresses] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [addressError, setAddressError] = useState('');
 
   const text = ka ? {
     title: 'უსაფრთხოება', subtitle: 'მრავალშრიანი დაცვა და გამჭვირვალე კონტროლი ანგარიშს შენს ხელში ტოვებს.',
@@ -35,6 +41,13 @@ export default function Security() {
     if (!user) return;
     await ensureSecuritySettings(user.id);
     setSettings(await fetchSecuritySettings(user.id));
+    const { data, error } = await supabase.auth.getUser();
+    if (error) { setAddressError('Could not load saved addresses.'); }
+    else {
+      const stored = data.user?.user_metadata?.withdrawal_addresses;
+      const list = Array.isArray(stored) ? stored.filter(value => typeof value === 'string') : [];
+      setSavedAddresses(list); setAddresses(list.join('\n'));
+    }
     setLoading(false);
   }, [user]);
 
@@ -49,6 +62,10 @@ export default function Security() {
   ];
 
   async function toggle(field) {
+    if (field === 'withdrawal_whitelist' && !settings[field] && !savedAddresses.length) {
+      setAddressError(ka ? 'ჩართვამდე დაამატეთ და შეინახეთ მინიმუმ ერთი მისამართი.' : 'Add and save at least one address before enabling the whitelist.');
+      return;
+    }
     const value = !settings[field];
     setSettings({ ...settings, [field]: value });
     try {
@@ -59,6 +76,22 @@ export default function Security() {
       showToast(text.failed);
       setSettings({ ...settings, [field]: !value });
     }
+  }
+
+  async function saveAddresses(event) {
+    event.preventDefault(); setSaving(true); setAddressError('');
+    try {
+      const list = parseWhitelist(addresses);
+      if (settings.withdrawal_whitelist && !list.length) {
+        throw new Error('Disable the whitelist before removing all addresses.');
+      }
+      const { error } = await supabase.auth.updateUser({ data: { withdrawal_addresses: list } });
+      if (error) throw error;
+      setSavedAddresses(list); setAddresses(list.join('\n'));
+      showToast(ka ? 'მისამართები შენახულია' : 'Addresses saved');
+    } catch {
+      setAddressError(ka ? 'მისამართები ვერ შეინახა. ჩაწერეთ მაქსიმუმ 50 მისამართი, თითო ახალ ხაზზე, გამოტოვებების გარეშე (12–256 სიმბოლო). ჩართულ სიაში მინიმუმ ერთი მისამართი უნდა დარჩეს.' : 'Could not save addresses. Enter up to 50 addresses, one per line, without spaces (12–256 characters). An enabled whitelist must keep at least one address.');
+    } finally { setSaving(false); }
   }
 
   return <div className="fade-up" style={{ maxWidth: 720 }}>
@@ -73,7 +106,14 @@ export default function Security() {
             <span className="badge badge-green">{text.active}</span>
           </div>
         </div>
-        {items.map(item => <div key={item.key} className="security-item"><div className="security-info"><h4>{item.title}</h4><p>{item.desc}</p></div><button type="button" aria-label={item.title} className={'toggle ' + (settings[item.key] ? 'on' : '')} onClick={() => toggle(item.key)} /></div>)}
+        {items.map(item => <div key={item.key} className="security-item"><div className="security-info"><h4>{item.title}</h4><p>{item.desc}</p></div><button type="button" aria-label={item.title} aria-pressed={Boolean(settings[item.key])} disabled={saving} className={'toggle ' + (settings[item.key] ? 'on' : '')} onClick={() => toggle(item.key)} /></div>)}
+        <form onSubmit={saveAddresses} style={{ marginTop: 24 }}>
+          <label htmlFor="whitelist-addresses" style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>{ka ? 'დამტკიცებული გატანის მისამართები' : 'Approved withdrawal addresses'}</label>
+          <p className="muted" id="whitelist-help" style={{ fontSize: 13, marginBottom: 12 }}>{ka ? 'ჩაწერეთ თითო მისამართი ახალ ხაზზე და შეინახეთ. გადაამოწმეთ ვალუტა და ქსელი. სიიდან წასაშლელად ამოიღეთ შესაბამისი ხაზი და კვლავ შეინახეთ.' : 'Enter one address per line and save. Check the currency and network. To remove an address, delete its line and save again.'}</p>
+          <textarea id="whitelist-addresses" aria-describedby="whitelist-help" value={addresses} onChange={event => setAddresses(event.target.value)} disabled={saving} rows={5} maxLength={13000} spellCheck={false} autoCapitalize="none" style={{ width: '100%', background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--line)', borderRadius: 8, padding: 12, resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 14 }} />
+          {addressError && <p role="alert" className="loss" style={{ marginTop: 10 }}>{addressError}</p>}
+          <button className="btn small" disabled={saving} style={{ marginTop: 12 }}>{saving ? (ka ? 'ინახება…' : 'Saving…') : (ka ? 'მისამართების შენახვა' : 'Save addresses')}</button>
+        </form>
       </>}
     </div>
     <div className="card-2" style={{ marginTop: 24 }}><p className="eyebrow" style={{ marginBottom: 10 }}>{text.tips}</p><ul style={{ paddingLeft: 20, color: 'var(--muted)', fontSize: 13, lineHeight: 1.8 }}><li>{text.tip1}</li><li>{text.tip2}</li><li>{text.tip3}</li><li>{text.tip4}</li></ul></div>

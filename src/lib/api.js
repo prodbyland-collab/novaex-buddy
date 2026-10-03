@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { createDeposit, getMinDeposits, getDepositMinimum } from '@/lib/deposits.functions';
+import { checkWithdrawalWhitelist } from '@/lib/withdrawal-whitelist';
 
 // Ensure the current user has a USD cash row. New accounts start at $0 —
 // balance only grows through confirmed crypto deposits.
@@ -235,6 +236,13 @@ export async function fetchWithdrawals(userId) {
 export async function createWithdrawal(userId, symbol, amount, address, usdValue) {
   if (!address || address.trim().length < 12) throw new Error('Enter a valid destination address');
   if (!Number.isFinite(amount) || amount <= 0) throw new Error('Enter an amount greater than zero');
+
+  const [{ data: authData, error: authError }, security] = await Promise.all([
+    supabase.auth.getUser(),
+    fetchSecuritySettings(userId),
+  ]);
+  if (authError || authData.user?.id !== userId) throw new Error('Sign in again before requesting a withdrawal.');
+  checkWithdrawalWhitelist(security?.withdrawal_whitelist, authData.user.user_metadata?.withdrawal_addresses, address);
 
   const { data: row } = await supabase
     .from('holdings')
