@@ -1,3 +1,3 @@
 # Tasks
-- [ ] Verify completed deposits appear only in history and pending instructions say “or more”.
-- [ ] Fix and verify the sticky centered balance does not overlap navigation.
+- [x] Verified the existing finished deposit appears only in history and cannot reopen instructions; confirmed “or more” wording in the displayed Georgian instructions.
+- [x] Verified the sticky centered balance does not overlap navigation at widths from 320 to 1504 pixels, including after scrolling.
