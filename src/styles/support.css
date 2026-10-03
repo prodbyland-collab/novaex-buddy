@@ -1,0 +1,23 @@
+.support-widget { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 250; font-size: 13px; }
+.support-launcher { display: flex; margin-left: auto; }
+.support-panel { display: flex; flex-direction: column; width: min(400px, calc(100vw - 32px)); max-height: calc(100dvh - 100px); margin-bottom: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 20px 70px rgba(0,0,0,.5); }
+.support-header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); }
+.support-header h2 { font-size: 16px; font-weight: 700; }
+.support-header p { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.support-icon-button { font-size: 26px; width: 36px; height: 36px; border-radius: 8px; }
+.support-messages { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
+.support-answer, .support-question { padding: 12px; margin-bottom: 12px; border-radius: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.support-answer { background: var(--panel-2); border: 1px solid var(--line); }
+.support-question { margin-left: 32px; background: rgba(20,184,166,.12); }
+.support-answer strong, .support-question strong { display: block; font-size: 11px; color: var(--teal-light); margin-bottom: 4px; }
+.support-answer p, .support-question p { white-space: pre-wrap; }
+.support-answer a { display: inline-block; color: var(--teal-light); text-decoration: underline; margin-top: 8px; margin-right: 12px; }
+.support-suggestions { display: flex; flex-shrink: 0; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+.support-suggestions button { font-size: 11px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; text-align: left; }
+.support-suggestions button:hover, .support-icon-button:hover { background: var(--panel-2); }
+.support-form { display: flex; flex-shrink: 0; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.support-form input { min-width: 0; flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 16px; }
+.support-footer { display: flex; flex-shrink: 0; justify-content: space-between; gap: 12px; padding: 0 16px 14px; color: var(--muted); font-size: 11px; }
+.support-footer a { text-decoration: underline; }
+.support-widget button:focus-visible, .support-widget a:focus-visible, .support-widget input:focus-visible { outline: 2px solid var(--teal-light); outline-offset: 2px; }
+@media (max-height: 550px) { .support-suggestions { display: none; } }

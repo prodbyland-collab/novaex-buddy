@@ -4,6 +4,7 @@
 @import "./styles/global.css";
 @import "./styles/landing.css";
 @import "./styles/app.css";
+@import "./styles/support.css";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -4,6 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
+    "test:support": "node --test tests/support.test.js",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
