@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import { ensureUsdBalance, ensureSecuritySettings, claimReferral } from '@/lib/api';
 import LegalLinks from '@/components/LegalLinks';
+import LanguageSwitch from '@/components/LanguageSwitch';
 import { legalLabels } from '@/lib/legal';
 
 const REF_KEY = 'novax_ref_code';
@@ -75,6 +76,7 @@ export default function Auth() {
           <span className="brand-mark"><span>G</span></span>GNG
         </Link>
         <div className="card fade-up">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}><LanguageSwitch /></div>
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
             {mode === 'login' ? t('auth.welcome') : t('auth.createAccount')}
           </h1>
