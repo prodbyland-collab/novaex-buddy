@@ -10,7 +10,7 @@ export default function Referrals() {
   const load = useCallback(() => fetchReferralInfo().then(setReferral).catch(() => setReferral(null)), []);
   useEffect(() => { load(); }, [load]);
 
-  const inviteLink = referral?.code ? `${window.location.origin}/auth?ref=${referral.code}` : '';
+  const inviteLink = referral?.code ? `https://teamgng.online/auth?ref=${referral.code}` : '';
   async function copyLink() {
     if (!inviteLink) return;
     await navigator.clipboard.writeText(inviteLink);
