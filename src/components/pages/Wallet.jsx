@@ -44,7 +44,7 @@ export default function Wallet() {
       setDeposits(data);
       // Completed deposits live only in the history list; the instructions
       // card shows pending deposits only.
-      const active = data.filter(d => !['finished', 'credited'].includes(d.status));
+      const active = data.filter(d => !d.credited_at && ['creating', 'waiting', 'confirming', 'partially_paid', 'sending'].includes(d.status));
       setSelectedDeposit(current => {
         if (current) {
           const still = active.find(item => item.id === current.id);
@@ -57,7 +57,7 @@ export default function Wallet() {
     } finally {
       setLoading(false);
     }
-  }, [user, t]);
+  }, [user, t, reload]);
 
   useEffect(() => {
     loadDeposits();
@@ -313,7 +313,7 @@ export default function Wallet() {
         {loading ? <p className="muted">{t('wallet.loadingDeposits')}</p> : deposits.length === 0 ? <p className="muted-2">{t('wallet.noDeposits')}</p> : (
           <div className="deposit-history-list">
             {deposits.map(deposit => {
-              const done = ['finished', 'credited'].includes(deposit.status);
+              const done = Boolean(deposit.credited_at) || !['creating', 'waiting', 'confirming', 'partially_paid', 'sending'].includes(deposit.status);
               return (
                 <button key={deposit.id} className={`deposit-history-row ${selectedDeposit?.id === deposit.id ? 'selected' : ''}`} onClick={() => !done && setSelectedDeposit(deposit)}>
                   <span><strong>{deposit.pay_currency.toUpperCase()}</strong><small>{formatDate(deposit.created_at)}</small></span>
