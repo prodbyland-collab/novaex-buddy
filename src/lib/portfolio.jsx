@@ -3,7 +3,9 @@ import { useLivePrices } from '@/lib/useLivePrices';
 import { MARKET_MAP } from '@/lib/markets';
 import { ensureUsdBalance, fetchHoldings, fetchCostBasis } from '@/lib/api';
 
-const PortfolioContext = createContext(null);
+// Keep one context instance across hot reloads so provider and consumers always match.
+const PortfolioContext =
+  globalThis.__gngPortfolioContext ?? (globalThis.__gngPortfolioContext = createContext(null));
 
 export function PortfolioProvider({ user, children }) {
   const prices = useLivePrices();
