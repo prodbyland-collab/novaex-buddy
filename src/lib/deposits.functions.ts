@@ -66,7 +66,7 @@ export const createDeposit = createServerFn({ method: "POST" })
     if (!supported.some((item) => item.currency === currency)) {
       throw new Error("This currency or network is not currently supported by NOWPayments");
     }
-    const { minUsd } = await fetchMinDeposit(currency, apiKey);
+    const { minUsd: minUsdRaw } = await fetchMinDeposit(currency, apiKey);
     const minUsd = Math.max(minUsdRaw ?? 0, 200);
     if (minUsdRaw === null) {
       throw new Error("Could not retrieve the current NOWPayments minimum for this currency");
