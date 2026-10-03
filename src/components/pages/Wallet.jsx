@@ -200,12 +200,23 @@ export default function Wallet() {
             </div>
             <div className="field">
               <label>{t('wallet.value')}</label>
-              <input type="number" min={minUsd ?? 0} max="100000" step="1" value={amountUsd} onChange={e => setAmountUsd(e.target.value)} required />
-              <span className="field-hint">
+              <input
+                type="number"
+                min={minUsd ?? 200}
+                max="100000"
+                step="1"
+                value={amountUsd}
+                onChange={e => setAmountUsd(e.target.value)}
+                onBlur={() => {
+                  if (amountUsd !== '' && minUsd !== null && Number(amountUsd) < minUsd) setAmountUsd(String(minUsd));
+                }}
+                required
+              />
+              <span className="field-hint" style={amountUsd !== '' && minUsd !== null && Number(amountUsd) < minUsd ? { color: '#f6465d' } : undefined}>
                 {minsLoading ? t('wallet.minLoading') : minError ? minError : minUsd === null ? t('wallet.minLoading') : t('wallet.minMax', { min: minUsd })}
               </span>
             </div>
-            <button className="btn" disabled={creating || minsLoading || minUsd === null || !currencies.length} style={{ width: '100%', justifyContent: 'center' }}>
+            <button className="btn" disabled={creating || minsLoading || minUsd === null || !currencies.length || amountUsd === '' || Number(amountUsd) < minUsd} style={{ width: '100%', justifyContent: 'center' }}>
 
               {creating ? t('wallet.creating') : t('wallet.createAddress')}
             </button>
