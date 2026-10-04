@@ -96,6 +96,71 @@ before(async () => {
 });
 after(() => db.close());
 
+test("group read policy replaces open rules and requires a verified member for published posts", async () => {
+  const member = await account();
+  const news = randomUUID(),
+    future = randomUUID(),
+    expired = randomUUID();
+  await query(
+    "INSERT INTO public.group_announcements(id,kind,body) VALUES($1,'news','Published news')",
+    [news],
+  );
+  await query(
+    "INSERT INTO public.group_announcements(id,kind,body,created_at) VALUES($1,'news','Future news',now()+interval '1 day')",
+    [future],
+  );
+  await query(
+    "INSERT INTO public.group_announcements(id,kind,code,code_date,expires_at,created_at) VALUES($1,'code','ARCHIVED-CODE',current_date-100,now()-interval '1 day',now()-interval '2 days')",
+    [expired],
+  );
+  const ids = [news, future, expired];
+  const visible = () =>
+    query("SELECT id FROM public.group_announcements WHERE id=ANY($1) ORDER BY id", [ids]);
+  assert.deepEqual((await asUser(member, visible)).map((r) => r.id).sort(), [news, expired].sort());
+  await query("INSERT INTO auth.mfa_factors(user_id,status) VALUES($1,'verified')", [member]);
+  assert.equal((await asUser(member, visible)).length, 0);
+  assert.equal((await asUser(member, visible, "aal2")).length, 2);
+  assert.equal((await asUser("", visible)).length, 0);
+  await db.exec("SET ROLE anon");
+  try {
+    await assert.rejects(visible(), /permission denied/);
+  } finally {
+    await db.exec("RESET ROLE");
+  }
+  await assert.rejects(
+    asUser(
+      member,
+      () => query("INSERT INTO public.group_announcements(kind,body) VALUES('news','Forged news')"),
+      "aal2",
+    ),
+    /permission denied/,
+  );
+  assert.equal((await service(visible)).length, 3);
+
+  const migration = await readFile(
+    new URL("20261004200000_group_read_policy.sql", migrationDirectory),
+    "utf8",
+  );
+  assert.equal(
+    migration,
+    await readFile(
+      new URL("../drizzle/migrations/0007_group_read_policy.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  await db.exec(migration);
+  const policies = await query(
+    "SELECT policyname,qual FROM pg_policies WHERE schemaname='public' AND tablename='group_announcements'",
+  );
+  assert.ok(policies.some((p) => p.policyname === "group_announcements_verified_read"));
+  assert.ok(policies.every((p) => p.qual !== "true"));
+  assert.ok(
+    policies.every(
+      (p) => !["Members read announcements", "group_announcements_select"].includes(p.policyname),
+    ),
+  );
+});
+
 const purchasePlan = (id, plan, requestId = randomUUID()) =>
   service(() => value("SELECT public.purchase_balance_plan($1,$2,$3)", [id, plan, requestId]));
 
