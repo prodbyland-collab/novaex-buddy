@@ -1,3 +1,4 @@
+import { useI18n } from "@/lib/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MARKETS, formatUsd } from "@/lib/markets";
 import { useLivePrices } from "@/lib/useLivePrices";
@@ -111,6 +112,7 @@ function makeEvent(id, prices) {
 }
 
 export default function ActivityTicker() {
+  const { t } = useI18n();
   const prices = useLivePrices();
   const pricesRef = useRef(prices);
   pricesRef.current = prices;
@@ -131,9 +133,9 @@ export default function ActivityTicker() {
   const loop = useMemo(() => [...events, ...events], [events]);
 
   return (
-    <div className="ticker" aria-label="Illustrative activity examples">
+    <div className="ticker" aria-label={t("Illustrative activity examples")}>
       <div className="ticker-label">
-        <span className="ticker-dot" /> LIVE ACTIVITY
+        <span className="ticker-dot" /> {t("LIVE ACTIVITY")}
       </div>
       <div className="ticker-viewport">
         <div className="ticker-track">
@@ -141,7 +143,7 @@ export default function ActivityTicker() {
             <span className="ticker-item" key={`${e.id}-${i}`}>
               <b className="ticker-user">{e.user}</b>
               <span className={e.kind === "deposit" ? "gain" : "loss"}>
-                {e.kind === "deposit" ? "deposited" : "withdrew"} {e.coins} {e.symbol}
+                {t(e.kind === "deposit" ? "deposited" : "withdrew")} {e.coins} {e.symbol}
               </span>
               <span className="muted-2">≈ {formatUsd(e.usd)}</span>
               <span className="ticker-sep">•</span>

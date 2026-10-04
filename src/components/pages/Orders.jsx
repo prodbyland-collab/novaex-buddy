@@ -1,3 +1,5 @@
+import { formatDateTime } from "@/lib/locale";
+import { translateMessage } from "@/lib/ui-translations";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Layers3 } from "lucide-react";
 import RetryNotice from "@/components/RetryNotice";
@@ -15,15 +17,13 @@ import {
 
 const PENDING = ["creating", "waiting", "confirming", "confirmed", "sending", "partially_paid"];
 
-function formatDate(value) {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
+function formatDate(value, lang) {
+  return formatDateTime(value, lang);
 }
 
 export default function BotPlans() {
   const { user } = useAuth();
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const ka = lang === "ka";
 
   const [loading, setLoading] = useState(true);
@@ -219,7 +219,7 @@ export default function BotPlans() {
 
           {error && (
             <div className="toast error" style={{ marginTop: 18 }}>
-              {error}
+              {translateMessage(error, lang)}
             </div>
           )}
 
@@ -270,7 +270,8 @@ export default function BotPlans() {
                     style={{ padding: "8px 0", borderTop: "1px solid rgba(255,255,255,.08)" }}
                   >
                     {names[p.plan_id] || p.plan_id} · {p.pay_currency?.toUpperCase()} · $
-                    {Number(p.price_amount).toFixed(2)} · {p.status} · {formatDate(p.created_at)}
+                    {Number(p.price_amount).toFixed(2)} · {t(p.status)} ·{" "}
+                    {formatDate(p.created_at, lang)}
                   </li>
                 ))}
               </ul>
@@ -284,11 +285,11 @@ export default function BotPlans() {
               <div className="member-activity-row" key={p.id}>
                 <span>
                   {names[p.plan_id] || p.plan_id}
-                  <small>{formatDate(p.created_at)}</small>
+                  <small>{formatDate(p.created_at, lang)}</small>
                 </span>
                 <span>
                   ${Number(p.price_amount).toFixed(2)}
-                  <small>{p.credited_at ? (ka ? "გააქტიურდა" : "Activated") : p.status}</small>
+                  <small>{p.credited_at ? (ka ? "გააქტიურდა" : "Activated") : t(p.status)}</small>
                 </span>
               </div>
             ))}

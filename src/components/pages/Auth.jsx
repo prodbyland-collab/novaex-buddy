@@ -1,3 +1,4 @@
+import { translateMessage } from "@/lib/ui-translations";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
@@ -136,7 +137,11 @@ export default function Auth() {
       setMode("login");
       setPassword("");
       setConfirmation("");
-      setNotice(signOutError ? `${text.saved} ${signOutError.message}` : text.saved);
+      setNotice(
+        signOutError
+          ? `${text.saved} ${translateMessage(signOutError.message, language)}`
+          : text.saved,
+      );
       await navigate({ to: "/auth", replace: true, search: {} });
     } catch (e) {
       setError(e.message || t("auth.genericError"));
@@ -329,7 +334,7 @@ export default function Auth() {
                 </div>
                 {error && (
                   <p role="alert" className="loss">
-                    {error}
+                    {translateMessage(error, language)}
                   </p>
                 )}
                 <button
@@ -372,7 +377,7 @@ export default function Auth() {
               </div>
               {error && (
                 <p className="loss" role="alert">
-                  {error}
+                  {translateMessage(error, language)}
                 </p>
               )}
               <button className="btn" disabled={loading || cooldown > 0} style={{ width: "100%" }}>
@@ -457,7 +462,7 @@ export default function Auth() {
                     marginBottom: 16,
                   }}
                 >
-                  {error}
+                  {translateMessage(error, language)}
                 </div>
               )}
               <button

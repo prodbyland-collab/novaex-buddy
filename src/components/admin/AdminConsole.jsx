@@ -1,22 +1,23 @@
+import { formatDateTime } from "@/lib/locale";
+import { useI18n } from "@/lib/i18n";
+import { translateMessage } from "@/lib/ui-translations";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toCsv } from "@/lib/admin-tools";
 import AuditHistory from "./AuditHistory";
 
 const assets = ["USD", "BTC", "ETH", "SOL", "XRP", "BNB", "LTC", "DOGE", "TRX", "USDT"];
-const money = (v) => Number(v ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
-const date = (v) =>
-  v
-    ? new Date(v).toLocaleString("en-GB", {
-        timeZone: "Asia/Tbilisi",
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "—";
+const money = (v, lang) =>
+  Number(v ?? 0).toLocaleString(lang === "ka" ? "ka-GE" : "en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+const date = (v, lang) => (v ? formatDateTime(v, lang) : "—");
 function Tag({ children }) {
   return <span className="ac-tag">{children}</span>;
 }
 
 function AccountPanel({ account: a, viewerId, disabled, services, run, close, payments, copy }) {
+  const { t, lang } = useI18n();
   const [symbol, setSymbol] = useState("USD");
   const [mode, setMode] = useState("add");
   const [amount, setAmount] = useState("");
@@ -31,44 +32,45 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
   const balance =
     symbol === "USD" ? a.usd : (a.assets.find((asset) => asset.symbol === symbol)?.amount ?? 0);
   return (
-    <aside className="ac-panel" aria-label="Account details">
+    <aside className="ac-panel" aria-label={t("Account details")}>
       <div className="ac-heading">
         <div>
-          <span className="ac-eyebrow">ACCOUNT DETAILS</span>
+          <span className="ac-eyebrow">{t("ACCOUNT DETAILS")}</span>
           <h2>{a.email || a.id}</h2>
         </div>
-        <button onClick={close} aria-label="Close account details">
+        <button onClick={close} aria-label={t("Close account details")}>
           ×
         </button>
       </div>
       <div className="ac-tags">
-        <Tag>{a.suspended ? "Suspended" : "Active"}</Tag>
-        <Tag>{a.isAdmin ? "Admin" : "Member"}</Tag>
-        <Tag>{a.mfaEnabled ? "MFA on" : "MFA off"}</Tag>
+        <Tag>{a.suspended ? t("Suspended") : t("Active")}</Tag>
+        <Tag>{a.isAdmin ? t("Admin") : t("Member")}</Tag>
+        <Tag>{a.mfaEnabled ? t("MFA on") : t("MFA off")}</Tag>
       </div>
-      <button className="ac-id" onClick={() => copy(a.id)} title="Copy account ID">
-        {a.id} · Copy
+      <button className="ac-id" onClick={() => copy(a.id)} title={t("Copy account ID")}>
+        {a.id}
+        {t("· Copy")}
       </button>
       <dl className="ac-facts">
-        <dt>Joined</dt>
-        <dd>{date(a.createdAt)}</dd>
-        <dt>Last sign-in</dt>
-        <dd>{date(a.lastSignInAt)}</dd>
-        <dt>Email</dt>
-        <dd>{a.emailConfirmed ? "Verified" : "Unverified"}</dd>
-        <dt>Profit / referrals</dt>
+        <dt>{t("Joined")}</dt>
+        <dd>{date(a.createdAt, lang)}</dd>
+        <dt>{t("Last sign-in")}</dt>
+        <dd>{date(a.lastSignInAt, lang)}</dd>
+        <dt>{t("Email")}</dt>
+        <dd>{a.emailConfirmed ? t("Verified") : t("Unverified")}</dd>
+        <dt>{t("Profit / referrals")}</dt>
         <dd>
-          {money(a.totalProfit)} / {a.referrals}
+          {money(a.totalProfit, lang)} / {a.referrals}
         </dd>
-        <dt>Last payout</dt>
-        <dd>{a.lastPayout ?? "—"}</dd>
+        <dt>{t("Last payout")}</dt>
+        <dd>{formatDateTime(a.lastPayout, lang, false)}</dd>
       </dl>
-      <button onClick={() => payments(a.id)}>View payments</button>
+      <button onClick={() => payments(a.id)}>{t("View payments")}</button>
       <fieldset disabled={disabled}>
-        <legend>Balance adjustment</legend>
+        <legend>{t("Balance adjustment")}</legend>
         <div className="ac-form-row">
           <label>
-            Asset
+            {t("Asset")}
             <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
               {assets.map((s) => (
                 <option key={s}>{s}</option>
@@ -76,16 +78,20 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
             </select>
           </label>
           <label>
-            Action
+            {t("Action")}
             <select value={mode} onChange={(e) => setMode(e.target.value)}>
-              <option value="add">Add</option>
-              <option value="remove">Remove</option>
-              <option value="set">Set balance</option>
+              <option value="add">{t("Add")}</option>
+              <option value="remove">{t("Remove")}</option>
+              <option value="set">{t("Set balance")}</option>
             </select>
           </label>
         </div>
         <small>
-          Current: {Number(balance).toLocaleString("en-US", { maximumFractionDigits: 8 })} {symbol}
+          {t("Current:")}{" "}
+          {Number(balance).toLocaleString(lang === "ka" ? "ka-GE" : "en-US", {
+            maximumFractionDigits: 8,
+          })}{" "}
+          {symbol}
         </small>
         <form
           onSubmit={(e) => {
@@ -99,7 +105,17 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
               (mode !== "set" && value === 0)
             )
               return;
-            if (!window.confirm(`${mode} ${value} ${symbol} for ${a.email}?`)) return;
+            if (
+              !window.confirm(
+                t("Adjust {action}: {amount} {symbol} for {email}?", {
+                  action: t(mode === "set" ? "Set balance" : mode === "remove" ? "Remove" : "Add"),
+                  amount: value,
+                  symbol,
+                  email: a.email,
+                }),
+              )
+            )
+              return;
             run(
               () =>
                 mode === "set"
@@ -114,7 +130,7 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
           }}
         >
           <label>
-            Amount
+            {t("Amount")}
             <input
               type="number"
               min="0"
@@ -126,25 +142,25 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
             />
           </label>
           <button className="ac-primary" type="submit">
-            Apply adjustment
+            {t("Apply adjustment")}
           </button>
         </form>
       </fieldset>
       <fieldset disabled={disabled}>
-        <legend>AI trading</legend>
+        <legend>{t("AI trading")}</legend>
         <label>
-          Plan
+          {t("Plan")}
           <select value={plan} onChange={(e) => setPlan(e.target.value)}>
             {["free", "pro", "elite"].map((p) => (
               <option key={p} value={p}>
-                {p.toUpperCase()}
+                {t(p)}
               </option>
             ))}
           </select>
         </label>
         <label className="ac-check">
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-          Trading enabled
+          {t("Trading enabled")}
         </label>
         <div className="ac-actions">
           <button
@@ -155,7 +171,7 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
               )
             }
           >
-            Save settings
+            {t("Save settings")}
           </button>
           <button
             onClick={() =>
@@ -165,16 +181,26 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
               )
             }
           >
-            {boost ? "Remove boost" : "Grant today's boost"}
+            {boost ? t("Remove boost") : t("Grant today's boost")}
           </button>
         </div>
       </fieldset>
       <fieldset disabled={disabled || own}>
-        <legend>Account access{own ? " · Your account" : ""}</legend>
+        <legend>
+          {t("Account access")}
+          {own ? t(" · Your account") : ""}
+        </legend>
         <div className="ac-actions">
           <button
             onClick={() => {
-              if (window.confirm(`${a.suspended ? "Restore" : "Suspend"} sign-in for ${a.email}?`))
+              if (
+                window.confirm(
+                  t("{action} sign-in for {email}?", {
+                    action: t(a.suspended ? "Restore" : "Suspend"),
+                    email: a.email,
+                  }),
+                )
+              )
                 run(
                   () =>
                     services.setAccountAccess({ data: { userId: a.id, suspended: !a.suspended } }),
@@ -182,13 +208,16 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
                 );
             }}
           >
-            {a.suspended ? "Restore sign-in" : "Suspend sign-in"}
+            {a.suspended ? t("Restore sign-in") : t("Suspend sign-in")}
           </button>
           <button
             onClick={() => {
               if (
                 window.confirm(
-                  `${a.isAdmin ? "Remove" : "Grant"} administrator access for ${a.email}?`,
+                  t("{action} administrator access for {email}?", {
+                    action: t(a.isAdmin ? "Remove" : "Grant"),
+                    email: a.email,
+                  }),
                 )
               )
                 run(
@@ -197,21 +226,26 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
                 );
             }}
           >
-            {a.isAdmin ? "Remove admin" : "Make admin"}
+            {a.isAdmin ? t("Remove admin") : t("Make admin")}
           </button>
         </div>
         <small>
-          Suspension blocks new sign-ins. Existing sessions may remain active until their token
-          expires.
+          {t(
+            "Suspension blocks new sign-ins. Existing sessions may remain active until their token expires.",
+          )}
         </small>
       </fieldset>
       <details className="ac-danger">
-        <summary>Delete account</summary>
-        <p>Permanently deletes this account and its associated records.</p>
+        <summary>{t("Delete account")}</summary>
+        <p>{t("Permanently deletes this account and its associated records.")}</p>
         <button
           disabled={disabled || own}
           onClick={() => {
-            if (window.confirm(`Permanently delete ${a.email}? This cannot be undone.`))
+            if (
+              window.confirm(
+                t("Permanently delete {email}? This cannot be undone.", { email: a.email }),
+              )
+            )
               run(() => services.deleteUser({ data: { userId: a.id } }), "Account deleted").then(
                 (ok) => {
                   if (ok) close();
@@ -219,7 +253,7 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
               );
           }}
         >
-          Delete permanently
+          {t("Delete permanently")}
         </button>
       </details>
     </aside>
@@ -227,6 +261,7 @@ function AccountPanel({ account: a, viewerId, disabled, services, run, close, pa
 }
 
 export default function AdminConsole({ services, viewerId, initialData = null }) {
+  const { t, lang } = useI18n();
   const [data, setData] = useState(initialData);
   const [tab, setTab] = useState("users");
   const [query, setQuery] = useState("");
@@ -402,10 +437,10 @@ export default function AdminConsole({ services, viewerId, initialData = null })
   if (!data)
     return (
       <div className="admin-page admin-compact">
-        <h1>Administration</h1>
-        {notice && <p role="alert">{notice.text}</p>}
+        <h1>{t("Administration")}</h1>
+        {notice && <p role="alert">{translateMessage(notice.text, lang)}</p>}
         <button disabled={loading} onClick={load}>
-          {loading ? "Loading accounts…" : "Retry loading"}
+          {loading ? t("Loading accounts…") : t("Retry loading")}
         </button>
       </div>
     );
@@ -413,17 +448,17 @@ export default function AdminConsole({ services, viewerId, initialData = null })
     <div className="admin-page admin-compact">
       <header className="ac-top">
         <div>
-          <span className="ac-eyebrow">CONTROL CENTER</span>
-          <h1>Administration</h1>
-          <p>Accounts, payments and announcements in one place.</p>
+          <span className="ac-eyebrow">{t("CONTROL CENTER")}</span>
+          <h1>{t("Administration")}</h1>
+          <p>{t("Accounts, payments and announcements in one place.")}</p>
         </div>
         <div className="ac-actions">
           <label className="ac-check">
             <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
-            Auto-refresh
+            {t("Auto-refresh")}
           </label>
           <button disabled={busy || loading} onClick={load}>
-            {loading ? "Refreshing…" : "Refresh"}
+            {loading ? t("Refreshing…") : t("Refresh")}
           </button>
         </div>
       </header>
@@ -433,78 +468,82 @@ export default function AdminConsole({ services, viewerId, initialData = null })
           role={notice.error ? "alert" : "status"}
         >
           {notice.text}
-          <button aria-label="Dismiss notification" onClick={() => setNotice(null)}>
+          <button aria-label={t("Dismiss notification")} onClick={() => setNotice(null)}>
             ×
           </button>
         </div>
       )}
       <div className="ac-stats">
         {[
-          ["Accounts", data.totals.users],
-          ["USD balances", money(data.totals.usd)],
-          ["Deposited", money(data.totals.depositedUsd)],
-          ["Withdrawn", money(data.totals.withdrawnUsd)],
-          ["AI enabled", data.totals.aiOn],
+          [t("Accounts"), data.totals.users],
+          [t("USD balances"), money(data.totals.usd, lang)],
+          [t("Deposited"), money(data.totals.depositedUsd, lang)],
+          [t("Withdrawn"), money(data.totals.withdrawnUsd, lang)],
+          [t("AI enabled"), data.totals.aiOn],
         ].map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
+          <div key={t(label)}>
+            <span>{t(label)}</span>
             <strong>{value}</strong>
           </div>
         ))}
       </div>
-      <section className="ac-codebar" aria-label="Daily code controls">
+      <section className="ac-codebar" aria-label={t("Daily code controls")}>
         <div>
-          <span className="ac-eyebrow">DAILY GROUP CODE</span>
-          <strong>{code?.code ?? "No code"}</strong>
+          <span className="ac-eyebrow">{t("DAILY GROUP CODE")}</span>
+          <strong>{code?.code ?? t("No code")}</strong>
           <small>
             {remaining > 0
-              ? `Expires in ${Math.floor(remaining / 60000)}:${String(Math.floor(remaining / 1000) % 60).padStart(2, "0")}`
-              : "Inactive"}{" "}
-            · Daily at 20:00 Georgia · Valid for 10 minutes
+              ? t("Expires in {time}", {
+                  time: `${Math.floor(remaining / 60000)}:${String(Math.floor(remaining / 1000) % 60).padStart(2, "0")}`,
+                })
+              : t("Inactive")}{" "}
+            {t("· Daily at 20:00 Georgia · Valid for 10 minutes")}
           </small>
         </div>
         <div className="ac-actions">
           <button disabled={!code || !remaining} onClick={() => copy(code.code)}>
-            Copy
-          </button>
-          <button
-            disabled={busy || loading || stale}
-            onClick={() => {
-              if (
-                window.confirm("Replace the daily code? The new code will be valid for 10 minutes.")
-              )
-                run(() => services.rotateCode(), "Daily code replaced");
-            }}
-          >
-            Replace code
+            {t("Copy")}
           </button>
           <button
             disabled={busy || loading || stale}
             onClick={() => {
               if (
                 window.confirm(
-                  "Run today's payouts now? Accounts already paid today will be skipped.",
+                  t("Replace the daily code? The new code will be valid for 10 minutes."),
+                )
+              )
+                run(() => services.rotateCode(), "Daily code replaced");
+            }}
+          >
+            {t("Replace code")}
+          </button>
+          <button
+            disabled={busy || loading || stale}
+            onClick={() => {
+              if (
+                window.confirm(
+                  t("Run today's payouts now? Accounts already paid today will be skipped."),
                 )
               )
                 run(() => services.runPayout(), "Payout finished");
             }}
           >
-            Run payout
+            {t("Run payout")}
           </button>
         </div>
       </section>
       <div className={`ac-workspace ${account ? "ac-has-panel" : ""}`}>
         <section className="ac-main">
-          <nav className="ac-tabs" aria-label="Administrator sections">
+          <nav className="ac-tabs" aria-label={t("Administrator sections")}>
             {[
-              ["users", "Accounts"],
-              ["deposits", "Deposits"],
-              ["withdrawals", "Withdrawals"],
-              ["announcements", "Announcements"],
-              ["audit", "Audit log"],
+              ["users", t("Accounts")],
+              ["deposits", t("Deposits")],
+              ["withdrawals", t("Withdrawals")],
+              ["announcements", t("Announcements")],
+              ["audit", t("Audit log")],
             ].map(([key, title]) => (
               <button key={key} aria-pressed={tab === key} onClick={() => switchTab(key)}>
-                {title}
+                {t(title)}
                 {key !== "audit" && <span>{data[key]?.length ?? 0}</span>}
               </button>
             ))}
@@ -515,11 +554,11 @@ export default function AdminConsole({ services, viewerId, initialData = null })
             <>
               <div className="ac-toolbar">
                 <input
-                  aria-label="Search records"
+                  aria-label={t("Search records")}
                   placeholder={
                     tab === "announcements"
-                      ? "Search announcements…"
-                      : "Search email, ID or reference…"
+                      ? t("Search announcements…")
+                      : t("Search email, ID or reference…")
                   }
                   value={query}
                   onChange={(e) => {
@@ -529,38 +568,42 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                 />
                 {tab !== "announcements" && (
                   <select
-                    aria-label="Filter records"
+                    aria-label={t("Filter records")}
                     value={filter}
                     onChange={(e) => {
                       setFilter(e.target.value);
                       setPage(1);
                     }}
                   >
-                    <option value="all">All {tab === "users" ? "accounts" : "statuses"}</option>
+                    <option value="all">
+                      {t("All")} {t(tab === "users" ? "accounts" : "statuses")}
+                    </option>
                     {(tab === "users"
                       ? ["admin", "suspended", "ai", "funded"]
                       : [...new Set(data[tab].map((r) => r.status))]
                     ).map((value) => (
                       <option key={value} value={value}>
-                        {value === "ai" ? "AI enabled" : value}
+                        {value === "ai" ? t("AI enabled") : t(value)}
                       </option>
                     ))}
                   </select>
                 )}
                 <select
-                  aria-label="Sort records"
+                  aria-label={t("Sort records")}
                   value={sort}
                   onChange={(e) => {
                     setSort(e.target.value);
                     setPage(1);
                   }}
                 >
-                  <option value="newest">Newest first</option>
-                  {tab !== "announcements" && <option value="email">Email A–Z</option>}
-                  {tab !== "announcements" && <option value="amount">Highest USD value</option>}
+                  <option value="newest">{t("Newest first")}</option>
+                  {tab !== "announcements" && <option value="email">{t("Email A–Z")}</option>}
+                  {tab !== "announcements" && (
+                    <option value="amount">{t("Highest USD value")}</option>
+                  )}
                 </select>
                 <button disabled={!rows.length} onClick={exportRows}>
-                  Export CSV
+                  {t("Export CSV")}
                 </button>
               </div>
               {tab === "announcements" ? (
@@ -577,14 +620,14 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                     }}
                   >
                     <label>
-                      New group announcement
+                      {t("New group announcement")}
                       <textarea
                         required
                         minLength={1}
                         maxLength={2000}
                         value={news}
                         onChange={(e) => setNews(e.target.value)}
-                        placeholder="Write a message for your members…"
+                        placeholder={t("Write a message for your members…")}
                       />
                     </label>
                     <div className="ac-actions">
@@ -593,7 +636,7 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                         className="ac-primary"
                         disabled={busy || loading || stale || !news.trim()}
                       >
-                        Publish announcement
+                        {t("Publish announcement")}
                       </button>
                     </div>
                   </form>
@@ -601,11 +644,11 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                     <article key={r.id}>
                       <p>{r.body}</p>
                       <div className="ac-actions">
-                        <small>{date(r.created_at)}</small>
+                        <small>{date(r.created_at, lang)}</small>
                         <button
                           disabled={busy || loading || stale}
                           onClick={() => {
-                            if (window.confirm("Delete this announcement?"))
+                            if (window.confirm(t("Delete this announcement?")))
                               run(
                                 () =>
                                   services.deleteAnnouncement({ data: { announcementId: r.id } }),
@@ -613,7 +656,7 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                               );
                           }}
                         >
-                          Delete
+                          {t("Delete")}
                         </button>
                       </div>
                     </article>
@@ -625,10 +668,23 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                     <thead>
                       <tr>
                         {(tab === "users"
-                          ? ["Account", "USD balance", "Trading", "Access", "Joined", ""]
-                          : ["Account / reference", "Amount", "Status", "Created", "Actions"]
+                          ? [
+                              t("Account"),
+                              t("USD balance"),
+                              t("Trading"),
+                              t("Access"),
+                              t("Joined"),
+                              "",
+                            ]
+                          : [
+                              t("Account / reference"),
+                              t("Amount"),
+                              t("Status"),
+                              t("Created"),
+                              t("Actions"),
+                            ]
                         ).map((label, i) => (
-                          <th key={i}>{label}</th>
+                          <th key={i}>{t(label)}</th>
                         ))}
                       </tr>
                     </thead>
@@ -637,28 +693,33 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                         tab === "users" ? (
                           <tr key={r.id} className={r.id === selected ? "ac-selected" : ""}>
                             <td>
-                              <strong>{r.email || "No email"}</strong>
+                              <strong>{r.email || t("No email")}</strong>
                               <small>
-                                {r.id.slice(0, 8)} · {r.referrals} referrals
+                                {r.id.slice(0, 8)} ·{" "}
+                                {t("{count} referrals", { count: r.referrals })}
                               </small>
                             </td>
-                            <td>{money(r.usd)}</td>
+                            <td>{money(r.usd, lang)}</td>
                             <td>
-                              <Tag>{r.planId}</Tag>
-                              <small>AI {r.aiEnabled ? "on" : "off"}</small>
+                              <Tag>{t(r.planId)}</Tag>
+                              <small>AI {t(r.aiEnabled ? "on" : "off")}</small>
                             </td>
                             <td>
                               <Tag>
-                                {r.suspended ? "Suspended" : r.isAdmin ? "Admin" : "Member"}
+                                {r.suspended
+                                  ? t("Suspended")
+                                  : r.isAdmin
+                                    ? t("Admin")
+                                    : t("Member")}
                               </Tag>
                             </td>
-                            <td>{date(r.createdAt)}</td>
+                            <td>{date(r.createdAt, lang)}</td>
                             <td>
                               <button
-                                aria-label={`Manage ${r.email || r.id}`}
+                                aria-label={t("Manage {account}", { account: r.email || r.id })}
                                 onClick={() => setSelected(r.id)}
                               >
-                                Manage
+                                {t("Manage")}
                               </button>
                             </td>
                           </tr>
@@ -673,10 +734,11 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                               </button>
                               <button
                                 className="ac-id"
-                                title="Copy payment reference"
+                                title={t("Copy payment reference")}
                                 onClick={() => copy(String(r.payment_id ?? r.id))}
                               >
-                                {String(r.payment_id ?? r.id).slice(0, 16)} · Copy
+                                {String(r.payment_id ?? r.id).slice(0, 16)}
+                                {t("· Copy")}
                               </button>
                               {r.address && (
                                 <small title={r.address}>{r.address.slice(0, 18)}…</small>
@@ -684,7 +746,7 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                             </td>
                             <td>
                               {tab === "deposits"
-                                ? money(r.price_amount)
+                                ? money(r.price_amount, lang)
                                 : `${Number(r.amount).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${r.symbol}`}
                               <small>
                                 {tab === "deposits"
@@ -693,10 +755,10 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                               </small>
                             </td>
                             <td>
-                              <Tag>{r.status}</Tag>
-                              {r.credited_at && <small>Credited</small>}
+                              <Tag>{t(r.status)}</Tag>
+                              {r.credited_at && <small>{t("Credited")}</small>}
                             </td>
-                            <td>{date(r.created_at)}</td>
+                            <td>{date(r.created_at, lang)}</td>
                             <td>
                               <div className="ac-actions">
                                 {tab === "deposits" ? (
@@ -705,7 +767,7 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                                       <button
                                         disabled={busy || loading || stale}
                                         onClick={() => {
-                                          if (window.confirm("Verify and credit this deposit?"))
+                                          if (window.confirm(t("Verify and credit this deposit?")))
                                             run(
                                               () =>
                                                 services.updateDeposit({
@@ -715,12 +777,12 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                                             );
                                         }}
                                       >
-                                        Verify & credit
+                                        {t("Verify & credit")}
                                       </button>
                                       <button
                                         disabled={busy || loading || stale || r.status === "failed"}
                                         onClick={() => {
-                                          if (window.confirm("Reject this uncredited deposit?"))
+                                          if (window.confirm(t("Reject this uncredited deposit?")))
                                             run(
                                               () =>
                                                 services.updateDeposit({
@@ -730,12 +792,12 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                                             );
                                         }}
                                       >
-                                        Reject
+                                        {t("Reject")}
                                       </button>
                                     </>
                                   )
                                 ) : r.refunded_at ? (
-                                  <small>Refunded · locked</small>
+                                  <small>{t("Refunded · locked")}</small>
                                 ) : (
                                   ["pending", "completed", "failed"]
                                     .filter((s) => s !== r.status)
@@ -747,8 +809,10 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                                           if (
                                             window.confirm(
                                               status === "failed"
-                                                ? "Mark failed and refund this withdrawal once?"
-                                                : `Mark withdrawal ${status}?`,
+                                                ? t("Mark failed and refund this withdrawal once?")
+                                                : t("Mark withdrawal {status}?", {
+                                                    status: t(status),
+                                                  }),
                                             )
                                           )
                                             run(
@@ -761,10 +825,10 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                                         }}
                                       >
                                         {status === "failed"
-                                          ? "Fail & refund"
+                                          ? t("Fail & refund")
                                           : status === "completed"
-                                            ? "Complete"
-                                            : "Pending"}
+                                            ? t("Complete")
+                                            : t("Pending")}
                                       </button>
                                     ))
                                 )}
@@ -777,26 +841,26 @@ export default function AdminConsole({ services, viewerId, initialData = null })
                   </table>
                 </div>
               )}
-              {!rows.length && <p className="ac-empty">No records match your filters.</p>}
+              {!rows.length && <p className="ac-empty">{t("No records match your filters.")}</p>}
               <footer className="ac-pagination">
                 <small>
-                  {rows.length} matching records
+                  {t("{count} matching records", { count: rows.length })}
                   {tab === "deposits" || tab === "withdrawals"
-                    ? " · Full payment history"
+                    ? t(" · Full payment history")
                     : tab === "announcements"
-                      ? " · Latest 20 loaded"
+                      ? t(" · Latest 20 loaded")
                       : ""}
-                  {updated ? ` · Updated ${date(updated)}` : ""}
+                  {updated ? t(" · Updated {time}", { time: date(updated, lang) }) : ""}
                 </small>
                 <div className="ac-actions">
                   <button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
-                    Previous
+                    {t("Previous")}
                   </button>
                   <span>
                     {currentPage} / {pages}
                   </span>
                   <button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>
-                    Next
+                    {t("Next")}
                   </button>
                 </div>
               </footer>

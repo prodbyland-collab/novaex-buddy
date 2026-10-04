@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/locale";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { getMemberOverview } from "@/lib/member.functions";
@@ -7,7 +8,7 @@ import { useI18n } from "@/lib/i18n";
 import RetryNotice from "./RetryNotice";
 
 export default function AccountOverview() {
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const ka = lang === "ka";
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
@@ -108,16 +109,12 @@ export default function AccountOverview() {
                           "Plan payment": "გეგმის გადახდა",
                         }[item.type]
                       : item.type}
-                    <small>
-                      {new Date(item.created_at).toLocaleString(ka ? "ka-GE" : "en-GB", {
-                        timeZone: "Asia/Tbilisi",
-                      })}
-                    </small>
+                    <small>{formatDateTime(item.created_at, lang)}</small>
                   </span>
                   <span>
                     {item.amount ?? item.price_amount} {item.symbol ?? "USD"}
                     <small>
-                      {item.credited_at ? (ka ? "ჩარიცხულია" : "Credited") : item.status}
+                      {item.credited_at ? (ka ? "ჩარიცხულია" : "Credited") : t(item.status)}
                     </small>
                   </span>
                 </div>

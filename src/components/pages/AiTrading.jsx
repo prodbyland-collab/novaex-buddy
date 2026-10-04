@@ -1,3 +1,4 @@
+import { translateMessage } from "@/lib/ui-translations";
 import { useCallback, useEffect, useState } from "react";
 import { Bot } from "lucide-react";
 import RetryNotice from "@/components/RetryNotice";
@@ -21,7 +22,7 @@ function utcToday() {
 export default function AiTrading() {
   const { user } = useAuth();
   const { usdBalance, reload } = usePortfolio();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [settings, setSettings] = useState(null);
@@ -300,7 +301,7 @@ export default function AiTrading() {
                     <div className="table-row" key={tr.id}>
                       <span>{tr.symbol}</span>
                       <span className={tr.side === "sell" ? "loss" : "gain"}>
-                        {tr.side === "credit" ? t("ai.credit") : tr.side.toUpperCase()}
+                        {tr.side === "credit" ? t("ai.credit") : t(tr.side)}
                       </span>
                       <span>{formatNum(tr.amount, 6)}</span>
                       <span>{formatUsd(tr.price)}</span>
@@ -311,7 +312,9 @@ export default function AiTrading() {
               )}
             </div>
 
-            {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
+            {toast && (
+              <div className={`toast ${toast.type}`}>{translateMessage(toast.msg, lang)}</div>
+            )}
           </div>
         </>
       )}

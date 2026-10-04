@@ -1,3 +1,5 @@
+import { formatDateTime } from "@/lib/locale";
+import { translateMessage } from "@/lib/ui-translations";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Wallet as WalletIcon } from "lucide-react";
 import RetryNotice from "@/components/RetryNotice";
@@ -18,19 +20,19 @@ import { syncMyDeposits } from "@/lib/deposits.functions";
 
 import { usePortfolio } from "@/lib/portfolio";
 
-function formatAmount(value) {
-  return Number(value).toLocaleString("en-US", { maximumFractionDigits: 8 });
+function formatAmount(value, lang) {
+  return Number(value).toLocaleString(lang === "ka" ? "ka-GE" : "en-US", {
+    maximumFractionDigits: 8,
+  });
 }
 
-function formatDate(value) {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
+function formatDate(value, lang) {
+  return formatDateTime(value, lang);
 }
 
 export default function Wallet() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [depositError, setDepositError] = useState("");
   const [withdrawalError, setWithdrawalError] = useState("");
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
@@ -326,16 +328,14 @@ export default function Wallet() {
               <div className="deposit-status-row">
                 <div>
                   <span className="muted-2">{t("wallet.status")}</span>
-                  <strong className="deposit-status">
-                    {selectedDeposit.status.replace("_", " ")}
-                  </strong>
+                  <strong className="deposit-status">{t(selectedDeposit.status)}</strong>
                 </div>
                 <div className="deposit-currency">{selectedDeposit.pay_currency.toUpperCase()}</div>
               </div>
               <div className="deposit-amount-box">
                 <span>{t("wallet.sendExactly")}</span>
                 <strong>
-                  {formatAmount(selectedDeposit.pay_amount)}{" "}
+                  {formatAmount(selectedDeposit.pay_amount, lang)}{" "}
                   {selectedDeposit.pay_currency.toUpperCase()}
                 </strong>
                 <small>
@@ -358,7 +358,7 @@ export default function Wallet() {
                 {t("wallet.warning", { cur: selectedDeposit.pay_currency.toUpperCase() })}
               </p>
               <p className="deposit-created">
-                {t("wallet.created", { date: formatDate(selectedDeposit.created_at) })}
+                {t("wallet.created", { date: formatDate(selectedDeposit.created_at, lang) })}
               </p>
             </>
           ) : (
@@ -371,7 +371,9 @@ export default function Wallet() {
       </div>
 
       {(error || notice) && (
-        <div className={`toast ${error ? "error" : "success"}`}>{error || notice}</div>
+        <div className={`toast ${error ? "error" : "success"}`}>
+          {translateMessage(error || notice, lang)}
+        </div>
       )}
 
       <div className="wallet-grid">
@@ -393,7 +395,7 @@ export default function Wallet() {
                   ))}
               </select>
               <span className="field-hint">
-                {t("wallet.available", { amount: formatAmount(available), sym: wSymbol })}
+                {t("wallet.available", { amount: formatAmount(available, lang), sym: wSymbol })}
               </span>
             </div>
             <div className="field">
@@ -414,13 +416,13 @@ export default function Wallet() {
               <div>
                 <span>{t("wallet.commission")}</span>
                 <span className="loss">
-                  -{formatAmount(feeAmount)} {wSymbol}
+                  -{formatAmount(feeAmount, lang)} {wSymbol}
                 </span>
               </div>
               <div>
                 <span>{t("wallet.youReceive")}</span>
                 <span>
-                  {formatAmount(netAmount > 0 ? netAmount : 0)} {wSymbol}
+                  {formatAmount(netAmount > 0 ? netAmount : 0, lang)} {wSymbol}
                 </span>
               </div>
             </div>
@@ -458,16 +460,16 @@ export default function Wallet() {
                 <div key={w.id} className="deposit-history-row">
                   <span>
                     <strong>{w.symbol}</strong>
-                    <small>{formatDate(w.created_at)}</small>
+                    <small>{formatDate(w.created_at, lang)}</small>
                   </span>
                   <span>
-                    <strong>{formatAmount(w.amount)}</strong>
+                    <strong>{formatAmount(w.amount, lang)}</strong>
                     <small>
-                      {t("wallet.net")} {formatAmount(w.net_amount ?? w.amount)} · {t("wallet.fee")}{" "}
-                      {formatAmount(w.fee_amount ?? 0)}
+                      {t("wallet.net")} {formatAmount(w.net_amount ?? w.amount, lang)} ·{" "}
+                      {t("wallet.fee")} {formatAmount(w.fee_amount ?? 0, lang)}
                     </small>
                   </span>
-                  <span className="badge badge-teal">{w.status}</span>
+                  <span className="badge badge-teal">{t(w.status)}</span>
                 </div>
               ))}
             </div>
@@ -509,13 +511,13 @@ export default function Wallet() {
                 >
                   <span>
                     <strong>{deposit.pay_currency.toUpperCase()}</strong>
-                    <small>{formatDate(deposit.created_at)}</small>
+                    <small>{formatDate(deposit.created_at, lang)}</small>
                   </span>
                   <span>
-                    <strong>{formatAmount(deposit.pay_amount || 0)}</strong>
+                    <strong>{formatAmount(deposit.pay_amount || 0, lang)}</strong>
                     <small>${Number(deposit.price_amount).toFixed(2)} USD</small>
                   </span>
-                  <span className="badge badge-teal">{deposit.status.replace("_", " ")}</span>
+                  <span className="badge badge-teal">{t(deposit.status)}</span>
                 </button>
               );
             })}

@@ -1,6 +1,20 @@
+import { formatDateTime } from "@/lib/locale";
+import { useI18n } from "@/lib/i18n";
+import { translateMessage } from "@/lib/ui-translations";
 import { useCallback, useEffect, useState, useRef } from "react";
 
+function localizeDetails(value, t) {
+  if (Array.isArray(value)) return value.map((item) => localizeDetails(item, t));
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [t(key), localizeDetails(item, t)]),
+    );
+  if (typeof value === "boolean") return t(String(value));
+  return typeof value === "string" ? t(value) : value;
+}
+
 export default function AuditHistory({ service }) {
+  const { t, lang } = useI18n();
   const sequence = useRef(0);
   const [page, setPage] = useState(0),
     [result, setResult] = useState(null),
@@ -30,7 +44,15 @@ export default function AuditHistory({ service }) {
     };
   }, [load]);
   const rows = (result?.rows ?? []).filter((r) =>
-    [r.action, r.actor_label, r.target_label, r.target_id, r.outcome].some((v) =>
+    [
+      r.action,
+      t(r.action),
+      r.actor_label,
+      r.target_label,
+      r.target_id,
+      r.outcome,
+      t(r.outcome),
+    ].some((v) =>
       String(v ?? "")
         .toLowerCase()
         .includes(query.toLowerCase()),
@@ -40,50 +62,48 @@ export default function AuditHistory({ service }) {
     <div className="audit-history">
       <div className="ac-toolbar">
         <input
-          aria-label="Filter this audit page"
-          placeholder="Filter this page by admin, account or action…"
+          aria-label={t("Filter this audit page")}
+          placeholder={t("Filter this page by admin, account or action…")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <button disabled={loading} onClick={load}>
-          {loading ? "Loading…" : "Refresh audit"}
+          {loading ? t("Loading…") : t("Refresh audit")}
         </button>
       </div>
       {error && (
         <p className="ac-notice ac-error" role="alert">
-          {error}
+          {translateMessage(error, lang)}
         </p>
       )}
       <div className="ac-table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Time · Georgia</th>
-              <th>Administrator</th>
-              <th>Action / target</th>
-              <th>Outcome</th>
-              <th>Details</th>
+              <th>{t("Time · Georgia")}</th>
+              <th>{t("Administrator")}</th>
+              <th>{t("Action / target")}</th>
+              <th>{t("Outcome")}</th>
+              <th>{t("Details")}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td>
-                  {new Date(r.created_at).toLocaleString("en-GB", { timeZone: "Asia/Tbilisi" })}
-                </td>
+                <td>{formatDateTime(r.created_at, lang)}</td>
                 <td>{r.actor_label}</td>
                 <td>
-                  {r.action}
-                  <small>{r.target_label ?? r.target_id ?? "System-wide"}</small>
+                  {t(r.action)}
+                  <small>{r.target_label ?? r.target_id ?? t("System-wide")}</small>
                 </td>
                 <td>
-                  <span className="ac-tag">{r.outcome}</span>
-                  {r.error_message && <small>{r.error_message}</small>}
+                  <span className="ac-tag">{t(r.outcome)}</span>
+                  {r.error_message && <small>{translateMessage(r.error_message, lang)}</small>}
                 </td>
                 <td>
                   <details>
-                    <summary>View changes</summary>
-                    <pre>{JSON.stringify(r.details, null, 2)}</pre>
+                    <summary>{t("View changes")}</summary>
+                    <pre>{JSON.stringify(localizeDetails(r.details, t), null, 2)}</pre>
                   </details>
                 </td>
               </tr>
@@ -92,19 +112,19 @@ export default function AuditHistory({ service }) {
         </table>
       </div>
       {!error && !loading && !rows.length && (
-        <p className="ac-empty">No audit entries match this page.</p>
+        <p className="ac-empty">{t("No audit entries match this page.")}</p>
       )}
       <footer className="ac-pagination">
         <small>
-          50 entries per page · Pending means the external outcome is not yet confirmed.
+          {t("50 entries per page · Pending means the external outcome is not yet confirmed.")}
         </small>
         <div className="ac-actions">
           <button disabled={loading || page === 0} onClick={() => setPage(page - 1)}>
-            Previous
+            {t("Previous")}
           </button>
           <span>{page + 1}</span>
           <button disabled={loading || !result?.hasMore} onClick={() => setPage(page + 1)}>
-            Next
+            {t("Next")}
           </button>
         </div>
       </footer>

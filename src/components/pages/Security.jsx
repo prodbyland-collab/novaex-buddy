@@ -1,3 +1,4 @@
+import { translateMessage } from "@/lib/ui-translations";
 import { useEffect, useState, useCallback } from "react";
 import { ShieldCheck } from "lucide-react";
 import PageHeading from "@/components/PageHeading";
@@ -248,7 +249,7 @@ export default function Security() {
               />
               {addressError && (
                 <p role="alert" className="loss" style={{ marginTop: 10 }}>
-                  {addressError}
+                  {translateMessage(addressError, ka ? "ka" : "en")}
                 </p>
               )}
               <button className="btn small" disabled={saving} style={{ marginTop: 12 }}>
@@ -275,7 +276,9 @@ export default function Security() {
           <li>{text.tip4}</li>
         </ul>
       </div>
-      {toast && <div className="toast success">{toast.msg}</div>}
+      {toast && (
+        <div className="toast success">{translateMessage(toast.msg, ka ? "ka" : "en")}</div>
+      )}
     </div>
   );
 }

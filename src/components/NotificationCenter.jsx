@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/locale";
 import { useCallback, useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -6,7 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import RetryNotice from "./RetryNotice";
 
 export default function NotificationCenter() {
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const ka = lang === "ka";
   const [now, setNow] = useState(Date.now());
   const [open, setOpen] = useState(false),
@@ -118,14 +119,10 @@ export default function NotificationCenter() {
                 {r.kind === "code"
                   ? `${ka ? "კოდი" : "Code"}: ${r.details.code}`
                   : r.kind === "plan"
-                    ? String(r.details.plan ?? "").toUpperCase()
+                    ? t(String(r.details.plan ?? ""))
                     : `${Number(r.details.amount ?? 0).toFixed(2)} USD`}
               </span>
-              <small>
-                {new Date(r.created_at).toLocaleString(ka ? "ka-GE" : "en-GB", {
-                  timeZone: "Asia/Tbilisi",
-                })}
-              </small>
+              <small>{formatDateTime(r.created_at, lang)}</small>
             </Link>
           ))}
           <div className="member-inbox-heading">

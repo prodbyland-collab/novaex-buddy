@@ -1,3 +1,4 @@
+import { translateMessage } from "@/lib/ui-translations";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -55,7 +56,7 @@ export function MfaChallenge({
       </div>
       {error && (
         <p className="loss" role="alert">
-          {error}
+          {translateMessage(error, ka ? "ka" : "en")}
         </p>
       )}
       <button className="btn small" disabled={busy || code.length !== 6}>
@@ -130,7 +131,7 @@ export function MfaSettings({ ka = false }: { ka?: boolean }) {
       </p>
       {error && (
         <p className="loss" role="alert">
-          {error}
+          {translateMessage(error, ka ? "ka" : "en")}
         </p>
       )}
       {enrollment ? (

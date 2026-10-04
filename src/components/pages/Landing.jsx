@@ -112,7 +112,7 @@ export default function Landing() {
               </div>
             </div>
           </div>
-          <div className="hero-art" aria-label="Abstract trading dashboard illustration">
+          <div className="hero-art" aria-label={t("Abstract trading dashboard illustration")}>
             <div className="orb orb-one"></div>
             <div className="orb orb-two"></div>
             <div className="dashboard-card">
@@ -125,7 +125,7 @@ export default function Landing() {
               <small>
                 + $1,284.42 <b>↗ 5.51%</b>
               </small>
-              <svg viewBox="0 0 360 120" role="img" aria-label="Rising price chart">
+              <svg viewBox="0 0 360 120" role="img" aria-label={t("Rising price chart")}>
                 <defs>
                   <linearGradient id="fade" x1="0" x2="0" y1="0" y2="1">
                     <stop stopColor="#2dd4bf" stopOpacity=".45" />

@@ -59,7 +59,7 @@ export default function AppLayout({ children }) {
     { to: "/app/recurring", label: t("nav.referrals"), icon: Users },
     { to: "/app/security", label: t("nav.security"), icon: ShieldCheck },
     { to: "/app/wallet", label: t("nav.wallet"), icon: Wallet },
-    ...(isAdmin ? [{ to: "/app/admin", label: "Admin", icon: Settings2 }] : []),
+    ...(isAdmin ? [{ to: "/app/admin", label: t("Admin"), icon: Settings2 }] : []),
   ];
 
   function isActive(item) {

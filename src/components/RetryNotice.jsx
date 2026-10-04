@@ -1,3 +1,4 @@
+import { translateMessage } from "@/lib/ui-translations";
 import { useI18n } from "@/lib/i18n";
 export default function RetryNotice({ error, onRetry, busy = false }) {
   const { lang } = useI18n();
@@ -10,7 +11,7 @@ export default function RetryNotice({ error, onRetry, busy = false }) {
         </strong>
         <p>
           {typeof error === "string"
-            ? error
+            ? translateMessage(error, lang)
             : lang === "ka"
               ? "სცადე ხელახლა."
               : "Please try again."}

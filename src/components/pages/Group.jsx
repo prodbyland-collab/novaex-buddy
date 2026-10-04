@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/locale";
 import { useCallback, useEffect, useState } from "react";
 import { MessagesSquare } from "lucide-react";
 import RetryNotice from "@/components/RetryNotice";
@@ -104,9 +105,7 @@ export default function Group() {
           className={`card group-post ${post.kind === "code" ? "group-code" : ""}`}
         >
           <time dateTime={post.created_at} className="muted-2">
-            {new Date(post.created_at).toLocaleString(ka ? "ka-GE" : "en-US", {
-              timeZone: "Asia/Tbilisi",
-            })}
+            {formatDateTime(post.created_at, lang)}
           </time>
           {post.kind === "code" ? (
             <>
