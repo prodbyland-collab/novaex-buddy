@@ -1,11 +1,12 @@
 import { formatDateTime } from "@/lib/locale";
 import { translateMessage } from "@/lib/ui-translations";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layers3 } from "lucide-react";
 import RetryNotice from "@/components/RetryNotice";
 import PageHeading from "@/components/PageHeading";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { usePortfolio } from "@/lib/portfolio";
 import { BOT_PLANS } from "@/lib/plans";
 import { syncMyDeposits } from "@/lib/deposits.functions";
 import {
@@ -13,6 +14,8 @@ import {
   fetchMinDeposits,
   createPlanPurchase,
   fetchCryptoDeposits,
+  fetchBalancePlanPurchases,
+  buyPlanWithBalance,
 } from "@/lib/api";
 
 const PENDING = ["creating", "waiting", "confirming", "confirmed", "sending", "partially_paid"];
@@ -25,6 +28,11 @@ export default function BotPlans() {
   const { user } = useAuth();
   const { lang, t } = useI18n();
   const ka = lang === "ka";
+  const portfolio = usePortfolio();
+  const [balancePlan, setBalancePlan] = useState(null);
+  const [success, setSuccess] = useState("");
+  const purchaseRequests = useRef({});
+  const purchasing = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -53,10 +61,21 @@ export default function BotPlans() {
               : "Payment status could not be refreshed from the provider.",
           ),
         );
-      const [s, p] = await Promise.all([
+      const [s, cryptoPayments, balancePayments] = await Promise.all([
         fetchAiSettings(user.id),
         fetchCryptoDeposits(user.id, "plan"),
+        fetchBalancePlanPurchases(user.id),
       ]);
+      const p = [
+        ...cryptoPayments,
+        ...balancePayments.map((payment) => ({
+          ...payment,
+          pay_currency: "USD",
+          status: "finished",
+          credited_at: payment.created_at,
+          balance_payment: true,
+        })),
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setSettings(s);
       setLoadError("");
       setPayments(p || []);
@@ -109,7 +128,10 @@ export default function BotPlans() {
   };
 
   async function buy(plan) {
+    if (purchasing.current) return;
+    purchasing.current = true;
     setError("");
+    setSuccess("");
     setBusy(plan.id);
     try {
       const deposit = await createPlanPurchase(currency, plan.id);
@@ -120,6 +142,36 @@ export default function BotPlans() {
         err?.message || (ka ? "გადახდის შექმნა ვერ მოხერხდა." : "Could not start the payment."),
       );
     } finally {
+      setBusy("");
+      purchasing.current = false;
+    }
+  }
+
+  async function buyFromBalance() {
+    if (!balancePlan || purchasing.current) return;
+    purchasing.current = true;
+    const plan = balancePlan;
+    setBusy(plan.id);
+    setError("");
+    setSuccess("");
+    purchaseRequests.current[plan.id] ??= crypto.randomUUID();
+    try {
+      await buyPlanWithBalance(plan.id, purchaseRequests.current[plan.id]);
+      delete purchaseRequests.current[plan.id];
+      setSettings((current) => ({
+        ...current,
+        plan_id: plan.id,
+        plan_rate: plan.rate,
+        enabled: true,
+      }));
+      setBalancePlan(null);
+      setSuccess(t("Plan purchased with balance and activated."));
+      await Promise.all([load(), portfolio.reload()]);
+    } catch (err) {
+      setError(err?.message || "Could not purchase bot plan");
+      await Promise.all([load(), portfolio.reload()]);
+    } finally {
+      purchasing.current = false;
       setBusy("");
     }
   }
@@ -134,8 +186,8 @@ export default function BotPlans() {
     <div className="fade-up plans-page">
       <PageHeading icon={Layers3} title={ka ? "ბოტ-გეგმები" : "Bot Plans"}>
         {ka
-          ? "აირჩიე AI ბოტის დონე. გადახდა ხდება კრიპტოთი ცალკე — ბალანსიდან თანხა არ ჩამოიჭრება."
-          : "Pick your AI bot tier. Plans are paid in crypto separately — nothing is taken from your trading balance."}
+          ? "აირჩიე AI ბოტის დონე და გადაიხადე USD ბალანსით ან კრიპტოთი. ბალანსით შეძენისას გეგმა მაშინვე აქტიურდება."
+          : "Choose your AI bot tier and pay with your USD balance or crypto. Balance purchases activate immediately."}
       </PageHeading>
       <RetryNotice error={loadError} onRetry={load} busy={loading} />
       <RetryNotice error={syncError} onRetry={load} />
@@ -148,6 +200,12 @@ export default function BotPlans() {
             <div style={{ fontSize: 26, fontWeight: 800 }}>{names[activeId] || names.free}</div>
             <p className="muted-2">
               {(activeRate * 100).toFixed(0)}% {ka ? "დღეში" : "per day"}
+            </p>
+            <p className="muted-2">
+              {t("Available USD balance")}:{" "}
+              {portfolio.loading || portfolio.error
+                ? "—"
+                : `$${Number(portfolio.usdBalance).toFixed(2)}`}
             </p>
           </div>
 
@@ -180,11 +238,7 @@ export default function BotPlans() {
                     {ka ? "ყოველდღიური მოგება ბალანსზე" : "Daily profit on your balance"}
                   </p>
                   <p style={{ margin: "16px 0", fontWeight: 700 }}>
-                    {plan.price
-                      ? `$${plan.price} ${ka ? "კრიპტოთი" : "in crypto"}`
-                      : ka
-                        ? "უფასო"
-                        : "Free"}
+                    {plan.price ? `$${plan.price}` : ka ? "უფასო" : "Free"}
                   </p>
                   <button
                     className={current || owned ? "btn ghost" : "btn"}
@@ -192,7 +246,7 @@ export default function BotPlans() {
                     disabled={
                       !plan.price ||
                       owned ||
-                      busy === plan.id ||
+                      !!busy ||
                       loading ||
                       !!loadError ||
                       !!currencyError ||
@@ -212,10 +266,66 @@ export default function BotPlans() {
                           ? "ყიდვა კრიპტოთი"
                           : "Buy with crypto"}
                   </button>
+                  {!owned && !!plan.price && (
+                    <button
+                      className="btn ghost"
+                      style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
+                      disabled={
+                        !!busy ||
+                        portfolio.loading ||
+                        !!portfolio.error ||
+                        portfolio.usdBalance < plan.price
+                      }
+                      onClick={() => {
+                        setBalancePlan(plan);
+                        setError("");
+                        setSuccess("");
+                      }}
+                    >
+                      {t("Buy with balance")}
+                    </button>
+                  )}
+                  {!owned &&
+                    !!plan.price &&
+                    !portfolio.loading &&
+                    !portfolio.error &&
+                    portfolio.usdBalance < plan.price && (
+                      <p className="muted-2">{t("Insufficient USD balance")}</p>
+                    )}
                 </div>
               );
             })}
           </div>
+
+          {balancePlan && (
+            <div className="card" style={{ marginTop: 18 }}>
+              <h2>{t("Confirm balance purchase")}</h2>
+              <p>
+                {names[balancePlan.id]} · ${balancePlan.price}
+              </p>
+              <p className="muted-2">{t("This amount will be deducted from your USD balance.")}</p>
+              <button
+                className="btn"
+                disabled={
+                  !!busy ||
+                  portfolio.loading ||
+                  !!portfolio.error ||
+                  portfolio.usdBalance < balancePlan.price
+                }
+                onClick={buyFromBalance}
+              >
+                {busy ? t("Processing...") : t("Confirm purchase")}
+              </button>
+              <button className="btn ghost" disabled={!!busy} onClick={() => setBalancePlan(null)}>
+                {t("Cancel")}
+              </button>
+            </div>
+          )}
+          {success && (
+            <p role="status" className="gain">
+              {success}
+            </p>
+          )}
 
           {error && (
             <div className="toast error" style={{ marginTop: 18 }}>
@@ -285,7 +395,10 @@ export default function BotPlans() {
               <div className="member-activity-row" key={p.id}>
                 <span>
                   {names[p.plan_id] || p.plan_id}
-                  <small>{formatDate(p.created_at, lang)}</small>
+                  <small>
+                    {formatDate(p.created_at, lang)} ·{" "}
+                    {p.balance_payment ? t("USD balance") : p.pay_currency?.toUpperCase()}
+                  </small>
                 </span>
                 <span>
                   ${Number(p.price_amount).toFixed(2)}

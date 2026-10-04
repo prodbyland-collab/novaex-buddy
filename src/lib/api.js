@@ -1,6 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createDeposit, getMinDeposits, getDepositMinimum } from "@/lib/deposits.functions";
-import { requestWithdrawal, requestMarketOrder } from "@/lib/account.functions";
+import {
+  requestWithdrawal,
+  requestMarketOrder,
+  purchaseBalancePlan,
+} from "@/lib/account.functions";
 import { fetchAllRows } from "@/lib/pagination";
 import { depositPrincipal } from "@/lib/portfolio-math";
 
@@ -120,6 +124,22 @@ export async function createPlanPurchase(currency, planId) {
   const result = await createDeposit({ data: { currency, amountUsd: 0, planId } });
   if (!result?.deposit) throw new Error("Could not create a payment address");
   return result.deposit;
+}
+
+export async function buyPlanWithBalance(planId, requestId) {
+  return purchaseBalancePlan({ data: { planId, requestId } });
+}
+
+export async function fetchBalancePlanPurchases(userId) {
+  return fetchAllRows((from, to) =>
+    supabase
+      .from("balance_plan_purchases")
+      .select("id, plan_id, price_amount, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
 }
 
 export async function fetchMinDeposits() {

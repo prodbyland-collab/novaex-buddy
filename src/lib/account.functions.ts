@@ -16,6 +16,21 @@ export const assetSymbol = z.enum([
 ]);
 const amount = z.number().finite().positive().max(1e12);
 
+export const purchaseBalancePlan = createServerFn({ method: "POST" })
+  .middleware([requireVerifiedAuth])
+  .validator(z.object({ planId: z.enum(["pro", "elite"]), requestId: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: purchase, error } = await supabaseAdmin.rpc("purchase_balance_plan", {
+      p_user_id: context.userId,
+      p_plan_id: data.planId,
+      p_request_id: data.requestId,
+    });
+    if (error) throw new Error(error.message);
+    if (!purchase) throw new Error("Could not purchase bot plan");
+    return purchase;
+  });
+
 export const requestWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
   .validator(

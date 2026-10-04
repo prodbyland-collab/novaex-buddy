@@ -1,5 +1,17 @@
 // English source phrases are keys for shared UI labels and server messages.
 export const georgianUi = {
+  "Available USD balance": "ხელმისაწვდომი USD ბალანსი",
+  "Buy with balance": "ბალანსით ყიდვა",
+  "Insufficient USD balance": "USD ბალანსი არასაკმარისია",
+  "Confirm balance purchase": "ბალანსით შეძენის დადასტურება",
+  "This amount will be deducted from your USD balance.": "ეს თანხა ჩამოიჭრება შენი USD ბალანსიდან.",
+  "Confirm purchase": "შეძენის დადასტურება",
+  "Processing...": "მიმდინარეობს...",
+  Cancel: "გაუქმება",
+  "USD balance": "USD ბალანსი",
+  "Plan purchased with balance and activated.": "გეგმა ბალანსით შეძენილია და გააქტიურებულია.",
+  "This plan or a higher tier is already active": "ეს ან უფრო მაღალი დონის გეგმა უკვე აქტიურია",
+  "Could not purchase bot plan": "ბოტის გეგმის შეძენა ვერ მოხერხდა",
   "{count} referrals": "{count} მოწვევა",
   "{count} matching records": "{count} შესაბამისი ჩანაწერი",
   Sidebar: "გვერდითი პანელი",

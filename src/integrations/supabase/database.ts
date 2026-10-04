@@ -45,9 +45,21 @@ export type Database = Omit<GeneratedDatabase, "public"> & {
         expires_at: string | null;
       }>;
       notification_reads: Table<{ user_id: string; notification_id: string; read_at: string }>;
+      balance_plan_purchases: Table<{
+        id: string;
+        user_id: string;
+        request_id: string;
+        plan_id: string;
+        price_amount: number;
+        created_at: string;
+      }>;
     };
     Functions: PublicSchema["Functions"] & {
       session_is_verified: Fn<Record<string, never>, boolean>;
+      purchase_balance_plan: Fn<
+        { p_user_id: string; p_plan_id: string; p_request_id: string },
+        Json
+      >;
       perform_admin_action: Fn<
         { p_actor: string; p_action: string; p_target?: string | null; p_details?: Json },
         Json

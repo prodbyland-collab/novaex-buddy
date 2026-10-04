@@ -96,6 +96,131 @@ before(async () => {
 });
 after(() => db.close());
 
+const purchasePlan = (id, plan, requestId = randomUUID()) =>
+  service(() => value("SELECT public.purchase_balance_plan($1,$2,$3)", [id, plan, requestId]));
+
+test("balance plan purchases deduct fixed prices, activate immediately and safely replay", async () => {
+  const id = await account(650);
+  const request = randomUUID();
+  const pro = await purchasePlan(id, "pro", request);
+  assert.equal(Number(pro.price_amount), 250);
+  assert.equal(await balance(id), 400);
+  assert.equal(
+    await value("SELECT plan_id FROM public.ai_trading_settings WHERE user_id=$1", [id]),
+    "pro",
+  );
+  assert.deepEqual(await purchasePlan(id, "pro", request), pro);
+  assert.equal(await balance(id), 400);
+  await assert.rejects(purchasePlan(id, "elite", request), /Request already used/);
+  await assert.rejects(purchasePlan(id, "pro"), /already active/);
+  const elite = await purchasePlan(id, "elite");
+  assert.equal(Number(elite.price_amount), 400);
+  assert.equal(await balance(id), 0);
+  const settings = (
+    await query(
+      "SELECT plan_id,plan_rate,enabled FROM public.ai_trading_settings WHERE user_id=$1",
+      [id],
+    )
+  )[0];
+  assert.equal(settings.plan_id, "elite");
+  assert.equal(Number(settings.plan_rate), 0.05);
+  assert.equal(settings.enabled, true);
+  await assert.rejects(purchasePlan(id, "pro"), /already active/);
+  assert.equal(
+    Number(
+      await value("SELECT count(*) FROM public.balance_plan_purchases WHERE user_id=$1", [id]),
+    ),
+    2,
+  );
+  assert.equal(
+    Number(await value("SELECT count(*) FROM public.crypto_deposits WHERE user_id=$1", [id])),
+    0,
+  );
+  assert.equal(
+    Number(
+      await value(
+        "SELECT count(*) FROM public.member_notifications WHERE user_id=$1 AND kind='plan'",
+        [id],
+      ),
+    ),
+    2,
+  );
+});
+
+test("failed balance purchases leave balances, plans and history unchanged", async () => {
+  const id = await account(249.99);
+  await assert.rejects(purchasePlan(id, "pro"), /Insufficient USD balance/);
+  await assert.rejects(purchasePlan(id, "elite"), /Insufficient USD balance/);
+  await assert.rejects(purchasePlan(id, "free"), /Unknown bot plan/);
+  assert.equal(await balance(id), 249.99);
+  assert.equal(
+    await value("SELECT plan_id FROM public.ai_trading_settings WHERE user_id=$1", [id]),
+    "free",
+  );
+  assert.equal(
+    Number(
+      await value("SELECT count(*) FROM public.balance_plan_purchases WHERE user_id=$1", [id]),
+    ),
+    0,
+  );
+});
+
+test("a balance purchase failure after deduction rolls back the entire transaction", async () => {
+  const id = await account(500);
+  await db.exec(`
+    CREATE FUNCTION public.reject_test_plan_purchase() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN RAISE EXCEPTION 'Test purchase failure'; END $$;
+    CREATE TRIGGER reject_test_plan_purchase BEFORE INSERT ON public.balance_plan_purchases
+      FOR EACH ROW EXECUTE FUNCTION public.reject_test_plan_purchase();
+  `);
+  try {
+    await assert.rejects(purchasePlan(id, "pro"), /Test purchase failure/);
+    assert.equal(await balance(id), 500);
+    assert.equal(
+      await value("SELECT plan_id FROM public.ai_trading_settings WHERE user_id=$1", [id]),
+      "free",
+    );
+    assert.equal(
+      Number(
+        await value(
+          "SELECT count(*) FROM public.member_notifications WHERE user_id=$1 AND kind='plan'",
+          [id],
+        ),
+      ),
+      0,
+    );
+  } finally {
+    await db.exec(
+      "DROP TRIGGER reject_test_plan_purchase ON public.balance_plan_purchases; DROP FUNCTION public.reject_test_plan_purchase()",
+    );
+  }
+});
+
+test("balance purchase history is owner-only and financial writes are service-only", async () => {
+  const id = await account(500),
+    other = await account();
+  await purchasePlan(id, "pro");
+  assert.equal(
+    (await asUser(id, () => query("SELECT * FROM public.balance_plan_purchases"))).length,
+    1,
+  );
+  assert.equal(
+    (await asUser(other, () => query("SELECT * FROM public.balance_plan_purchases"))).length,
+    0,
+  );
+  await assert.rejects(
+    asUser(other, () =>
+      query("SELECT public.purchase_balance_plan($1,'elite',$2)", [id, randomUUID()]),
+    ),
+    /permission denied/,
+  );
+  await assert.rejects(
+    asUser(id, () => query("DELETE FROM public.balance_plan_purchases WHERE user_id=$1", [id])),
+    /permission denied/,
+  );
+  assert.equal(await balance(id), 250);
+});
+
 test("audited administrator changes are atomic, service-only and preserve before/after values", async () => {
   const admin = await account(),
     member = await account();

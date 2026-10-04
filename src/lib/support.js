@@ -112,8 +112,8 @@ const topics = [
     id: "plans",
     keywords: ["bot plan", "plan", "tier", "pro", "elite", "free bot", "ბოტ", "პაკეტ", "გეგმ"],
     link: "/terms",
-    en: "Bot plans are paid separately in crypto, not deducted from the trading balance. The $500 balance-deposit minimum does not apply to plan purchases, although provider minimums still apply. Plan rates are programmed internal credits, not guaranteed investment returns.",
-    ka: "ბოტის პაკეტები კრიპტოთი ცალკე გადაიხდება და სავაჭრო ბალანსიდან არ ჩამოიჭრება. ბალანსის დეპოზიტის $500-იანი მინიმუმი პაკეტის შეძენას არ ეხება, თუმცა პროვაიდერის მინიმუმი მოქმედებს. პაკეტის პროცენტები პროგრამული შიდა დარიცხვებია და გარანტირებული საინვესტიციო შემოსავალი არ არის.",
+    en: "Bot plans can be purchased with your USD balance or a separate crypto payment. Balance purchases deduct the full plan price and activate immediately. The $500 balance-deposit minimum does not apply to plan purchases, although provider minimums still apply. Plan rates are programmed internal credits, not guaranteed investment returns.",
+    ka: "ბოტის პაკეტების შეძენა შესაძლებელია USD ბალანსით ან კრიპტოთი ცალკე გადახდით. ბალანსით შეძენისას პაკეტის სრული ფასი ჩამოიჭრება და გეგმა მაშინვე გააქტიურდება. ბალანსის დეპოზიტის $500-იანი მინიმუმი პაკეტის შეძენას არ ეხება, თუმცა პროვაიდერის მინიმუმი მოქმედებს. პაკეტის პროცენტები პროგრამული შიდა დარიცხვებია და გარანტირებული საინვესტიციო შემოსავალი არ არის.",
   },
   {
     id: "referrals",
