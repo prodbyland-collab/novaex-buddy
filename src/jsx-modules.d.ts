@@ -48,3 +48,16 @@ declare module "@/lib/i18n" {
   export const LanguageSwitch: any;
   export const LANGUAGES: any;
 }
+
+declare module "@/lib/group" {
+  export const validateNews: any;
+}
+
+declare module "@/lib/group.server" {
+  export const publishAdministratorNews: any;
+}
+
+declare module "@/components/SupportChat" {
+  const Component: any;
+  export default Component;
+}
