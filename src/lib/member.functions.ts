@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireVerifiedAuth } from "@/integrations/supabase/verified-auth";
+import { z } from "zod";
 
 export const getMemberOverview = createServerFn({ method: "GET" })
   .middleware([requireVerifiedAuth])
@@ -66,8 +67,9 @@ export const getNotifications = createServerFn({ method: "GET" })
 
 export const markNotificationsRead = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .handler(async ({ context }) => {
-    const { error } = await context.supabase.rpc("mark_notifications_read", {});
+  .validator(z.object({ ids: z.array(z.string().uuid()).max(100) }))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("mark_notifications_read", { p_ids: data.ids });
     if (error) throw new Error("Could not mark notifications as read. Please retry.");
     return { ok: true };
   });

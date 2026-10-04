@@ -1,5 +1,5 @@
 import { formatDateTime } from "@/lib/locale";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { getNotifications, markNotificationsRead } from "@/lib/member.functions";
@@ -9,6 +9,7 @@ import RetryNotice from "./RetryNotice";
 export default function NotificationCenter() {
   const { lang, t } = useI18n();
   const ka = lang === "ka";
+  const attemptedReads = useRef("");
   const [now, setNow] = useState(Date.now());
   const [open, setOpen] = useState(false),
     [rows, setRows] = useState([]),
@@ -45,17 +46,30 @@ export default function NotificationCenter() {
   }, [open]);
   const visible = rows.filter((r) => !r.expires_at || Date.parse(r.expires_at) > now);
   const unread = visible.filter((r) => !r.notification_reads?.length).length;
-  async function markRead() {
+  const markRead = useCallback(async () => {
+    const ids = rows.filter((r) => (!r.expires_at || Date.parse(r.expires_at) > now) && !r.notification_reads?.length).map((r) => r.id);
+    if (!ids.length) return;
     setBusy(true);
     try {
-      await markNotificationsRead();
-      await load();
+      await markNotificationsRead({ data: { ids } });
+      const readAt = new Date().toISOString();
+      setRows((current) => current.map((row) => ids.includes(row.id)
+        ? { ...row, notification_reads: [{ notification_id: row.id, read_at: readAt }] }
+        : row));
+      setError("");
     } catch (e) {
       setError(e.message);
     } finally {
       setBusy(false);
     }
-  }
+  }, [rows, now]);
+  const unreadIds = visible.filter((r) => !r.notification_reads?.length).map((r) => r.id).join(",");
+  useEffect(() => {
+    if (!open) { attemptedReads.current = ""; return; }
+    if (loading || busy || error || !unreadIds || attemptedReads.current === unreadIds) return;
+    attemptedReads.current = unreadIds;
+    void markRead();
+  }, [open, loading, busy, error, unreadIds, markRead]);
   const labels = ka
     ? {
         deposit: "დეპოზიტი ჩაირიცხა",
