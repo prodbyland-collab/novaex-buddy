@@ -96,6 +96,216 @@ before(async () => {
 });
 after(() => db.close());
 
+test("audited administrator changes are atomic, service-only and preserve before/after values", async () => {
+  const admin = await account(),
+    member = await account();
+  await query("INSERT INTO public.user_roles(user_id,role) VALUES($1,'admin')", [admin]);
+  const act = (actor, action, target, details) =>
+    service(() =>
+      value("SELECT public.perform_admin_action($1,$2,$3,$4)", [actor, action, target, details]),
+    );
+  await assert.rejects(
+    act(member, "balance.set", member, { symbol: "USD", value: 500 }),
+    /Forbidden/,
+  );
+  await asUser(admin, () =>
+    assert.rejects(
+      query("SELECT public.perform_admin_action($1,'balance.set',$2,'{}')", [admin, member]),
+      /permission denied/,
+    ),
+  );
+  await act(admin, "balance.set", member, { symbol: "USD", value: 700 });
+  assert.equal(await balance(member), 700);
+  const audit = (
+    await query(
+      "SELECT * FROM public.admin_audit_log WHERE target_id=$1 AND action='balance.set'",
+      [member],
+    )
+  )[0];
+  assert.equal(audit.actor_id, admin);
+  assert.equal(audit.details.before.amount, 1000);
+  assert.equal(audit.details.result.amount, 700);
+  await assert.rejects(
+    act(admin, "balance.adjust", member, { symbol: "USD", value: -900 }),
+    /balance|funds/i,
+  );
+  assert.equal(await balance(member), 700);
+  assert.equal(
+    Number(await value("SELECT count(*) FROM public.admin_audit_log WHERE target_id=$1", [member])),
+    1,
+  );
+  await asUser(member, async () =>
+    assert.equal(Number(await value("SELECT count(*) FROM public.admin_audit_log")), 0),
+  );
+  await act(admin, "plan.set", member, { plan: "pro", enabled: true });
+  await act(admin, "boost.set", member, { grant: true });
+  await act(admin, "role.set", member, { admin: true });
+  await assert.rejects(act(admin, "role.set", admin, { admin: false }), /own admin/);
+  assert.equal(
+    await value("SELECT plan_id FROM public.ai_trading_settings WHERE user_id=$1", [member]),
+    "pro",
+  );
+});
+
+test("deposit and plan alerts are private, idempotent, and read receipts cannot be forged", async () => {
+  const owner = await account(),
+    stranger = await account(),
+    payment = await deposit(owner);
+  await credit(payment, 2);
+  await credit(payment, 2);
+  const rows = await query("SELECT * FROM public.member_notifications WHERE user_id=$1", [owner]);
+  assert.equal(rows.filter((r) => r.kind === "deposit").length, 1);
+  assert.equal(rows[0].details.amount, 1000);
+  await asUser(stranger, async () => {
+    assert.equal(
+      Number(
+        await value("SELECT count(*) FROM public.member_notifications WHERE user_id=$1", [owner]),
+      ),
+      0,
+    );
+    await query("SELECT public.mark_notifications_read($1)", [[rows[0].id]]);
+    assert.equal(
+      Number(
+        await value("SELECT count(*) FROM public.notification_reads WHERE notification_id=$1", [
+          rows[0].id,
+        ]),
+      ),
+      0,
+    );
+    await assert.rejects(
+      query("INSERT INTO public.member_notifications(kind,event_key) VALUES('code','forged')"),
+      /permission denied/,
+    );
+  });
+  await asUser(owner, () => query("SELECT public.mark_notifications_read($1)", [[rows[0].id]]));
+  assert.equal(
+    Number(
+      await value("SELECT count(*) FROM public.notification_reads WHERE notification_id=$1", [
+        rows[0].id,
+      ]),
+    ),
+    1,
+  );
+  const planPayment = await deposit(owner, "plan", "pro");
+  await credit(planPayment, 2);
+  await credit(planPayment, 2);
+  assert.equal(
+    Number(
+      await value(
+        "SELECT count(*) FROM public.member_notifications WHERE user_id=$1 AND kind='plan'",
+        [owner],
+      ),
+    ),
+    1,
+  );
+});
+
+test("global code alerts expire and rotations become unread again", async () => {
+  const owner = await account();
+  const id = randomUUID();
+  await query(
+    "INSERT INTO public.group_announcements(id,kind,body,code,code_date,expires_at) VALUES($1,'code','','TEST-CODE',current_date,now()+interval '10 minutes')",
+    [id],
+  );
+  const notification = await value(
+    "SELECT id FROM public.member_notifications WHERE event_key=$1",
+    [`code:${id}`],
+  );
+  await asUser(owner, () => query("SELECT public.mark_notifications_read($1)", [[notification]]));
+  await query("UPDATE public.group_announcements SET code='ROTATED-CODE' WHERE id=$1", [id]);
+  assert.equal(
+    Number(
+      await value("SELECT count(*) FROM public.notification_reads WHERE notification_id=$1", [
+        notification,
+      ]),
+    ),
+    0,
+  );
+  assert.equal(
+    await value("SELECT details->>'code' FROM public.member_notifications WHERE id=$1", [
+      notification,
+    ]),
+    "ROTATED-CODE",
+  );
+  await query(
+    "UPDATE public.group_announcements SET expires_at=now()-interval '1 second' WHERE id=$1",
+    [id],
+  );
+  await asUser(owner, async () =>
+    assert.equal(
+      Number(
+        await value("SELECT count(*) FROM public.member_notifications WHERE id=$1", [notification]),
+      ),
+      0,
+    ),
+  );
+});
+
+test("auth audit intents record failures and survive account deletion", async () => {
+  const admin = await account(),
+    member = await account();
+  await query("INSERT INTO public.user_roles(user_id,role) VALUES($1,'admin')", [admin]);
+  const id = await service(() =>
+    value("SELECT public.begin_admin_auth_action($1,$2,'account.delete')", [admin, member]),
+  );
+  assert.equal(
+    await value("SELECT outcome FROM public.admin_audit_log WHERE id=$1", [id]),
+    "pending",
+  );
+  await service(() =>
+    query("SELECT public.finish_admin_auth_action($1,false,'Provider refused')", [id]),
+  );
+  assert.equal(
+    await value("SELECT outcome FROM public.admin_audit_log WHERE id=$1", [id]),
+    "failed",
+  );
+  await query("DELETE FROM auth.users WHERE id=$1", [member]);
+  assert.equal(
+    await value("SELECT target_id FROM public.admin_audit_log WHERE id=$1", [id]),
+    member,
+  );
+});
+
+test("notification and audit reads require MFA and the migration safely reapplies", async () => {
+  const admin = await account(),
+    payment = await deposit(admin);
+  await credit(payment, 2);
+  await query("INSERT INTO public.user_roles(user_id,role) VALUES($1,'admin')", [admin]);
+  await query("INSERT INTO auth.mfa_factors(user_id,status) VALUES($1,'verified')", [admin]);
+  await asUser(admin, async () => {
+    assert.equal(
+      Number(
+        await value("SELECT count(*) FROM public.member_notifications WHERE user_id=$1", [admin]),
+      ),
+      0,
+    );
+    assert.equal(Number(await value("SELECT count(*) FROM public.admin_audit_log")), 0);
+    await assert.rejects(query("SELECT public.mark_notifications_read()"), /verification required/);
+  });
+  await asUser(
+    admin,
+    async () => {
+      assert.equal(
+        Number(
+          await value("SELECT count(*) FROM public.member_notifications WHERE user_id=$1", [admin]),
+        ),
+        1,
+      );
+      await query("SELECT public.mark_notifications_read()");
+    },
+    "aal2",
+  );
+  await db.exec(
+    await readFile(new URL("20261004160000_member_tools.sql", migrationDirectory), "utf8"),
+  );
+  assert.equal(
+    Number(
+      await value("SELECT count(*) FROM public.member_notifications WHERE user_id=$1", [admin]),
+    ),
+    1,
+  );
+});
+
 test("authenticated users cannot forge balances, payouts, withdrawals or orders", async () => {
   const id = await account();
   await asUser(id, async () => {

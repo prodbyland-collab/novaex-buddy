@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -17,6 +18,8 @@ export function AuthProvider({ children }) {
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (_event === "PASSWORD_RECOVERY") setRecovering(true);
+      if (_event === "SIGNED_OUT") setRecovering(false);
       setSession(sess);
       setUser(sess?.user ?? null);
       setLoading(false);
@@ -30,6 +33,7 @@ export function AuthProvider({ children }) {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth`,
         data: createLegalAcceptance(acceptedLegal),
       },
     });
@@ -44,7 +48,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, recovering }}>
       {children}
     </AuthContext.Provider>
   );

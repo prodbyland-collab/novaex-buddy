@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useLivePrices } from "@/lib/useLivePrices";
 import { MARKET_MAP } from "@/lib/markets";
 import { ensureUsdBalance, fetchHoldings, fetchCostBasis } from "@/lib/api";
@@ -11,23 +11,46 @@ export function PortfolioProvider({ user, children }) {
   const prices = useLivePrices();
   const [holdings, setHoldings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const sequence = useRef(0);
   const [prevTotal, setPrevTotal] = useState(null);
   const [basis, setBasis] = useState({ deposited: 0, withdrawn: 0, netInvested: 0 });
 
   const load = useCallback(async () => {
-    if (!user) return;
-    await ensureUsdBalance(user.id);
-    const [data, costBasis] = await Promise.all([
-      fetchHoldings(user.id),
-      fetchCostBasis(user.id).catch(() => ({ deposited: 0, withdrawn: 0, netInvested: 0 })),
-    ]);
-    setHoldings(data);
-    setBasis(costBasis);
-    setLoading(false);
+    const request = ++sequence.current;
+    if (!user) {
+      setLoading(false);
+      return false;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      await ensureUsdBalance(user.id);
+      const [data, costBasis] = await Promise.all([
+        fetchHoldings(user.id),
+        fetchCostBasis(user.id),
+      ]);
+      if (request !== sequence.current) return false;
+      setHoldings(data);
+      setBasis(costBasis);
+      return true;
+    } catch (e) {
+      if (request === sequence.current) setError(e.message || "Could not load portfolio");
+      return false;
+    } finally {
+      if (request === sequence.current) setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
+    setHoldings([]);
+    setBasis({ deposited: 0, withdrawn: 0, netInvested: 0 });
+    setPrevTotal(null);
     load();
+    const pending = sequence;
+    return () => {
+      pending.current++;
+    };
   }, [load]);
 
   const total = holdings.reduce((sum, h) => {
@@ -64,6 +87,7 @@ export function PortfolioProvider({ user, children }) {
         total,
         usdBalance,
         loading,
+        error,
         flashDir,
         changeUsd,
         changePct,

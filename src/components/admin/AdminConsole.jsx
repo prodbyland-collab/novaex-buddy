@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toCsv } from "@/lib/admin-tools";
+import AuditHistory from "./AuditHistory";
 
 const assets = ["USD", "BTC", "ETH", "SOL", "XRP", "BNB", "LTC", "DOGE", "TRX", "USDT"];
 const money = (v) => Number(v ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -500,290 +501,307 @@ export default function AdminConsole({ services, viewerId, initialData = null })
               ["deposits", "Deposits"],
               ["withdrawals", "Withdrawals"],
               ["announcements", "Announcements"],
+              ["audit", "Audit log"],
             ].map(([key, title]) => (
               <button key={key} aria-pressed={tab === key} onClick={() => switchTab(key)}>
                 {title}
-                <span>{data[key]?.length ?? 0}</span>
+                {key !== "audit" && <span>{data[key]?.length ?? 0}</span>}
               </button>
             ))}
           </nav>
-          <div className="ac-toolbar">
-            <input
-              aria-label="Search records"
-              placeholder={
-                tab === "announcements" ? "Search announcements…" : "Search email, ID or reference…"
-              }
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-            />
-            {tab !== "announcements" && (
-              <select
-                aria-label="Filter records"
-                value={filter}
-                onChange={(e) => {
-                  setFilter(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">All {tab === "users" ? "accounts" : "statuses"}</option>
-                {(tab === "users"
-                  ? ["admin", "suspended", "ai", "funded"]
-                  : [...new Set(data[tab].map((r) => r.status))]
-                ).map((value) => (
-                  <option key={value} value={value}>
-                    {value === "ai" ? "AI enabled" : value}
-                  </option>
-                ))}
-              </select>
-            )}
-            <select
-              aria-label="Sort records"
-              value={sort}
-              onChange={(e) => {
-                setSort(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="newest">Newest first</option>
-              {tab !== "announcements" && <option value="email">Email A–Z</option>}
-              {tab !== "announcements" && <option value="amount">Highest USD value</option>}
-            </select>
-            <button disabled={!rows.length} onClick={exportRows}>
-              Export CSV
-            </button>
-          </div>
-          {tab === "announcements" ? (
-            <div className="ac-news">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  run(
-                    () => services.publishNews({ data: { body: news.trim() } }),
-                    "Announcement published",
-                  ).then((ok) => {
-                    if (ok) setNews("");
-                  });
-                }}
-              >
-                <label>
-                  New group announcement
-                  <textarea
-                    required
-                    minLength={1}
-                    maxLength={2000}
-                    value={news}
-                    onChange={(e) => setNews(e.target.value)}
-                    placeholder="Write a message for your members…"
-                  />
-                </label>
-                <div className="ac-actions">
-                  <small>{news.length}/2000</small>
-                  <button
-                    className="ac-primary"
-                    disabled={busy || loading || stale || !news.trim()}
+          {tab === "audit" ? (
+            <AuditHistory service={services.auditHistory} />
+          ) : (
+            <>
+              <div className="ac-toolbar">
+                <input
+                  aria-label="Search records"
+                  placeholder={
+                    tab === "announcements"
+                      ? "Search announcements…"
+                      : "Search email, ID or reference…"
+                  }
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setPage(1);
+                  }}
+                />
+                {tab !== "announcements" && (
+                  <select
+                    aria-label="Filter records"
+                    value={filter}
+                    onChange={(e) => {
+                      setFilter(e.target.value);
+                      setPage(1);
+                    }}
                   >
-                    Publish announcement
+                    <option value="all">All {tab === "users" ? "accounts" : "statuses"}</option>
+                    {(tab === "users"
+                      ? ["admin", "suspended", "ai", "funded"]
+                      : [...new Set(data[tab].map((r) => r.status))]
+                    ).map((value) => (
+                      <option key={value} value={value}>
+                        {value === "ai" ? "AI enabled" : value}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <select
+                  aria-label="Sort records"
+                  value={sort}
+                  onChange={(e) => {
+                    setSort(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="newest">Newest first</option>
+                  {tab !== "announcements" && <option value="email">Email A–Z</option>}
+                  {tab !== "announcements" && <option value="amount">Highest USD value</option>}
+                </select>
+                <button disabled={!rows.length} onClick={exportRows}>
+                  Export CSV
+                </button>
+              </div>
+              {tab === "announcements" ? (
+                <div className="ac-news">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      run(
+                        () => services.publishNews({ data: { body: news.trim() } }),
+                        "Announcement published",
+                      ).then((ok) => {
+                        if (ok) setNews("");
+                      });
+                    }}
+                  >
+                    <label>
+                      New group announcement
+                      <textarea
+                        required
+                        minLength={1}
+                        maxLength={2000}
+                        value={news}
+                        onChange={(e) => setNews(e.target.value)}
+                        placeholder="Write a message for your members…"
+                      />
+                    </label>
+                    <div className="ac-actions">
+                      <small>{news.length}/2000</small>
+                      <button
+                        className="ac-primary"
+                        disabled={busy || loading || stale || !news.trim()}
+                      >
+                        Publish announcement
+                      </button>
+                    </div>
+                  </form>
+                  {visible.map((r) => (
+                    <article key={r.id}>
+                      <p>{r.body}</p>
+                      <div className="ac-actions">
+                        <small>{date(r.created_at)}</small>
+                        <button
+                          disabled={busy || loading || stale}
+                          onClick={() => {
+                            if (window.confirm("Delete this announcement?"))
+                              run(
+                                () =>
+                                  services.deleteAnnouncement({ data: { announcementId: r.id } }),
+                                "Announcement deleted",
+                              );
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="ac-table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        {(tab === "users"
+                          ? ["Account", "USD balance", "Trading", "Access", "Joined", ""]
+                          : ["Account / reference", "Amount", "Status", "Created", "Actions"]
+                        ).map((label, i) => (
+                          <th key={i}>{label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visible.map((r) =>
+                        tab === "users" ? (
+                          <tr key={r.id} className={r.id === selected ? "ac-selected" : ""}>
+                            <td>
+                              <strong>{r.email || "No email"}</strong>
+                              <small>
+                                {r.id.slice(0, 8)} · {r.referrals} referrals
+                              </small>
+                            </td>
+                            <td>{money(r.usd)}</td>
+                            <td>
+                              <Tag>{r.planId}</Tag>
+                              <small>AI {r.aiEnabled ? "on" : "off"}</small>
+                            </td>
+                            <td>
+                              <Tag>
+                                {r.suspended ? "Suspended" : r.isAdmin ? "Admin" : "Member"}
+                              </Tag>
+                            </td>
+                            <td>{date(r.createdAt)}</td>
+                            <td>
+                              <button
+                                aria-label={`Manage ${r.email || r.id}`}
+                                onClick={() => setSelected(r.id)}
+                              >
+                                Manage
+                              </button>
+                            </td>
+                          </tr>
+                        ) : (
+                          <tr key={r.id}>
+                            <td>
+                              <button
+                                className="ac-text-button"
+                                onClick={() => setSelected(r.user_id)}
+                              >
+                                {r.email}
+                              </button>
+                              <button
+                                className="ac-id"
+                                title="Copy payment reference"
+                                onClick={() => copy(String(r.payment_id ?? r.id))}
+                              >
+                                {String(r.payment_id ?? r.id).slice(0, 16)} · Copy
+                              </button>
+                              {r.address && (
+                                <small title={r.address}>{r.address.slice(0, 18)}…</small>
+                              )}
+                            </td>
+                            <td>
+                              {tab === "deposits"
+                                ? money(r.price_amount)
+                                : `${Number(r.amount).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${r.symbol}`}
+                              <small>
+                                {tab === "deposits"
+                                  ? `${r.pay_amount ?? "—"} ${r.pay_currency ?? ""}`
+                                  : `Fee ${r.fee_amount ?? 0} ${r.symbol} · Net ${r.net_amount ?? 0}`}
+                              </small>
+                            </td>
+                            <td>
+                              <Tag>{r.status}</Tag>
+                              {r.credited_at && <small>Credited</small>}
+                            </td>
+                            <td>{date(r.created_at)}</td>
+                            <td>
+                              <div className="ac-actions">
+                                {tab === "deposits" ? (
+                                  !r.credited_at && (
+                                    <>
+                                      <button
+                                        disabled={busy || loading || stale}
+                                        onClick={() => {
+                                          if (window.confirm("Verify and credit this deposit?"))
+                                            run(
+                                              () =>
+                                                services.updateDeposit({
+                                                  data: { depositId: r.id, action: "approve" },
+                                                }),
+                                              "Deposit credited",
+                                            );
+                                        }}
+                                      >
+                                        Verify & credit
+                                      </button>
+                                      <button
+                                        disabled={busy || loading || stale || r.status === "failed"}
+                                        onClick={() => {
+                                          if (window.confirm("Reject this uncredited deposit?"))
+                                            run(
+                                              () =>
+                                                services.updateDeposit({
+                                                  data: { depositId: r.id, action: "reject" },
+                                                }),
+                                              "Deposit rejected",
+                                            );
+                                        }}
+                                      >
+                                        Reject
+                                      </button>
+                                    </>
+                                  )
+                                ) : r.refunded_at ? (
+                                  <small>Refunded · locked</small>
+                                ) : (
+                                  ["pending", "completed", "failed"]
+                                    .filter((s) => s !== r.status)
+                                    .map((status) => (
+                                      <button
+                                        key={status}
+                                        disabled={busy || loading || stale}
+                                        onClick={() => {
+                                          if (
+                                            window.confirm(
+                                              status === "failed"
+                                                ? "Mark failed and refund this withdrawal once?"
+                                                : `Mark withdrawal ${status}?`,
+                                            )
+                                          )
+                                            run(
+                                              () =>
+                                                services.updateWithdrawal({
+                                                  data: { withdrawalId: r.id, status },
+                                                }),
+                                              "Withdrawal updated",
+                                            );
+                                        }}
+                                      >
+                                        {status === "failed"
+                                          ? "Fail & refund"
+                                          : status === "completed"
+                                            ? "Complete"
+                                            : "Pending"}
+                                      </button>
+                                    ))
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {!rows.length && <p className="ac-empty">No records match your filters.</p>}
+              <footer className="ac-pagination">
+                <small>
+                  {rows.length} matching records
+                  {tab === "deposits" || tab === "withdrawals"
+                    ? " · Full payment history"
+                    : tab === "announcements"
+                      ? " · Latest 20 loaded"
+                      : ""}
+                  {updated ? ` · Updated ${date(updated)}` : ""}
+                </small>
+                <div className="ac-actions">
+                  <button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
+                    Previous
+                  </button>
+                  <span>
+                    {currentPage} / {pages}
+                  </span>
+                  <button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>
+                    Next
                   </button>
                 </div>
-              </form>
-              {visible.map((r) => (
-                <article key={r.id}>
-                  <p>{r.body}</p>
-                  <div className="ac-actions">
-                    <small>{date(r.created_at)}</small>
-                    <button
-                      disabled={busy || loading || stale}
-                      onClick={() => {
-                        if (window.confirm("Delete this announcement?"))
-                          run(
-                            () => services.deleteAnnouncement({ data: { announcementId: r.id } }),
-                            "Announcement deleted",
-                          );
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="ac-table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    {(tab === "users"
-                      ? ["Account", "USD balance", "Trading", "Access", "Joined", ""]
-                      : ["Account / reference", "Amount", "Status", "Created", "Actions"]
-                    ).map((label, i) => (
-                      <th key={i}>{label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visible.map((r) =>
-                    tab === "users" ? (
-                      <tr key={r.id} className={r.id === selected ? "ac-selected" : ""}>
-                        <td>
-                          <strong>{r.email || "No email"}</strong>
-                          <small>
-                            {r.id.slice(0, 8)} · {r.referrals} referrals
-                          </small>
-                        </td>
-                        <td>{money(r.usd)}</td>
-                        <td>
-                          <Tag>{r.planId}</Tag>
-                          <small>AI {r.aiEnabled ? "on" : "off"}</small>
-                        </td>
-                        <td>
-                          <Tag>{r.suspended ? "Suspended" : r.isAdmin ? "Admin" : "Member"}</Tag>
-                        </td>
-                        <td>{date(r.createdAt)}</td>
-                        <td>
-                          <button
-                            aria-label={`Manage ${r.email || r.id}`}
-                            onClick={() => setSelected(r.id)}
-                          >
-                            Manage
-                          </button>
-                        </td>
-                      </tr>
-                    ) : (
-                      <tr key={r.id}>
-                        <td>
-                          <button className="ac-text-button" onClick={() => setSelected(r.user_id)}>
-                            {r.email}
-                          </button>
-                          <button
-                            className="ac-id"
-                            title="Copy payment reference"
-                            onClick={() => copy(String(r.payment_id ?? r.id))}
-                          >
-                            {String(r.payment_id ?? r.id).slice(0, 16)} · Copy
-                          </button>
-                          {r.address && <small title={r.address}>{r.address.slice(0, 18)}…</small>}
-                        </td>
-                        <td>
-                          {tab === "deposits"
-                            ? money(r.price_amount)
-                            : `${Number(r.amount).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${r.symbol}`}
-                          <small>
-                            {tab === "deposits"
-                              ? `${r.pay_amount ?? "—"} ${r.pay_currency ?? ""}`
-                              : `Fee ${r.fee_amount ?? 0} ${r.symbol} · Net ${r.net_amount ?? 0}`}
-                          </small>
-                        </td>
-                        <td>
-                          <Tag>{r.status}</Tag>
-                          {r.credited_at && <small>Credited</small>}
-                        </td>
-                        <td>{date(r.created_at)}</td>
-                        <td>
-                          <div className="ac-actions">
-                            {tab === "deposits" ? (
-                              !r.credited_at && (
-                                <>
-                                  <button
-                                    disabled={busy || loading || stale}
-                                    onClick={() => {
-                                      if (window.confirm("Verify and credit this deposit?"))
-                                        run(
-                                          () =>
-                                            services.updateDeposit({
-                                              data: { depositId: r.id, action: "approve" },
-                                            }),
-                                          "Deposit credited",
-                                        );
-                                    }}
-                                  >
-                                    Verify & credit
-                                  </button>
-                                  <button
-                                    disabled={busy || loading || stale || r.status === "failed"}
-                                    onClick={() => {
-                                      if (window.confirm("Reject this uncredited deposit?"))
-                                        run(
-                                          () =>
-                                            services.updateDeposit({
-                                              data: { depositId: r.id, action: "reject" },
-                                            }),
-                                          "Deposit rejected",
-                                        );
-                                    }}
-                                  >
-                                    Reject
-                                  </button>
-                                </>
-                              )
-                            ) : r.refunded_at ? (
-                              <small>Refunded · locked</small>
-                            ) : (
-                              ["pending", "completed", "failed"]
-                                .filter((s) => s !== r.status)
-                                .map((status) => (
-                                  <button
-                                    key={status}
-                                    disabled={busy || loading || stale}
-                                    onClick={() => {
-                                      if (
-                                        window.confirm(
-                                          status === "failed"
-                                            ? "Mark failed and refund this withdrawal once?"
-                                            : `Mark withdrawal ${status}?`,
-                                        )
-                                      )
-                                        run(
-                                          () =>
-                                            services.updateWithdrawal({
-                                              data: { withdrawalId: r.id, status },
-                                            }),
-                                          "Withdrawal updated",
-                                        );
-                                    }}
-                                  >
-                                    {status === "failed"
-                                      ? "Fail & refund"
-                                      : status === "completed"
-                                        ? "Complete"
-                                        : "Pending"}
-                                  </button>
-                                ))
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ),
-                  )}
-                </tbody>
-              </table>
-            </div>
+              </footer>
+            </>
           )}
-          {!rows.length && <p className="ac-empty">No records match your filters.</p>}
-          <footer className="ac-pagination">
-            <small>
-              {rows.length} matching records
-              {tab === "deposits" || tab === "withdrawals"
-                ? " · Latest 100 loaded"
-                : tab === "announcements"
-                  ? " · Latest 20 loaded"
-                  : ""}
-              {updated ? ` · Updated ${date(updated)}` : ""}
-            </small>
-            <div className="ac-actions">
-              <button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
-                Previous
-              </button>
-              <span>
-                {currentPage} / {pages}
-              </span>
-              <button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>
-                Next
-              </button>
-            </div>
-          </footer>
         </section>
         {account && (
           <AccountPanel

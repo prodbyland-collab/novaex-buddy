@@ -8,6 +8,7 @@ import AdminConsole from "@/components/admin/AdminConsole";
 export default function Admin() {
   const { user } = useAuth();
   const overview = useServerFn(functions.adminOverview);
+  const auditHistory = useServerFn(functions.adminAuditHistory);
   const setBalance = useServerFn(functions.adminSetBalance);
   const adjustBalance = useServerFn(functions.adminAdjustBalance);
   const setPlan = useServerFn(functions.adminSetPlan);
@@ -24,6 +25,7 @@ export default function Admin() {
   const services = useMemo(
     () => ({
       overview,
+      auditHistory,
       setBalance,
       adjustBalance,
       setPlan,
@@ -40,6 +42,7 @@ export default function Admin() {
     }),
     [
       overview,
+      auditHistory,
       setBalance,
       adjustBalance,
       setPlan,

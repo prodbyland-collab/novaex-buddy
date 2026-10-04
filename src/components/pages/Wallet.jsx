@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Wallet as WalletIcon } from "lucide-react";
+import RetryNotice from "@/components/RetryNotice";
+import HistoryPagination from "@/components/HistoryPagination";
 import PageHeading from "@/components/PageHeading";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -29,6 +31,15 @@ function formatDate(value) {
 export default function Wallet() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const [depositError, setDepositError] = useState("");
+  const [withdrawalError, setWithdrawalError] = useState("");
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
+  const [currencyError, setCurrencyError] = useState("");
+  const [syncError, setSyncError] = useState("");
+  const [minimumAttempt, setMinimumAttempt] = useState(0);
+  const [currencyAttempt, setCurrencyAttempt] = useState(0);
+  const [depositPage, setDepositPage] = useState(0);
+  const [withdrawalPage, setWithdrawalPage] = useState(0);
   const [currency, setCurrency] = useState("btc");
   const [amountUsd, setAmountUsd] = useState("");
   const [deposits, setDeposits] = useState([]);
@@ -51,10 +62,19 @@ export default function Wallet() {
   const loadDeposits = useCallback(async () => {
     if (!user) return;
     try {
-      const sync = await syncMyDeposits().catch(() => null);
+      const sync = await syncMyDeposits()
+        .then((result) => {
+          setSyncError("");
+          return result;
+        })
+        .catch(() => {
+          setSyncError(t("wallet.historyError"));
+          return null;
+        });
       if (sync?.updated) reload?.();
       const data = await fetchCryptoDeposits(user.id);
       setDeposits(data);
+      setDepositError("");
       // Completed deposits live only in the history list; the instructions
       // card shows pending deposits only.
       const active = data.filter(
@@ -70,7 +90,7 @@ export default function Wallet() {
         return active[0] || null;
       });
     } catch {
-      setError(t("wallet.historyError"));
+      setDepositError(t("wallet.historyError"));
     } finally {
       setLoading(false);
     }
@@ -90,6 +110,7 @@ export default function Wallet() {
         const result = await fetchMinDeposits();
         if (alive) {
           setCurrencies(result);
+          setCurrencyError("");
           setCurrency((current) =>
             result.length && !result.some((item) => item.currency === current)
               ? result[0].currency
@@ -97,13 +118,13 @@ export default function Wallet() {
           );
         }
       } catch {
-        /* currency list unavailable */
+        if (alive) setCurrencyError(t("wallet.depositError"));
       }
     })();
     return () => {
       alive = false;
     };
-  }, []);
+  }, [currencyAttempt, t]);
 
   const [minUsd, setMinUsd] = useState(null);
   const [minError, setMinError] = useState("");
@@ -129,7 +150,7 @@ export default function Wallet() {
     return () => {
       alive = false;
     };
-  }, [currency, t]);
+  }, [currency, t, minimumAttempt]);
 
   useEffect(() => {
     if (minsLoading || minUsd === null) return;
@@ -172,8 +193,11 @@ export default function Wallet() {
     if (!user) return;
     try {
       setWithdrawals(await fetchWithdrawals(user.id));
+      setWithdrawalError("");
     } catch {
-      /* history is non-critical */
+      setWithdrawalError("Could not load withdrawal history. Please retry.");
+    } finally {
+      setWithdrawalsLoading(false);
     }
   }, [user]);
 
@@ -222,6 +246,13 @@ export default function Wallet() {
       <PageHeading icon={WalletIcon} title={t("wallet.title")}>
         {t("wallet.sub")}
       </PageHeading>
+      <RetryNotice error={currencyError} onRetry={() => setCurrencyAttempt((v) => v + 1)} />
+      <RetryNotice
+        error={minError}
+        onRetry={() => setMinimumAttempt((v) => v + 1)}
+        busy={minsLoading}
+      />
+      <RetryNotice error={syncError} onRetry={loadDeposits} />
 
       <div className="wallet-grid">
         <div className="card">
@@ -416,11 +447,14 @@ export default function Wallet() {
         <div className="card">
           <p className="eyebrow">{t("wallet.activity")}</p>
           <h2 className="wallet-card-title">{t("wallet.withdrawHistory")}</h2>
-          {withdrawals.length === 0 ? (
+          <RetryNotice error={withdrawalError} onRetry={loadWithdrawals} />
+          {withdrawalsLoading ? (
+            <p role="status">{t("wallet.processing")}</p>
+          ) : withdrawalError ? null : withdrawals.length === 0 ? (
             <p className="muted-2">{t("wallet.noWithdrawals")}</p>
           ) : (
             <div className="deposit-history-list">
-              {withdrawals.map((w) => (
+              {withdrawals.slice(withdrawalPage * 20, (withdrawalPage + 1) * 20).map((w) => (
                 <div key={w.id} className="deposit-history-row">
                   <span>
                     <strong>{w.symbol}</strong>
@@ -438,6 +472,11 @@ export default function Wallet() {
               ))}
             </div>
           )}
+          <HistoryPagination
+            page={withdrawalPage}
+            setPage={setWithdrawalPage}
+            count={withdrawals.length}
+          />
         </div>
       </div>
 
@@ -449,13 +488,14 @@ export default function Wallet() {
           </div>
           <span className="muted-2">{t("wallet.autoUpdates")}</span>
         </div>
+        <RetryNotice error={depositError} onRetry={loadDeposits} busy={loading} />
         {loading ? (
           <p className="muted">{t("wallet.loadingDeposits")}</p>
-        ) : deposits.length === 0 ? (
+        ) : depositError ? null : deposits.length === 0 ? (
           <p className="muted-2">{t("wallet.noDeposits")}</p>
         ) : (
           <div className="deposit-history-list">
-            {deposits.map((deposit) => {
+            {deposits.slice(depositPage * 20, (depositPage + 1) * 20).map((deposit) => {
               const done =
                 Boolean(deposit.credited_at) ||
                 !["creating", "waiting", "confirming", "partially_paid", "sending"].includes(
@@ -482,6 +522,7 @@ export default function Wallet() {
           </div>
         )}
       </div>
+      <HistoryPagination page={depositPage} setPage={setDepositPage} count={deposits.length} />
     </div>
   );
 }

@@ -5,7 +5,6 @@ import type { Database } from "@/integrations/supabase/database";
 import { requireVerifiedAuth } from "@/integrations/supabase/verified-auth";
 import { assetSymbol } from "./account.functions";
 import { paymentSchema } from "./payment";
-import { getBotPlan } from "./plans";
 import { fetchAllRows } from "./pagination";
 import { changeAccountAccess } from "./admin-tools";
 
@@ -19,6 +18,16 @@ async function assertAdmin(context: { supabase: SupabaseClient<Database>; userId
   return supabaseAdmin;
 }
 const userId = z.string().uuid();
+async function audited(
+  admin: SupabaseClient<Database>,
+  actor: string,
+  action: string,
+  target: string | null = null,
+  details: import("@/integrations/supabase/types").Json = {},
+) {
+  const { performAdminAction } = await import("./admin-audit.server");
+  return performAdminAction(admin, actor, action, target, details);
+}
 const symbol = assetSymbol.default("USD");
 const totalsSchema = z.object({
   users: z.number(),
@@ -64,12 +73,22 @@ export const adminOverview = createServerFn({ method: "GET" })
       fetchAllRows((from, to) =>
         admin.from("user_roles").select("user_id,role").order("id").range(from, to),
       ),
-      admin
-        .from("crypto_deposits")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100),
-      admin.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
+      fetchAllRows((from, to) =>
+        admin
+          .from("crypto_deposits")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(from, to),
+      ),
+      fetchAllRows((from, to) =>
+        admin
+          .from("withdrawals")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(from, to),
+      ),
       admin.from("daily_ai_codes").select("*").order("code_date", { ascending: false }).limit(1),
       admin.rpc("admin_account_totals"),
       admin
@@ -79,7 +98,7 @@ export const adminOverview = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false })
         .limit(20),
     ]);
-    for (const result of [deposits, withdrawals, code, totals, announcements])
+    for (const result of [code, totals, announcements])
       if (result.error) throw new Error("Could not load administrator data");
     const users = allUsers.map((u) => {
       const own = holdingRows.filter((h) => h.user_id === u.id);
@@ -110,11 +129,11 @@ export const adminOverview = createServerFn({ method: "GET" })
     return {
       users,
       announcements: announcements.data ?? [],
-      deposits: (deposits.data ?? []).map((r) => ({
+      deposits: deposits.map((r) => ({
         ...r,
         email: emailById.get(r.user_id) ?? r.user_id,
       })),
-      withdrawals: (withdrawals.data ?? []).map((r) => ({
+      withdrawals: withdrawals.map((r) => ({
         ...r,
         email: emailById.get(r.user_id) ?? r.user_id,
       })),
@@ -128,14 +147,10 @@ export const adminSetBalance = createServerFn({ method: "POST" })
   .validator(z.object({ userId, symbol, amount: z.number().finite().nonnegative().max(1e12) }))
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
-    const { error } = await admin.rpc("admin_change_balance", {
-      p_user_id: data.userId,
-      p_symbol: data.symbol,
-      p_value: data.amount,
-      p_replace: true,
+    return audited(admin, context.userId, "balance.set", data.userId, {
+      symbol: data.symbol,
+      value: data.amount,
     });
-    if (error) throw new Error(error.message);
-    return { ok: true };
   });
 export const adminAdjustBalance = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
@@ -153,30 +168,20 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
-    const { data: amount, error } = await admin.rpc("admin_change_balance", {
-      p_user_id: data.userId,
-      p_symbol: data.symbol,
-      p_value: data.delta,
-      p_replace: false,
+    return audited(admin, context.userId, "balance.adjust", data.userId, {
+      symbol: data.symbol,
+      value: data.delta,
     });
-    if (error) throw new Error(error.message);
-    return { ok: true, amount };
   });
 export const adminSetPlan = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
   .validator(z.object({ userId, planId: z.enum(["free", "pro", "elite"]), enabled: z.boolean() }))
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
-    const plan = getBotPlan(data.planId);
-    if (!plan) throw new Error("Unknown plan");
-    const { error } = await admin
-      .from("ai_trading_settings")
-      .upsert(
-        { user_id: data.userId, plan_id: plan.id, plan_rate: plan.rate, enabled: data.enabled },
-        { onConflict: "user_id" },
-      );
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    return audited(admin, context.userId, "plan.set", data.userId, {
+      plan: data.planId,
+      enabled: data.enabled,
+    });
   });
 export const adminUpdateDeposit = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
@@ -191,13 +196,7 @@ export const adminUpdateDeposit = createServerFn({ method: "POST" })
     if (error || !row) throw new Error("Deposit not found");
     if (row.credited_at) throw new Error("A credited deposit cannot be changed");
     if (data.action === "reject") {
-      const { error: writeError } = await admin
-        .from("crypto_deposits")
-        .update({ status: "failed" })
-        .eq("id", row.id)
-        .is("credited_at", null);
-      if (writeError) throw new Error(writeError.message);
-      return { ok: true };
+      return audited(admin, context.userId, "deposit.reject", row.id);
     }
     const apiKey = process.env["NOWPAYMENTS_API_KEY"];
     if (!apiKey || !row.payment_id) throw new Error("Payment lookup is unavailable");
@@ -213,13 +212,10 @@ export const adminUpdateDeposit = createServerFn({ method: "POST" })
       payment.actually_paid < Number(row.pay_amount ?? Infinity)
     )
       throw new Error("Payment is not fully settled");
-    const { error: creditError } = await admin.rpc("credit_crypto_deposit", {
-      p_payment_id: payment.payment_id,
-      p_status: payment.payment_status,
-      p_actually_paid: payment.actually_paid,
+    return audited(admin, context.userId, "deposit.credit", row.id, {
+      paymentId: payment.payment_id,
+      paid: payment.actually_paid,
     });
-    if (creditError) throw new Error(creditError.message);
-    return { ok: true };
   });
 export const adminUpdateWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
@@ -231,28 +227,21 @@ export const adminUpdateWithdrawal = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
-    const { error } = await admin.rpc("admin_change_withdrawal", {
-      p_id: data.withdrawalId,
-      p_status: data.status,
+    return audited(admin, context.userId, "withdrawal.status", data.withdrawalId, {
+      status: data.status,
     });
-    if (error) throw new Error(error.message);
-    return { ok: true };
   });
 export const adminRotateDailyCode = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
-    const { data, error } = await admin.rpc("rotate_daily_group_code");
-    if (error) throw new Error(error.message);
-    return { code: data };
+    return audited(admin, context.userId, "code.rotate");
   });
 export const adminRunPayout = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
-    const { data, error } = await admin.rpc("run_daily_ai_trading_payout");
-    if (error) throw new Error(error.message);
-    return { paid: Number(data ?? 0) };
+    return audited(admin, context.userId, "payout.run");
   });
 export const adminSetAdminRole = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
@@ -261,28 +250,14 @@ export const adminSetAdminRole = createServerFn({ method: "POST" })
     const admin = await assertAdmin(context);
     if (data.userId === context.userId && !data.makeAdmin)
       throw new Error("You cannot remove your own admin access");
-    const result = data.makeAdmin
-      ? await admin
-          .from("user_roles")
-          .upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" })
-      : await admin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
-    if (result.error) throw new Error(result.error.message);
-    return { ok: true };
+    return audited(admin, context.userId, "role.set", data.userId, { admin: data.makeAdmin });
   });
 export const adminSetBoost = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
   .validator(z.object({ userId, grant: z.boolean() }))
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
-    const { error } = await admin.from("ai_trading_settings").upsert(
-      {
-        user_id: data.userId,
-        boost_date: data.grant ? new Date().toISOString().slice(0, 10) : null,
-      },
-      { onConflict: "user_id" },
-    );
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    return audited(admin, context.userId, "boost.set", data.userId, { grant: data.grant });
   });
 export const adminDeleteUser = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
@@ -290,9 +265,11 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
     if (data.userId === context.userId) throw new Error("You cannot delete your own account");
-    const { error } = await admin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    const { auditAuthAction } = await import("./admin-audit.server");
+    return auditAuthAction(admin, context.userId, data.userId, "account.delete", async () => {
+      const { error } = await admin.auth.admin.deleteUser(data.userId);
+      if (error) throw new Error(error.message);
+    });
   });
 
 export const adminSetAccountAccess = createServerFn({ method: "POST" })
@@ -300,7 +277,14 @@ export const adminSetAccountAccess = createServerFn({ method: "POST" })
   .validator(z.object({ userId, suspended: z.boolean() }))
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
-    return changeAccountAccess(admin, context.userId, data.userId, data.suspended);
+    const { auditAuthAction } = await import("./admin-audit.server");
+    return auditAuthAction(
+      admin,
+      context.userId,
+      data.userId,
+      data.suspended ? "account.suspend" : "account.restore",
+      () => changeAccountAccess(admin, context.userId, data.userId, data.suspended),
+    );
   });
 
 export const adminDeleteAnnouncement = createServerFn({ method: "POST" })
@@ -308,13 +292,23 @@ export const adminDeleteAnnouncement = createServerFn({ method: "POST" })
   .validator(z.object({ announcementId: z.string().uuid() }))
   .handler(async ({ data, context }) => {
     const admin = await assertAdmin(context);
-    const { data: removed, error } = await admin
-      .from("group_announcements")
-      .delete()
-      .eq("id", data.announcementId)
-      .eq("kind", "news")
-      .select("id");
-    if (error) throw new Error(error.message);
-    if (!removed?.length) throw new Error("Announcement not found");
-    return { ok: true };
+    return audited(admin, context.userId, "announcement.delete", data.announcementId);
+  });
+
+export const adminAuditHistory = createServerFn({ method: "GET" })
+  .middleware([requireVerifiedAuth])
+  .validator(z.object({ page: z.number().int().min(0).max(1000000) }))
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    const { data: rows, error } = await admin
+      .from("admin_audit_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(data.page * 50, data.page * 50 + 50);
+    if (error)
+      throw new Error(
+        "Could not load audit history. Apply the member tools SQL migration and retry.",
+      );
+    return { rows: rows.slice(0, 50), hasMore: rows.length > 50 };
   });

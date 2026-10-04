@@ -22,9 +22,45 @@ export type Database = Omit<GeneratedDatabase, "public"> & {
     Tables: Omit<PublicSchema["Tables"], "security_settings"> & {
       security_settings: Table<Security>;
       group_announcements: Table<Announcement>;
+      admin_audit_log: Table<{
+        id: string;
+        actor_id: string;
+        actor_label: string;
+        target_id: string | null;
+        target_label: string | null;
+        action: string;
+        details: Json;
+        outcome: string;
+        error_message: string | null;
+        created_at: string;
+        completed_at: string | null;
+      }>;
+      member_notifications: Table<{
+        id: string;
+        user_id: string | null;
+        kind: string;
+        event_key: string;
+        details: Json;
+        created_at: string;
+        expires_at: string | null;
+      }>;
+      notification_reads: Table<{ user_id: string; notification_id: string; read_at: string }>;
     };
     Functions: PublicSchema["Functions"] & {
       session_is_verified: Fn<Record<string, never>, boolean>;
+      perform_admin_action: Fn<
+        { p_actor: string; p_action: string; p_target?: string | null; p_details?: Json },
+        Json
+      >;
+      begin_admin_auth_action: Fn<
+        { p_actor: string; p_target: string; p_action: string; p_details?: Json },
+        string
+      >;
+      finish_admin_auth_action: Fn<
+        { p_id: string; p_success: boolean; p_error?: string | null },
+        undefined
+      >;
+      mark_notifications_read: Fn<{ p_ids?: string[] | null }, undefined>;
       ensure_my_account: Fn<Record<string, never>, undefined>;
       set_my_trading_mode: Fn<{ p_enabled: boolean }, Tables<"ai_trading_settings">>;
       configure_my_security: Fn<{ p_whitelist: boolean; p_addresses: string[] }, Security>;

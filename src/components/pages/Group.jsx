@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { MessagesSquare } from "lucide-react";
+import RetryNotice from "@/components/RetryNotice";
+import { nextDailyTime, countdown } from "@/lib/member-time";
 import PageHeading from "@/components/PageHeading";
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
@@ -59,11 +61,11 @@ export default function Group() {
           ? "დღიური კოდი ქვეყნდება 20:00-ზე საქართველოს დროით და მოქმედებს 10 წუთი."
           : "The daily code is posted at 20:00 Tbilisi time and expires after 10 minutes."}
       </PageHeading>
-      {error && (
-        <p role="alert" className="loss">
-          {error}
-        </p>
-      )}
+      <div className="card member-group-timing">
+        <span>{ka ? "შემდეგი კოდი · 20:00" : "Next code · 20:00 Tbilisi"}</span>
+        <strong className="member-countdown">{countdown(nextDailyTime(now, 16), now)}</strong>
+      </div>
+      <RetryNotice error={error} onRetry={load} busy={loading} />
       <button className="btn small ghost" onClick={load}>
         {ka ? "განახლება" : "Refresh"}
       </button>
@@ -91,7 +93,7 @@ export default function Group() {
         </form>
       )}
       {loading && <p>{ka ? "იტვირთება…" : "Loading…"}</p>}
-      {!loading && !feed.posts.length && (
+      {!loading && !error && !feed.posts.length && (
         <p className="muted" style={{ marginTop: 20 }}>
           {ka ? "განცხადებები ჯერ არ არის." : "No announcements yet."}
         </p>
@@ -118,6 +120,9 @@ export default function Group() {
                     ? "ვადაგასულია"
                     : "Expired"}
               </p>
+              {codeIsActive(post, now) && (
+                <p className="member-countdown">{countdown(Date.parse(post.expires_at), now)}</p>
+              )}
               {codeIsActive(post, now) && (
                 <Link className="btn small" to="/app/ai" style={{ marginTop: 12 }}>
                   {ka ? "კოდის გააქტიურება" : "Redeem code"}

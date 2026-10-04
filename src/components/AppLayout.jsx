@@ -7,6 +7,7 @@ import { usePortfolio } from "@/lib/portfolio";
 import { formatUsd } from "@/lib/markets";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import LegalLinks from "@/components/LegalLinks";
+import NotificationCenter from "@/components/NotificationCenter";
 import {
   LayoutDashboard,
   Bot,
@@ -22,7 +23,7 @@ import {
 export default function AppLayout({ children }) {
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
-  const { total, changeUsd, changePct, flashDir } = usePortfolio();
+  const { total, changeUsd, changePct, flashDir, loading, error } = usePortfolio();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -79,11 +80,11 @@ export default function AppLayout({ children }) {
         {t("common.skipContent")}
       </a>
       <header className="app-header">
-        <Link className="brand" to="/app">
+        <Link className="brand" to="/app" aria-label="GNG">
           <span className="brand-mark">
             <span>G</span>
           </span>
-          GNG
+          <span className="brand-name">GNG</span>
         </Link>
         <nav className="app-nav" aria-label={t("common.dashboard")}>
           {navItems.map((item) => (
@@ -103,15 +104,18 @@ export default function AppLayout({ children }) {
           <div
             className={`header-balance-value ${flashDir === "up" ? "flash-up" : flashDir === "down" ? "flash-down" : ""}`}
           >
-            {formatUsd(total)}
+            {loading ? "…" : error ? "—" : formatUsd(total)}
           </div>
-          <div className={`header-balance-change ${isGain ? "gain" : "loss"}`}>
-            {isGain ? "+" : ""}
-            {formatUsd(changeUsd)} ({isGain ? "+" : ""}
-            {changePct.toFixed(2)}%)
-          </div>
+          {!loading && !error && (
+            <div className={`header-balance-change ${isGain ? "gain" : "loss"}`}>
+              {isGain ? "+" : ""}
+              {formatUsd(changeUsd)} ({isGain ? "+" : ""}
+              {changePct.toFixed(2)}%)
+            </div>
+          )}
         </div>
         <div className="user-area">
+          <NotificationCenter key={user?.id ?? "signed-out"} />
           <LanguageSwitch />
           <span className="user-email">{user?.email}</span>
           <div className="user-avatar">{initials}</div>

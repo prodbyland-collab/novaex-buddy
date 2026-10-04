@@ -13,11 +13,12 @@ import { ChartNoAxesCombined, ArrowUpRight } from "lucide-react";
 const REF_KEY = "novax_ref_code";
 
 export default function Auth() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, recovering, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
   const legal = legalLabels[language] || legalLabels.en;
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
+  const [recoveryFinished, setRecoveryFinished] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,6 +27,123 @@ export default function Auth() {
   const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [factorId, setFactorId] = useState(null);
   const [notice, setNotice] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const ka = language === "ka";
+  const recovery = mode === "reset";
+  const forgot = mode === "forgot";
+  const text = ka
+    ? {
+        forgot: "პაროლის აღდგენა",
+        forgotSub: "შეიყვანე ელფოსტა და მიიღე აღდგენის ბმული.",
+        reset: "ახალი პაროლი",
+        resetSub: "შექმენი ახალი პაროლი — მინიმუმ 8 სიმბოლო.",
+        send: "აღდგენის ბმულის გაგზავნა",
+        save: "პაროლის შენახვა",
+        resend: "დადასტურების წერილის ხელახლა გაგზავნა",
+        sent: "თუ ელფოსტა შესაბამის ანგარიშს ეკუთვნის, ბმულს მიიღებ. შეამოწმე სპამის საქაღალდეც.",
+        saved: "პაროლი შეიცვალა. შედი ახალი პაროლით.",
+        expired: "აღდგენის ბმული არ მოქმედებს ან ვადაგასულია. მოითხოვე ახალი ბმული.",
+        back: "შესვლაზე დაბრუნება",
+        email: "ჯერ შეიყვანე ელფოსტა.",
+        mismatch: "პაროლები არ ემთხვევა.",
+        confirm: "გაიმეორე პაროლი",
+      }
+    : {
+        forgot: "Forgot password?",
+        forgotSub: "Enter your email to receive a password reset link.",
+        reset: "Choose a new password",
+        resetSub: "Use at least 8 characters for your new password.",
+        send: "Send reset link",
+        save: "Save new password",
+        resend: "Resend verification email",
+        sent: "If this email is eligible, a link will arrive shortly. Check your spam folder too.",
+        saved: "Password updated. Sign in with your new password.",
+        expired: "This recovery link is invalid or expired. Request a new link.",
+        back: "Back to sign in",
+        email: "Enter your email address first.",
+        mismatch: "Passwords do not match.",
+        confirm: "Confirm new password",
+      };
+  const [confirmation, setConfirmation] = useState("");
+  useEffect(() => {
+    if (
+      !recoveryFinished &&
+      (recovering || new URLSearchParams(window.location.search).get("mode") === "recovery")
+    )
+      setMode("reset");
+  }, [recovering, recoveryFinished]);
+  useEffect(() => {
+    if (!cooldown) return;
+    const timer = setInterval(() => setCooldown((v) => Math.max(0, v - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  async function sendEmail(type) {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError(text.email);
+      return;
+    }
+    if (cooldown || loading) return;
+    setLoading(true);
+    setError("");
+    setNotice("");
+    try {
+      const { error: sendError } =
+        type === "reset"
+          ? await supabase.auth.resetPasswordForEmail(email.trim(), {
+              redirectTo: `${window.location.origin}/auth?mode=recovery`,
+            })
+          : await supabase.auth.resend({
+              type: "signup",
+              email: email.trim(),
+              options: { emailRedirectTo: `${window.location.origin}/auth` },
+            });
+      if (sendError) throw sendError;
+      setNotice(text.sent);
+      setCooldown(60);
+    } catch (e) {
+      setError(e.message || t("auth.genericError"));
+    } finally {
+      setLoading(false);
+    }
+  }
+  async function savePassword(event) {
+    event.preventDefault();
+    setError("");
+    if (password !== confirmation) {
+      setError(text.mismatch);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data: identity, error: identityError } = await supabase.auth.getUser();
+      if (identityError || !identity.user) throw new Error(text.expired);
+      const { data: level, error: levelError } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (levelError) throw levelError;
+      if (level.nextLevel === "aal2" && level.currentLevel !== "aal2") {
+        const { data: factors, error: factorError } = await supabase.auth.mfa.listFactors();
+        if (factorError) throw factorError;
+        const factor = factors.totp.find((f) => f.status === "verified");
+        if (!factor) throw new Error("Authenticator verification is unavailable");
+        setFactorId(factor.id);
+        return;
+      }
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+      setRecoveryFinished(true);
+      const { error: signOutError } = await supabase.auth.signOut({ scope: "global" });
+      setMode("login");
+      setPassword("");
+      setConfirmation("");
+      setNotice(signOutError ? `${text.saved} ${signOutError.message}` : text.saved);
+      await navigate({ to: "/auth", replace: true, search: {} });
+    } catch (e) {
+      setError(e.message || t("auth.genericError"));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get("ref");
@@ -34,7 +152,7 @@ export default function Auth() {
     if (code) {
       window.localStorage.setItem(REF_KEY, code);
       setRefCode(code);
-      if (fromUrl) setMode("signup");
+      if (fromUrl && !new URLSearchParams(window.location.search).has("mode")) setMode("signup");
     }
   }, []);
 
@@ -92,12 +210,17 @@ export default function Auth() {
   }
   useEffect(() => {
     let alive = true;
-    supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(async ({ data, error }) => {
-      if (error || data?.nextLevel !== "aal2" || data.currentLevel === "aal2") return;
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const factor = factors?.totp.find((f) => f.status === "verified");
-      if (alive && factor) setFactorId(factor.id);
-    });
+    supabase.auth.mfa
+      .getAuthenticatorAssuranceLevel()
+      .then(async ({ data, error }) => {
+        if (error || data?.nextLevel !== "aal2" || data.currentLevel === "aal2") return;
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const factor = factors?.totp.find((f) => f.status === "verified");
+        if (alive && factor) setFactorId(factor.id);
+      })
+      .catch((e) => {
+        if (alive) setError(e.message || "Could not verify your session. Please retry.");
+      });
     return () => {
       alive = false;
     };
@@ -129,32 +252,144 @@ export default function Auth() {
             <LanguageSwitch />
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
-            {mode === "login" ? t("auth.welcome") : t("auth.createAccount")}
+            {recovery
+              ? text.reset
+              : forgot
+                ? text.forgot
+                : mode === "login"
+                  ? t("auth.welcome")
+                  : t("auth.createAccount")}
           </h1>
           <p className="muted" style={{ fontSize: 14, marginBottom: 28 }}>
-            {mode === "login" ? t("auth.loginSubtitle") : t("auth.signupSubtitle")}
+            {recovery
+              ? text.resetSub
+              : forgot
+                ? text.forgotSub
+                : mode === "login"
+                  ? t("auth.loginSubtitle")
+                  : t("auth.signupSubtitle")}
           </p>
 
-          <div className="trade-tabs" style={{ marginBottom: 24 }}>
-            <button
-              className={`trade-tab ${mode === "login" ? "active" : ""}`}
-              aria-pressed={mode === "login"}
-              onClick={() => setMode("login")}
-            >
-              {t("auth.login")}
-            </button>
-            <button
-              className={`trade-tab ${mode === "signup" ? "active" : ""}`}
-              aria-pressed={mode === "signup"}
-              onClick={() => setMode("signup")}
-            >
-              {t("auth.signup")}
-            </button>
-          </div>
+          {!recovery && !forgot && (
+            <div className="trade-tabs" style={{ marginBottom: 24 }}>
+              <button
+                className={`trade-tab ${mode === "login" ? "active" : ""}`}
+                aria-pressed={mode === "login"}
+                onClick={() => setMode("login")}
+              >
+                {t("auth.login")}
+              </button>
+              <button
+                className={`trade-tab ${mode === "signup" ? "active" : ""}`}
+                aria-pressed={mode === "signup"}
+                onClick={() => setMode("signup")}
+              >
+                {t("auth.signup")}
+              </button>
+            </div>
+          )}
 
           {notice && <p role="status">{notice}</p>}
           {factorId ? (
-            <MfaChallenge factorId={factorId} ka={language === "ka"} onVerified={finishLogin} />
+            <MfaChallenge
+              factorId={factorId}
+              ka={language === "ka"}
+              onVerified={recovery ? async () => setFactorId(null) : finishLogin}
+            />
+          ) : recovery ? (
+            <>
+              {authLoading && (
+                <p role="status">{ka ? "იტვირთება…" : "Checking recovery session…"}</p>
+              )}
+              {!authLoading && !user && <p role="alert">{text.expired}</p>}
+              <form onSubmit={savePassword}>
+                <div className="field">
+                  <label htmlFor="reset-password">{text.reset}</label>
+                  <input
+                    id="reset-password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="confirm-password">{text.confirm}</label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    value={confirmation}
+                    onChange={(e) => setConfirmation(e.target.value)}
+                  />
+                </div>
+                {error && (
+                  <p role="alert" className="loss">
+                    {error}
+                  </p>
+                )}
+                <button
+                  className="btn"
+                  disabled={loading || authLoading || !user}
+                  style={{ width: "100%" }}
+                >
+                  {loading ? t("wallet.processing") : text.save}
+                </button>
+              </form>
+              <button
+                className="text-link"
+                onClick={() => {
+                  setMode("forgot");
+                  setError("");
+                  setFactorId(null);
+                }}
+                style={{ marginTop: 16 }}
+              >
+                {text.forgot}
+              </button>
+            </>
+          ) : forgot ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendEmail("reset");
+              }}
+            >
+              <div className="field">
+                <label htmlFor="recovery-email">{t("common.email")}</label>
+                <input
+                  id="recovery-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              {error && (
+                <p className="loss" role="alert">
+                  {error}
+                </p>
+              )}
+              <button className="btn" disabled={loading || cooldown > 0} style={{ width: "100%" }}>
+                {cooldown ? `${text.send} (${cooldown}s)` : text.send}
+              </button>
+              <button
+                type="button"
+                className="text-link"
+                style={{ marginTop: 16 }}
+                onClick={() => {
+                  setMode("login");
+                  setError("");
+                }}
+              >
+                {text.back}
+              </button>
+            </form>
           ) : (
             <form onSubmit={handleSubmit}>
               <div className="field">
@@ -239,6 +474,29 @@ export default function Auth() {
             </form>
           )}
 
+          {!forgot && !recovery && (
+            <div className="auth-help-actions">
+              <button
+                className="text-link"
+                type="button"
+                onClick={() => {
+                  setMode("forgot");
+                  setError("");
+                }}
+              >
+                {text.forgot}
+              </button>
+              <button
+                className="text-link"
+                type="button"
+                disabled={loading || cooldown > 0}
+                onClick={() => sendEmail("verify")}
+              >
+                {text.resend}
+                {cooldown ? ` (${cooldown}s)` : ""}
+              </button>
+            </div>
+          )}
           <p className="muted-2" style={{ fontSize: 12, textAlign: "center", marginTop: 20 }}>
             {t("auth.startingBalance")}
           </p>

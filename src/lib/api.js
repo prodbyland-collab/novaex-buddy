@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createDeposit, getMinDeposits, getDepositMinimum } from "@/lib/deposits.functions";
 import { requestWithdrawal, requestMarketOrder } from "@/lib/account.functions";
+import { fetchAllRows } from "@/lib/pagination";
 
 // Ensure the current user has a USD cash row. New accounts start at $0 —
 // balance only grows through confirmed crypto deposits.
@@ -94,16 +95,18 @@ export async function updateSecuritySettings(_id, fields) {
 }
 
 export async function fetchCryptoDeposits(userId, purpose = "balance") {
-  const { data, error } = await supabase
-    .from("crypto_deposits")
-    .select(
-      "id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at, purpose, plan_id",
-    )
-    .eq("user_id", userId)
-    .eq("purpose", purpose)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return data;
+  return fetchAllRows((from, to) =>
+    supabase
+      .from("crypto_deposits")
+      .select(
+        "id, payment_id, pay_currency, pay_address, price_amount, price_currency, pay_amount, status, actually_paid, credited_at, created_at, purpose, plan_id",
+      )
+      .eq("user_id", userId)
+      .eq("purpose", purpose)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
 }
 
 export async function createCryptoDeposit(currency, amountUsd) {
@@ -133,13 +136,15 @@ export async function fetchDepositMinimum(currency) {
 export const WITHDRAWAL_FEE_PCT = 0.2;
 
 export async function fetchWithdrawals(userId) {
-  const { data, error } = await supabase
-    .from("withdrawals")
-    .select("id, symbol, amount, usd_value, fee_amount, net_amount, address, status, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return data;
+  return fetchAllRows((from, to) =>
+    supabase
+      .from("withdrawals")
+      .select("id, symbol, amount, usd_value, fee_amount, net_amount, address, status, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
 }
 
 export async function createWithdrawal(
@@ -215,24 +220,34 @@ export async function claimReferral(code) {
 // ---- Cost basis: what the user actually put in vs what they hold now ----
 export async function fetchCostBasis(userId) {
   const [deposits, withdrawals] = await Promise.all([
-    supabase
-      .from("crypto_deposits")
-      .select("price_amount, pay_amount, actually_paid, credited_at, purpose")
-      .eq("user_id", userId)
-      .eq("purpose", "balance")
-      .not("credited_at", "is", null),
-    supabase.from("withdrawals").select("usd_value").eq("user_id", userId).neq("status", "failed"),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("crypto_deposits")
+        .select("price_amount, pay_amount, actually_paid, credited_at, purpose")
+        .eq("user_id", userId)
+        .eq("purpose", "balance")
+        .not("credited_at", "is", null)
+        .order("id")
+        .range(from, to),
+    ),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("withdrawals")
+        .select("usd_value")
+        .eq("user_id", userId)
+        .neq("status", "failed")
+        .order("id")
+        .range(from, to),
+    ),
   ]);
-  if (deposits.error) throw deposits.error;
-  if (withdrawals.error) throw withdrawals.error;
 
-  const deposited = (deposits.data ?? []).reduce(
+  const deposited = deposits.reduce(
     (sum, d) =>
       sum +
       Number(d.price_amount || 0) *
         Math.min(Number(d.actually_paid || 0) / Number(d.pay_amount || 1), 1),
     0,
   );
-  const withdrawn = (withdrawals.data ?? []).reduce((sum, w) => sum + Number(w.usd_value || 0), 0);
+  const withdrawn = withdrawals.reduce((sum, w) => sum + Number(w.usd_value || 0), 0);
   return { deposited, withdrawn, netInvested: deposited - withdrawn };
 }

@@ -1,0 +1,215 @@
+.retry-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--red, #f87171);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  background: var(--panel);
+}
+.retry-notice p {
+  margin: 4px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.account-overview {
+  margin: 0 0 24px;
+}
+.member-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.member-countdown {
+  font-family: "DM Mono", monospace;
+  font-size: 28px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+.member-summary-grid .card {
+  padding: 20px;
+}
+.member-code-link {
+  color: var(--text);
+  text-decoration: none;
+  display: block;
+}
+.member-code-link:hover {
+  border-color: var(--teal);
+}
+.member-activity {
+  margin-top: 16px;
+}
+.member-activity-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.member-activity-row small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.member-activity-row > span:last-child {
+  text-align: right;
+}
+.member-group-timing {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.notification-center {
+  position: relative;
+}
+.notification-toggle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+.notification-toggle > span {
+  position: absolute;
+  right: -4px;
+  top: -6px;
+  min-width: 16px;
+  border-radius: 8px;
+  background: var(--teal);
+  color: #061b19;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 3px;
+}
+.notification-inbox {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  max-height: min(70vh, 580px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 24px 60px #0008;
+  background: var(--panel);
+  z-index: 80;
+  color: var(--text);
+}
+.member-inbox-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.member-inbox-heading small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.notification-item {
+  display: block;
+  padding: 12px;
+  border-radius: 10px;
+  margin: 8px 0;
+  text-decoration: none;
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+.notification-item.unread {
+  border-left: 3px solid var(--teal);
+  background: #34d39908;
+}
+.notification-item strong,
+.notification-item span,
+.notification-item small {
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.notification-item span {
+  margin: 5px 0;
+}
+.notification-item small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.audit-history pre {
+  max-width: 400px;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 11px;
+}
+.auth-card .text-link {
+  background: transparent;
+  border: 0;
+  color: var(--teal);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+.auth-card .text-link:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+@media (max-width: 600px) {
+  .member-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .member-countdown {
+    font-size: 24px;
+  }
+  .notification-inbox {
+    position: fixed;
+    top: 82px;
+    right: 12px;
+  }
+  .retry-notice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .member-group-timing {
+    flex-wrap: wrap;
+  }
+  .app-header .user-area {
+    gap: 6px;
+  }
+}
+@media (max-width: 420px) {
+  .app-header .brand-name {
+    display: none;
+  }
+  .app-header .brand {
+    min-width: 32px;
+  }
+  .notification-toggle {
+    width: 30px;
+    height: 30px;
+  }
+}
