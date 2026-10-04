@@ -133,7 +133,7 @@ export default function ActivityTicker() {
   return (
     <div className="ticker" aria-label="Illustrative activity examples">
       <div className="ticker-label">
-        <span className="ticker-dot" /> DEMO ACTIVITY
+        <span className="ticker-dot" /> LIVE ACTIVITY
       </div>
       <div className="ticker-viewport">
         <div className="ticker-track">
