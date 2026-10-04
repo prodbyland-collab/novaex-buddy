@@ -413,6 +413,79 @@ test("market orders move both balances atomically and retry once", async () => {
   assert.equal(await balance(id), 900);
   assert.equal(await balance(id, "BTC"), 1);
 });
+test("test payments update the member balance and activate Pro and Elite at actual pack prices", async (context) => {
+  const id = await account(0);
+  const createPayment = async (amount, plan = null) => {
+    const reservation = await service(() =>
+      value("SELECT public.reserve_deposit($1,'btc',$2,$3)", [id, amount, plan]),
+    );
+    assert.equal(reservation.created, true);
+    const payment = randomUUID(),
+      quoted = amount / 100000;
+    await service(() =>
+      query(
+        "UPDATE public.crypto_deposits SET payment_id=$1,pay_amount=$2,pay_address='synthetic-test-address',status='waiting' WHERE id=$3",
+        [payment, quoted, reservation.deposit.id],
+      ),
+    );
+    return { payment, quoted, id: reservation.deposit.id };
+  };
+  const memberState = () =>
+    asUser(id, async () => ({
+      balance: Number(
+        await value("SELECT amount FROM public.holdings WHERE user_id=$1 AND symbol='USD'", [id]),
+      ),
+      ...(
+        await query(
+          "SELECT plan_id,plan_rate,enabled FROM public.ai_trading_settings WHERE user_id=$1",
+          [id],
+        )
+      )[0],
+    }));
+  const depositPayment = await createPayment(500);
+  await credit(depositPayment.payment, depositPayment.quoted, "confirmed");
+  assert.equal((await memberState()).balance, 0);
+  await credit(depositPayment.payment, depositPayment.quoted, "finished");
+  await credit(depositPayment.payment, depositPayment.quoted, "finished");
+  let state = await memberState();
+  assert.equal(state.balance, 500);
+  assert.equal(state.plan_id, "free");
+  context.diagnostic(
+    "Balance deposit $500: $0 → $500; duplicate confirmation remains $500; bot stays Free.",
+  );
+  for (const [plan, price, rate] of [
+    ["pro", 250, 0.03],
+    ["elite", 400, 0.05],
+  ]) {
+    const pack = await createPayment(price, plan),
+      before = (await memberState()).plan_id;
+    await credit(pack.payment, pack.quoted, "confirmed");
+    assert.equal((await memberState()).plan_id, before);
+    await credit(pack.payment, pack.quoted, "finished");
+    await credit(pack.payment, pack.quoted, "finished");
+    state = await memberState();
+    assert.equal(state.plan_id, plan);
+    assert.equal(Number(state.plan_rate), rate);
+    assert.equal(state.enabled, true);
+    assert.equal(state.balance, 500);
+    assert.ok(await value("SELECT credited_at FROM public.crypto_deposits WHERE id=$1", [pack.id]));
+    context.diagnostic(
+      `${plan.toUpperCase()} pack $${price}: ${before} → ${plan}, AI enabled at ${rate * 100}%; wallet stays $500.`,
+    );
+  }
+  const alerts = await asUser(id, () =>
+    query("SELECT kind,details FROM public.member_notifications WHERE user_id=$1", [id]),
+  );
+  assert.equal(alerts.filter((a) => a.kind === "deposit").length, 1);
+  assert.deepEqual(
+    alerts
+      .filter((a) => a.kind === "plan")
+      .map((a) => a.details.plan)
+      .sort(),
+    ["elite", "pro"],
+  );
+});
+
 test("deposit reuse matches amount and plan and recovers abandoned drafts", async () => {
   const id = await account();
   const reserve = (amount, plan = null) =>
