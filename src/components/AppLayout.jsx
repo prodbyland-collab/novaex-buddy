@@ -7,6 +7,17 @@ import { usePortfolio } from "@/lib/portfolio";
 import { formatUsd } from "@/lib/markets";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import LegalLinks from "@/components/LegalLinks";
+import {
+  LayoutDashboard,
+  Bot,
+  MessagesSquare,
+  Layers3,
+  Users,
+  ShieldCheck,
+  Wallet,
+  Settings2,
+  LogOut,
+} from "lucide-react";
 
 export default function AppLayout({ children }) {
   const { user, signOut } = useAuth();
@@ -38,15 +49,15 @@ export default function AppLayout({ children }) {
   }, [user]);
 
   const navItems = [
-    { to: "/app", label: t("nav.portfolio"), exact: true },
+    { to: "/app", label: t("nav.portfolio"), icon: LayoutDashboard, exact: true },
 
-    { to: "/app/ai", label: t("nav.aiTrading") },
-    { to: "/app/group", label: t("nav.group") },
-    { to: "/app/orders", label: t("nav.botPlans") },
-    { to: "/app/recurring", label: t("nav.referrals") },
-    { to: "/app/security", label: t("nav.security") },
-    { to: "/app/wallet", label: t("nav.wallet") },
-    ...(isAdmin ? [{ to: "/app/admin", label: "Admin" }] : []),
+    { to: "/app/ai", label: t("nav.aiTrading"), icon: Bot },
+    { to: "/app/group", label: t("nav.group"), icon: MessagesSquare },
+    { to: "/app/orders", label: t("nav.botPlans"), icon: Layers3 },
+    { to: "/app/recurring", label: t("nav.referrals"), icon: Users },
+    { to: "/app/security", label: t("nav.security"), icon: ShieldCheck },
+    { to: "/app/wallet", label: t("nav.wallet"), icon: Wallet },
+    ...(isAdmin ? [{ to: "/app/admin", label: "Admin", icon: Settings2 }] : []),
   ];
 
   function isActive(item) {
@@ -63,7 +74,10 @@ export default function AppLayout({ children }) {
   const isGain = changeUsd >= 0;
 
   return (
-    <div>
+    <div className="app-shell">
+      <a className="skip-link" href="#app-content">
+        {t("common.skipContent")}
+      </a>
       <header className="app-header">
         <Link className="brand" to="/app">
           <span className="brand-mark">
@@ -71,9 +85,15 @@ export default function AppLayout({ children }) {
           </span>
           GNG
         </Link>
-        <nav className="app-nav">
+        <nav className="app-nav" aria-label={t("common.dashboard")}>
           {navItems.map((item) => (
-            <Link key={item.to} to={item.to} className={isActive(item) ? "active" : ""}>
+            <Link
+              key={item.to}
+              to={item.to}
+              aria-current={isActive(item) ? "page" : undefined}
+              className={isActive(item) ? "active" : ""}
+            >
+              <item.icon size={16} strokeWidth={1.8} aria-hidden="true" />
               {item.label}
             </Link>
           ))}
@@ -95,12 +115,20 @@ export default function AppLayout({ children }) {
           <LanguageSwitch />
           <span className="user-email">{user?.email}</span>
           <div className="user-avatar">{initials}</div>
-          <button className="btn small ghost" onClick={handleSignOut}>
-            {t("common.signOut")}
+          <button
+            className="btn small ghost sign-out"
+            onClick={handleSignOut}
+            aria-label={t("common.signOut")}
+            title={t("common.signOut")}
+          >
+            <LogOut size={15} aria-hidden="true" />
+            <span>{t("common.signOut")}</span>
           </button>
         </div>
       </header>
-      <div className="app-body">{children}</div>
+      <main id="app-content" className="app-body" tabIndex={-1}>
+        {children}
+      </main>
       <footer className="legal-footer">
         <LegalLinks />
       </footer>

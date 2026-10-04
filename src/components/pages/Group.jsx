@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { MessagesSquare } from "lucide-react";
+import PageHeading from "@/components/PageHeading";
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 import { getGroupFeed, publishGroupNews } from "@/lib/group.functions";
@@ -51,13 +53,12 @@ export default function Group() {
   }
 
   return (
-    <div className="fade-up" style={{ maxWidth: 800 }}>
-      <h1 className="page-title">{ka ? "ჩატის ჯგუფი" : "Chat group"}</h1>
-      <p className="page-sub">
+    <div className="fade-up focused-page group-page">
+      <PageHeading icon={MessagesSquare} title={ka ? "ჩატის ჯგუფი" : "Chat group"}>
         {ka
           ? "დღიური კოდი ქვეყნდება 20:00-ზე საქართველოს დროით და მოქმედებს 10 წუთი."
           : "The daily code is posted at 20:00 Tbilisi time and expires after 10 minutes."}
-      </p>
+      </PageHeading>
       {error && (
         <p role="alert" className="loss">
           {error}
@@ -96,7 +97,10 @@ export default function Group() {
         </p>
       )}
       {feed.posts.map((post) => (
-        <article key={post.id} className="card" style={{ marginTop: 20 }}>
+        <article
+          key={post.id}
+          className={`card group-post ${post.kind === "code" ? "group-code" : ""}`}
+        >
           <time dateTime={post.created_at} className="muted-2">
             {new Date(post.created_at).toLocaleString(ka ? "ka-GE" : "en-US", {
               timeZone: "Asia/Tbilisi",

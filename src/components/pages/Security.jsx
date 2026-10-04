@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
+import { ShieldCheck } from "lucide-react";
+import PageHeading from "@/components/PageHeading";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/language";
 import { fetchSecuritySettings, ensureSecuritySettings, updateSecuritySettings } from "@/lib/api";
@@ -151,9 +153,10 @@ export default function Security() {
   }
 
   return (
-    <div className="fade-up" style={{ maxWidth: 720 }}>
-      <h1 className="page-title">{text.title}</h1>
-      <p className="page-sub">{text.subtitle}</p>
+    <div className="fade-up focused-page security-page">
+      <PageHeading icon={ShieldCheck} title={text.title}>
+        {text.subtitle}
+      </PageHeading>
       <div className="card">
         {loading || !settings ? (
           <p className="muted">{text.loading}</p>

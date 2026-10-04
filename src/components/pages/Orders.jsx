@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Layers3 } from "lucide-react";
+import PageHeading from "@/components/PageHeading";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { BOT_PLANS } from "@/lib/plans";
@@ -107,13 +109,12 @@ export default function BotPlans() {
   }
 
   return (
-    <div className="fade-up" style={{ maxWidth: 1040 }}>
-      <h1 className="page-title">{ka ? "ბოტ-გეგმები" : "Bot Plans"}</h1>
-      <p className="page-sub">
+    <div className="fade-up plans-page">
+      <PageHeading icon={Layers3} title={ka ? "ბოტ-გეგმები" : "Bot Plans"}>
         {ka
           ? "აირჩიე AI ბოტის დონე. გადახდა ხდება კრიპტოთი ცალკე — ბალანსიდან თანხა არ ჩამოიჭრება."
           : "Pick your AI bot tier. Plans are paid in crypto separately — nothing is taken from your trading balance."}
-      </p>
+      </PageHeading>
 
       <div className="card" style={{ marginTop: 24 }}>
         <p className="eyebrow">{ka ? "აქტიური გეგმა" : "Active plan"}</p>
@@ -134,20 +135,13 @@ export default function BotPlans() {
         </select>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: 18,
-          marginTop: 18,
-        }}
-      >
+      <div className="plan-grid">
         {BOT_PLANS.map((plan) => {
           const current = plan.id === activeId;
           const owned = activeRate >= plan.rate;
           return (
             <div
-              className="card"
+              className={`card plan-card ${current ? "plan-current" : ""}`}
               key={plan.id}
               style={{ border: current ? "1px solid var(--teal)" : undefined }}
             >

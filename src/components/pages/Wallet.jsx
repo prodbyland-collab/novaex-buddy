@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Wallet as WalletIcon } from "lucide-react";
+import PageHeading from "@/components/PageHeading";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -217,8 +219,9 @@ export default function Wallet() {
 
   return (
     <div className="fade-up wallet-page">
-      <h1 className="page-title">{t("wallet.title")}</h1>
-      <p className="page-sub">{t("wallet.sub")}</p>
+      <PageHeading icon={WalletIcon} title={t("wallet.title")}>
+        {t("wallet.sub")}
+      </PageHeading>
 
       <div className="wallet-grid">
         <div className="card">

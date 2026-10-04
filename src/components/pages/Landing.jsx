@@ -7,6 +7,14 @@ import { formatUsd } from "@/lib/markets";
 import { MARKETS } from "@/lib/markets";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import LegalLinks from "@/components/LegalLinks";
+import {
+  ArrowUpRight,
+  ChartNoAxesCombined,
+  SlidersHorizontal,
+  ShieldCheck,
+  Menu,
+  X,
+} from "lucide-react";
 
 function LocalizedTitle({ value }) {
   const [first, second] = value.split("|");
@@ -27,7 +35,7 @@ export default function Landing() {
   const prices = useLivePrices();
 
   return (
-    <>
+    <div className="landing-page">
       <div className="grid-glow" />
       <header className="site-header">
         <Link className="brand" to="/">
@@ -36,10 +44,20 @@ export default function Landing() {
           </span>
           GNG
         </Link>
-        <button className="menu-button" onClick={() => setMenuOpen((o) => !o)}>
-          {menuOpen ? t("common.close") : t("common.menu")}
+        <button
+          className="menu-button"
+          aria-expanded={menuOpen}
+          aria-controls="landing-navigation"
+          aria-label={menuOpen ? t("common.close") : t("common.menu")}
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          {menuOpen ? <X size={19} /> : <Menu size={19} />}
         </button>
-        <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
+        <nav
+          id="landing-navigation"
+          className={`nav-links ${menuOpen ? "open" : ""}`}
+          onClick={() => setMenuOpen(false)}
+        >
           <a href="#markets">{t("nav.markets")}</a>
           <a href="#features">{t("nav.whyNovax")}</a>
           <a href="#security">{t("nav.security")}</a>
@@ -73,7 +91,7 @@ export default function Landing() {
             <p className="hero-text">{t("landing.heroText")}</p>
             <div className="hero-actions">
               <Link className="btn" to={user ? "/app" : "/auth"}>
-                {t("landing.startExploring")} <b>→</b>
+                {t("landing.startExploring")} <ArrowUpRight size={18} aria-hidden="true" />
               </Link>
               <a className="text-link" href="#features">
                 {t("landing.seeHow")}
@@ -219,17 +237,23 @@ export default function Landing() {
           </h2>
           <div className="feature-grid">
             <article>
-              <span>01</span>
+              <span className="feature-icon">
+                <ChartNoAxesCombined size={24} aria-hidden="true" />
+              </span>
               <h3>{t("landing.simpleTitle")}</h3>
               <p>{t("landing.simpleText")}</p>
             </article>
             <article>
-              <span>02</span>
+              <span className="feature-icon">
+                <SlidersHorizontal size={24} aria-hidden="true" />
+              </span>
               <h3>{t("landing.yourWayTitle")}</h3>
               <p>{t("landing.yourWayText")}</p>
             </article>
             <article id="security">
-              <span>03</span>
+              <span className="feature-icon">
+                <ShieldCheck size={24} aria-hidden="true" />
+              </span>
               <h3>{t("landing.securityTitle")}</h3>
               <p>{t("landing.securityText")}</p>
             </article>
@@ -244,7 +268,7 @@ export default function Landing() {
             </h2>
           </div>
           <Link className="btn" to={user ? "/app" : "/auth"}>
-            {t("landing.openAccount")} <b>→</b>
+            {t("landing.openAccount")} <ArrowUpRight size={18} aria-hidden="true" />
           </Link>
         </section>
       </main>
@@ -259,6 +283,6 @@ export default function Landing() {
         <LegalLinks />
         <span>© 2026 GNG</span>
       </footer>
-    </>
+    </div>
   );
 }

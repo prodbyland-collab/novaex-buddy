@@ -17,6 +17,10 @@ const flattened = { en: flatten(nestedTranslations.en), ka: flatten(nestedTransl
 
 const supplementalTranslations = {
   en: {
+    "dashboard.aiAction": "Manage your bot",
+    "dashboard.planAction": "Compare bot tiers",
+    "dashboard.referralAction": "Invite members",
+    "common.skipContent": "Skip to content",
     "dashboard.title": "Portfolio",
     "dashboard.subtitle": "Your balances and market value, updating live.",
     "dashboard.totalValue": "Total portfolio value",
@@ -43,6 +47,10 @@ const supplementalTranslations = {
     "dashboard.usDollar": "US Dollar",
   },
   ka: {
+    "dashboard.aiAction": "მართე შენი ბოტი",
+    "dashboard.planAction": "შეადარე გეგმები",
+    "dashboard.referralAction": "მოიწვიე წევრები",
+    "common.skipContent": "შინაარსზე გადასვლა",
     "dashboard.title": "პორტფელი",
     "dashboard.subtitle": "შენი ბალანსები და საბაზრო ღირებულება, რომელიც ცოცხლად განახლდება.",
     "dashboard.totalValue": "პორტფელის სრული ღირებულება",
@@ -102,6 +110,10 @@ export function LanguageProvider({ children }) {
       /* ignore */
     }
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const t = useCallback(
     (key, vars) => {

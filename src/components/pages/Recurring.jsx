@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { Users } from "lucide-react";
+import PageHeading from "@/components/PageHeading";
 import { useI18n } from "@/lib/i18n";
 import { fetchReferralInfo } from "@/lib/api";
 
@@ -27,9 +29,10 @@ export default function Referrals() {
   }
 
   return (
-    <div className="fade-up" style={{ maxWidth: 760 }}>
-      <h1 className="page-title">{t("ref.title")}</h1>
-      <p className="page-sub">{t("ref.desc")}</p>
+    <div className="fade-up focused-page referral-page">
+      <PageHeading icon={Users} title={t("ref.title")}>
+        {t("ref.desc")}
+      </PageHeading>
       <div className="card" style={{ marginTop: 24 }}>
         <label className="address-label">{t("ref.link")}</label>
         <div className="address-box">

@@ -14,6 +14,7 @@ export default function LanguageSwitch() {
       <button
         type="button"
         className={lang === "ka" ? "active" : ""}
+        aria-pressed={lang === "ka"}
         onClick={() => changeLanguage("ka")}
       >
         ქარ
@@ -21,6 +22,7 @@ export default function LanguageSwitch() {
       <button
         type="button"
         className={lang === "en" ? "active" : ""}
+        aria-pressed={lang === "en"}
         onClick={() => changeLanguage("en")}
       >
         EN

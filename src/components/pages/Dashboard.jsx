@@ -1,4 +1,13 @@
 import { useEffect, useState } from "react";
+import {
+  LayoutDashboard,
+  Bot,
+  Layers3,
+  Users,
+  ShieldCheck,
+  ChartNoAxesCombined,
+} from "lucide-react";
+import PageHeading from "@/components/PageHeading";
 import { Link } from "@tanstack/react-router";
 import { usePortfolio } from "@/lib/portfolio";
 import { MARKETS, MARKET_MAP, formatUsd, formatNum } from "@/lib/markets";
@@ -57,8 +66,9 @@ export default function Dashboard() {
     <div className="fade-up">
       <ActivityTicker />
 
-      <h1 className="page-title">{t("dashboard.title")}</h1>
-      <p className="page-sub">{t("dashboard.subtitle")}</p>
+      <PageHeading icon={LayoutDashboard} title={t("dashboard.title")}>
+        {t("dashboard.subtitle")}
+      </PageHeading>
 
       <div className="dash-grid">
         <div className="dash-main">
@@ -134,7 +144,9 @@ export default function Dashboard() {
               <p className="muted">{t("dashboard.loading")}</p>
             ) : nonZero.length === 0 ? (
               <div className="empty-state">
-                <span>📊</span>
+                <span>
+                  <ChartNoAxesCombined size={32} aria-hidden="true" />
+                </span>
                 <p>{t("dashboard.noHoldings")}</p>
                 <Link className="btn small" to="/app/wallet" style={{ marginTop: 16 }}>
                   {t("nav.wallet")}
@@ -214,22 +226,30 @@ export default function Dashboard() {
             </p>
             <div className="quick-actions">
               <Link className="quick-action" to="/app/ai">
-                <span>🤖</span>
+                <span>
+                  <Bot size={22} aria-hidden="true" />
+                </span>
                 <strong>{t("nav.aiTrading")}</strong>
-                <small>{t("dashboard.spotDesc")}</small>
+                <small>{t("dashboard.aiAction")}</small>
               </Link>
               <Link className="quick-action" to="/app/orders">
-                <span>⏱</span>
+                <span>
+                  <Layers3 size={22} aria-hidden="true" />
+                </span>
                 <strong>{t("nav.botPlans")}</strong>
-                <small>{t("dashboard.limitDesc")}</small>
+                <small>{t("dashboard.planAction")}</small>
               </Link>
               <Link className="quick-action" to="/app/recurring">
-                <span>↻</span>
+                <span>
+                  <Users size={22} aria-hidden="true" />
+                </span>
                 <strong>{t("nav.referrals")}</strong>
-                <small>{t("dashboard.recurringDesc")}</small>
+                <small>{t("dashboard.referralAction")}</small>
               </Link>
               <Link className="quick-action" to="/app/security">
-                <span>🛡</span>
+                <span>
+                  <ShieldCheck size={22} aria-hidden="true" />
+                </span>
                 <strong>{t("dashboard.security")}</strong>
                 <small>{t("dashboard.securityDesc")}</small>
               </Link>

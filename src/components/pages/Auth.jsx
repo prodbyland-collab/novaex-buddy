@@ -8,6 +8,7 @@ import LanguageSwitch from "@/components/LanguageSwitch";
 import { supabase } from "@/integrations/supabase/client";
 import { MfaChallenge } from "@/components/Mfa";
 import { legalLabels } from "@/lib/legal";
+import { ChartNoAxesCombined, ArrowUpRight } from "lucide-react";
 
 const REF_KEY = "novax_ref_code";
 
@@ -103,16 +104,27 @@ export default function Auth() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "20px" }}>
-      <div className="grid-glow" />
-      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: "420px" }}>
+    <div className="auth-page">
+      <aside className="auth-story">
+        <span className="auth-art" aria-hidden="true">
+          <ChartNoAxesCombined size={76} strokeWidth={1} />
+          <ArrowUpRight size={30} />
+        </span>
+        <p className="eyebrow">{t("landing.heroEyebrow")}</p>
+        <h2>{t("landing.heroTitle").replace("|", " ")}</h2>
+        <p>{t("landing.heroText")}</p>
+        <div className="auth-story-links">
+          <LegalLinks />
+        </div>
+      </aside>
+      <div className="auth-form-wrap">
         <Link className="brand" to="/" style={{ justifyContent: "center", marginBottom: 32 }}>
           <span className="brand-mark">
             <span>G</span>
           </span>
           GNG
         </Link>
-        <div className="card fade-up">
+        <div className="card fade-up auth-card">
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
             <LanguageSwitch />
           </div>
@@ -126,12 +138,14 @@ export default function Auth() {
           <div className="trade-tabs" style={{ marginBottom: 24 }}>
             <button
               className={`trade-tab ${mode === "login" ? "active" : ""}`}
+              aria-pressed={mode === "login"}
               onClick={() => setMode("login")}
             >
               {t("auth.login")}
             </button>
             <button
               className={`trade-tab ${mode === "signup" ? "active" : ""}`}
+              aria-pressed={mode === "signup"}
               onClick={() => setMode("signup")}
             >
               {t("auth.signup")}
@@ -144,9 +158,11 @@ export default function Auth() {
           ) : (
             <form onSubmit={handleSubmit}>
               <div className="field">
-                <label>{t("common.email")}</label>
+                <label htmlFor="auth-email">{t("common.email")}</label>
                 <input
                   type="email"
+                  id="auth-email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -154,9 +170,11 @@ export default function Auth() {
                 />
               </div>
               <div className="field">
-                <label>{t("common.password")}</label>
+                <label htmlFor="auth-password">{t("common.password")}</label>
                 <input
                   type="password"
+                  id="auth-password"
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
