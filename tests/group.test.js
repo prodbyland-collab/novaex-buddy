@@ -15,9 +15,10 @@ test("codes expire exactly at their deadline and old-day codes are inactive", ()
     kind: "code",
     code: "GNG-TESTCODE",
     code_date: "2026-10-04",
-    expires_at: "2026-10-04T17:00:00Z",
+    created_at: "2026-10-04T16:00:00Z",
+    expires_at: "2026-10-04T16:10:00Z",
   };
-  assert.equal(codeIsActive(post, Date.parse("2026-10-04T16:59:59Z")), true);
+  assert.equal(codeIsActive(post, Date.parse("2026-10-04T16:09:59Z")), true);
   assert.equal(codeIsActive(post, Date.parse(post.expires_at)), false);
   assert.equal(
     codeIsActive(

@@ -29,6 +29,13 @@
       "when": 1791115200000,
       "tag": "0003_secure_accounting",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791122400000,
+      "tag": "0004_ten_minute_group_codes",
+      "breakpoints": true
     }
   ]
 }

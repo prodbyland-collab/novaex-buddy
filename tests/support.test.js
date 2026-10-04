@@ -16,7 +16,7 @@ test("deposit and code answers explain the current minimum, bonus and expiry", (
   assert.match(getSupportReply("Is the minimum deposit $200?").text, /\$500/);
   const code = getSupportReply("My Telegram code expired").text;
   assert.match(code, /1 percentage point/);
-  assert.match(code, /1 hour/);
+  assert.match(code, /10 minutes/);
   assert.match(code, /cannot generate/);
 });
 

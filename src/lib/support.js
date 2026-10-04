@@ -105,8 +105,8 @@ const topics = [
       "სიახლ",
     ],
     link: "/app/group",
-    en: "The site bot posts the daily code in the read-only Chat group at 20:00 Georgian time. Only administrators can post news there. The daily code adds 1 percentage point to the daily programmed rate, on top of the bot plan and referral bonus. Redeem it on the Trading mode page within 1 hour of issue/sending. It applies to that day’s payout, so redeem each new daily code. I cannot generate, reveal, or renew a code.",
-    ka: "საიტის ბოტი დღიურ კოდს მხოლოდ წაკითხვად ჩატის ჯგუფში საქართველოს დროით 20:00-ზე აქვეყნებს. სიახლეებს მხოლოდ ადმინისტრატორები აქვეყნებენ. დღიური კოდი პროგრამულ დღიურ განაკვეთს 1 პროცენტულ პუნქტს ამატებს ბოტის პაკეტისა და მოწვევის ბონუსის გარდა. გაააქტიურეთ ვაჭრობის რეჟიმის გვერდზე შექმნიდან/გაგზავნიდან 1 საათში. ის შესაბამისი დღის დარიცხვაზე მოქმედებს, ამიტომ ყოველდღე ახალი კოდი უნდა გაააქტიუროთ. კოდს ვერ ვქმნი, ვერ ვამჟღავნებ და ვადას ვერ ვუხანგრძლივებ.",
+    en: "The site bot posts the daily code in the read-only Chat group at 20:00 Georgian time. Only administrators can post news there. The daily code adds 1 percentage point to the daily programmed rate, on top of the bot plan and referral bonus. Redeem it on the Trading mode page within 10 minutes of posting. It applies to that day’s payout, so redeem each new daily code. I cannot generate, reveal, or renew a code.",
+    ka: "საიტის ბოტი დღიურ კოდს მხოლოდ წაკითხვად ჩატის ჯგუფში საქართველოს დროით 20:00-ზე აქვეყნებს. სიახლეებს მხოლოდ ადმინისტრატორები აქვეყნებენ. დღიური კოდი პროგრამულ დღიურ განაკვეთს 1 პროცენტულ პუნქტს ამატებს ბოტის პაკეტისა და მოწვევის ბონუსის გარდა. გაააქტიურეთ ვაჭრობის რეჟიმის გვერდზე გამოქვეყნებიდან 10 წუთში. ის შესაბამისი დღის დარიცხვაზე მოქმედებს, ამიტომ ყოველდღე ახალი კოდი უნდა გაააქტიუროთ. კოდს ვერ ვქმნი, ვერ ვამჟღავნებ და ვადას ვერ ვუხანგრძლივებ.",
   },
   {
     id: "plans",

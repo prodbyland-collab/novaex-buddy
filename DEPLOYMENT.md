@@ -6,6 +6,11 @@ server functions and restricted database RPCs.
 
 ## Database
 
+After the accounting migration, apply `20261004140000_ten_minute_group_codes.sql`
+(Drizzle equivalent: `0004_ten_minute_group_codes.sql`). It reduces publication,
+rotation, and server-side redemption to 10 minutes and shortens existing posts.
+The daily publication remains at 20:00 in Tbilisi.
+
 `supabase/migrations` is the canonical migration history. Apply pending migrations
 in filename order, including `20261004120000_secure_accounting.sql`, using your
 Supabase deployment workflow. Do not replay the old referral migrations afterward.
@@ -23,7 +28,7 @@ Verify these Supabase Cron jobs are enabled and successful after deployment:
 
 | Job                   | UTC   | Tbilisi                 | Action                                           |
 | --------------------- | ----- | ----------------------- | ------------------------------------------------ |
-| `gng-site-daily-code` | 16:00 | 20:00                   | Publish the daily code, valid for one hour       |
+| `gng-site-daily-code` | 16:00 | 20:00                   | Publish the daily code, valid for 10 minutes     |
 | `gng-daily-payout`    | 23:55 | 03:55 next calendar day | Credit the preceding UTC day's programmed payout |
 
 Payout eligibility and daily boosts use UTC dates. Payouts are idempotent per UTC

@@ -300,3 +300,51 @@ test("Supabase and Drizzle fixes match and reapplication preserves trusted addre
     ["approved-wallet-address"],
   );
 });
+
+test("group codes publish at 20:00 Tbilisi and expire on the server after ten minutes", async () => {
+  const sql = await readFile(
+    new URL("20261004140000_ten_minute_group_codes.sql", migrationDirectory),
+    "utf8",
+  );
+  assert.equal(
+    sql,
+    await readFile(
+      new URL("../drizzle/migrations/0004_ten_minute_group_codes.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  await db.exec(sql);
+  assert.equal(
+    await value("SELECT schedule FROM cron.job WHERE name='gng-site-daily-code'"),
+    "0 16 * * *",
+  );
+  assert.equal(
+    await value(
+      "SELECT (timestamptz '2026-10-04 16:00:00+00' AT TIME ZONE 'Asia/Tbilisi')::time::text",
+    ),
+    "20:00:00",
+  );
+  const id = await account();
+  const code = await service(() => value("SELECT public.rotate_daily_group_code()"));
+  assert.equal(
+    Number(
+      await value(
+        "SELECT extract(epoch FROM expires_at-created_at) FROM public.group_announcements WHERE code=$1",
+        [code],
+      ),
+    ),
+    600,
+  );
+  const redeem = () => asUser(id, () => value("SELECT public.redeem_ai_code($1)", [code]));
+  assert.equal((await redeem()).ok, true);
+  await query(
+    "UPDATE public.daily_ai_codes SET sent_at=now()-interval '10 minutes' WHERE code=$1",
+    [code],
+  );
+  assert.equal((await redeem()).ok, false);
+  await query(
+    "UPDATE public.daily_ai_codes SET sent_at=now()-interval '11 minutes' WHERE code=$1",
+    [code],
+  );
+  assert.equal((await redeem()).ok, false);
+});

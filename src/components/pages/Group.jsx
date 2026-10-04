@@ -25,11 +25,14 @@ export default function Group() {
   }, []);
   useEffect(() => {
     load();
+    const clock = setInterval(() => setNow(Date.now()), 1000);
     const timer = setInterval(() => {
-      setNow(Date.now());
       load();
     }, 15000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(clock);
+      clearInterval(timer);
+    };
   }, [load]);
 
   async function publish(event) {
@@ -52,8 +55,8 @@ export default function Group() {
       <h1 className="page-title">{ka ? "ჩატის ჯგუფი" : "Chat group"}</h1>
       <p className="page-sub">
         {ka
-          ? "დღიური კოდი ქვეყნდება 20:00-ზე საქართველოს დროით და მოქმედებს ერთი საათი."
-          : "The daily code is posted at 20:00 Tbilisi time and expires after one hour."}
+          ? "დღიური კოდი ქვეყნდება 20:00-ზე საქართველოს დროით და მოქმედებს 10 წუთი."
+          : "The daily code is posted at 20:00 Tbilisi time and expires after 10 minutes."}
       </p>
       {error && (
         <p role="alert" className="loss">

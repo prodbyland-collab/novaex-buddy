@@ -100,7 +100,7 @@ export const translations = {
     "nav.group": "Chat group",
     "ai.boostBadge": "+1% active today",
     "ai.boostDesc":
-      "The site bot posts a new code in the chat group every day at 20:00 Georgian time. Enter today's code to add +1% to your daily AI profit — it stacks on top of your bot plan. The boost resets after the daily payout.",
+      "The site bot posts a new code in the chat group every day at 20:00 Georgian time. Enter today's code within 10 minutes of posting to add +1% to your daily AI profit — it stacks on top of your bot plan. The boost resets after the daily payout.",
     "ai.boostApplied": "Boost applied",
     "ai.checking": "Checking...",
     "ai.applyCode": "Apply code",
@@ -282,7 +282,7 @@ export const translations = {
     "nav.group": "ჩატის ჯგუფი",
     "ai.boostBadge": "დღეს +1% აქტიურია",
     "ai.boostDesc":
-      "საიტის ბოტი ახალ კოდს ჩატის ჯგუფში ყოველდღე საქართველოს დროით 20:00-ზე აქვეყნებს. შეიყვანე დღევანდელი კოდი და დღიურ AI მოგებას +1% დაემატება — ემატება შენი ბოტის პაკეტის პროცენტს. დღიური დარიცხვის შემდეგ ბონუსი ნულდება.",
+      "საიტის ბოტი ახალ კოდს ჩატის ჯგუფში ყოველდღე საქართველოს დროით 20:00-ზე აქვეყნებს. შეიყვანე დღევანდელი კოდი გამოქვეყნებიდან 10 წუთში და დღიურ AI მოგებას +1% დაემატება — ემატება შენი ბოტის პაკეტის პროცენტს. დღიური დარიცხვის შემდეგ ბონუსი ნულდება.",
     "ai.boostApplied": "ბონუსი გააქტიურდა",
     "ai.checking": "მოწმდება...",
     "ai.applyCode": "კოდის გააქტიურება",
