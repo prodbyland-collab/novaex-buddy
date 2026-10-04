@@ -6,13 +6,24 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      ".nitro",
+      ".tanstack",
+      ".wrangler",
+      "src/routeTree.gen.ts",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
+    files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: { ecmaFeatures: { jsx: true } },
     },
     plugins: {
       "react-hooks": reactHooks,
@@ -32,9 +43,29 @@ export default tseslint.config(
           ],
         },
       ],
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "react-refresh/only-export-components": [
+        "warn",
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            "badgeVariants",
+            "buttonVariants",
+            "useFormField",
+            "navigationMenuTriggerStyle",
+            "useSidebar",
+            "toggleVariants",
+            "useAuth",
+            "useI18n",
+            "LANGUAGES",
+            "useLanguage",
+            "usePortfolio",
+          ],
+        },
+      ],
       "@typescript-eslint/no-unused-vars": "off",
+      "no-unused-vars": "off",
     },
   },
+  { files: ["**/*.{js,jsx}"], rules: { "no-undef": "error" } },
   eslintPluginPrettier,
 );

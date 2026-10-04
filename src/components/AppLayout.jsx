@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useLocation } from '@tanstack/react-router';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/lib/auth';
-import { useLanguage } from '@/lib/language';
-import { usePortfolio } from '@/lib/portfolio';
-import { formatUsd } from '@/lib/markets';
-import LanguageSwitch from '@/components/LanguageSwitch';
-import LegalLinks from '@/components/LegalLinks';
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/language";
+import { usePortfolio } from "@/lib/portfolio";
+import { formatUsd } from "@/lib/markets";
+import LanguageSwitch from "@/components/LanguageSwitch";
+import LegalLinks from "@/components/LegalLinks";
 
 export default function AppLayout({ children }) {
   const { user, signOut } = useAuth();
@@ -19,27 +19,34 @@ export default function AppLayout({ children }) {
 
   useEffect(() => {
     let alive = true;
-    if (!user) { setIsAdmin(false); return; }
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
     supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
       .maybeSingle()
-      .then(({ data }) => { if (alive) setIsAdmin(!!data); });
-    return () => { alive = false; };
+      .then(({ data }) => {
+        if (alive) setIsAdmin(!!data);
+      });
+    return () => {
+      alive = false;
+    };
   }, [user]);
 
   const navItems = [
-    { to: '/app', label: t('nav.portfolio'), exact: true },
-    
-    { to: '/app/ai', label: t('nav.aiTrading') },
-    { to: '/app/group', label: t('nav.group') },
-    { to: '/app/orders', label: t('nav.botPlans') },
-    { to: '/app/recurring', label: t('nav.referrals') },
-    { to: '/app/security', label: t('nav.security') },
-    { to: '/app/wallet', label: t('nav.wallet') },
-    ...(isAdmin ? [{ to: '/app/admin', label: 'Admin' }] : [])
+    { to: "/app", label: t("nav.portfolio"), exact: true },
+
+    { to: "/app/ai", label: t("nav.aiTrading") },
+    { to: "/app/group", label: t("nav.group") },
+    { to: "/app/orders", label: t("nav.botPlans") },
+    { to: "/app/recurring", label: t("nav.referrals") },
+    { to: "/app/security", label: t("nav.security") },
+    { to: "/app/wallet", label: t("nav.wallet") },
+    ...(isAdmin ? [{ to: "/app/admin", label: "Admin" }] : []),
   ];
 
   function isActive(item) {
@@ -49,45 +56,54 @@ export default function AppLayout({ children }) {
 
   async function handleSignOut() {
     await signOut();
-    navigate({ to: '/' });
+    navigate({ to: "/" });
   }
 
-  const initials = (user?.email || 'U').slice(0, 2).toUpperCase();
+  const initials = (user?.email || "U").slice(0, 2).toUpperCase();
   const isGain = changeUsd >= 0;
 
   return (
     <div>
       <header className="app-header">
         <Link className="brand" to="/app">
-          <span className="brand-mark"><span>G</span></span>GNG
+          <span className="brand-mark">
+            <span>G</span>
+          </span>
+          GNG
         </Link>
         <nav className="app-nav">
-          {navItems.map(item => (
-            <Link key={item.to} to={item.to} className={isActive(item) ? 'active' : ''}>
+          {navItems.map((item) => (
+            <Link key={item.to} to={item.to} className={isActive(item) ? "active" : ""}>
               {item.label}
             </Link>
           ))}
         </nav>
         <div className="header-balance" data-flash={flashDir}>
-          <div className="header-balance-label">{t('common.portfolio')}</div>
-          <div className={`header-balance-value ${flashDir === 'up' ? 'flash-up' : flashDir === 'down' ? 'flash-down' : ''}`}>
+          <div className="header-balance-label">{t("common.portfolio")}</div>
+          <div
+            className={`header-balance-value ${flashDir === "up" ? "flash-up" : flashDir === "down" ? "flash-down" : ""}`}
+          >
             {formatUsd(total)}
           </div>
-          <div className={`header-balance-change ${isGain ? 'gain' : 'loss'}`}>
-            {isGain ? '+' : ''}{formatUsd(changeUsd)} ({isGain ? '+' : ''}{changePct.toFixed(2)}%)
+          <div className={`header-balance-change ${isGain ? "gain" : "loss"}`}>
+            {isGain ? "+" : ""}
+            {formatUsd(changeUsd)} ({isGain ? "+" : ""}
+            {changePct.toFixed(2)}%)
           </div>
         </div>
         <div className="user-area">
           <LanguageSwitch />
           <span className="user-email">{user?.email}</span>
           <div className="user-avatar">{initials}</div>
-          <button className="btn small ghost" onClick={handleSignOut}>{t('common.signOut')}</button>
+          <button className="btn small ghost" onClick={handleSignOut}>
+            {t("common.signOut")}
+          </button>
         </div>
       </header>
-      <div className="app-body">
-        {children}
-      </div>
-      <footer className="legal-footer"><LegalLinks /></footer>
+      <div className="app-body">{children}</div>
+      <footer className="legal-footer">
+        <LegalLinks />
+      </footer>
     </div>
   );
 }

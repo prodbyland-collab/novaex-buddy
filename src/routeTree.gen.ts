@@ -12,10 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app.ai'
+import { Route as AuthenticatedAppGroupRouteImport } from './routes/_authenticated/app.group'
 import { Route as AuthenticatedAppOrdersRouteImport } from './routes/_authenticated/app.orders'
 import { Route as AuthenticatedAppRecurringRouteImport } from './routes/_authenticated/app.recurring'
 import { Route as AuthenticatedAppSecurityRouteImport } from './routes/_authenticated/app.security'
@@ -37,6 +40,16 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -55,6 +68,11 @@ const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
 const AuthenticatedAppAiRoute = AuthenticatedAppAiRouteImport.update({
   id: '/ai',
   path: '/ai',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppGroupRoute = AuthenticatedAppGroupRouteImport.update({
+  id: '/group',
+  path: '/group',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAppOrdersRoute = AuthenticatedAppOrdersRouteImport.update({
@@ -95,9 +113,12 @@ const ApiPublicHooksDailyAiCodeRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
+  '/app/group': typeof AuthenticatedAppGroupRoute
   '/app/orders': typeof AuthenticatedAppOrdersRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/app/security': typeof AuthenticatedAppSecurityRoute
@@ -109,8 +130,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
+  '/app/group': typeof AuthenticatedAppGroupRoute
   '/app/orders': typeof AuthenticatedAppOrdersRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/app/security': typeof AuthenticatedAppSecurityRoute
@@ -124,9 +148,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
+  '/_authenticated/app/group': typeof AuthenticatedAppGroupRoute
   '/_authenticated/app/orders': typeof AuthenticatedAppOrdersRoute
   '/_authenticated/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/_authenticated/app/security': typeof AuthenticatedAppSecurityRoute
@@ -140,9 +167,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/privacy'
+    | '/terms'
     | '/app'
     | '/app/admin'
     | '/app/ai'
+    | '/app/group'
     | '/app/orders'
     | '/app/recurring'
     | '/app/security'
@@ -154,8 +184,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/privacy'
+    | '/terms'
     | '/app/admin'
     | '/app/ai'
+    | '/app/group'
     | '/app/orders'
     | '/app/recurring'
     | '/app/security'
@@ -168,9 +201,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/privacy'
+    | '/terms'
     | '/_authenticated/app'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/ai'
+    | '/_authenticated/app/group'
     | '/_authenticated/app/orders'
     | '/_authenticated/app/recurring'
     | '/_authenticated/app/security'
@@ -184,6 +220,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiPublicNowpaymentsWebhookRoute: typeof ApiPublicNowpaymentsWebhookRoute
   ApiPublicHooksDailyAiCodeRoute: typeof ApiPublicHooksDailyAiCodeRoute
 }
@@ -209,6 +247,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -237,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/ai'
       fullPath: '/app/ai'
       preLoaderRoute: typeof AuthenticatedAppAiRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/group': {
+      id: '/_authenticated/app/group'
+      path: '/group'
+      fullPath: '/app/group'
+      preLoaderRoute: typeof AuthenticatedAppGroupRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/orders': {
@@ -287,6 +346,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
+  AuthenticatedAppGroupRoute: typeof AuthenticatedAppGroupRoute
   AuthenticatedAppOrdersRoute: typeof AuthenticatedAppOrdersRoute
   AuthenticatedAppRecurringRoute: typeof AuthenticatedAppRecurringRoute
   AuthenticatedAppSecurityRoute: typeof AuthenticatedAppSecurityRoute
@@ -297,6 +357,7 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
+  AuthenticatedAppGroupRoute: AuthenticatedAppGroupRoute,
   AuthenticatedAppOrdersRoute: AuthenticatedAppOrdersRoute,
   AuthenticatedAppRecurringRoute: AuthenticatedAppRecurringRoute,
   AuthenticatedAppSecurityRoute: AuthenticatedAppSecurityRoute,
@@ -322,6 +383,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiPublicNowpaymentsWebhookRoute: ApiPublicNowpaymentsWebhookRoute,
   ApiPublicHooksDailyAiCodeRoute: ApiPublicHooksDailyAiCodeRoute,
 }

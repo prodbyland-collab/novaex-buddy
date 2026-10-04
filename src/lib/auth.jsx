@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { createLegalAcceptance } from '@/lib/legal';
+import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { createLegalAcceptance } from "@/lib/legal";
 
 const AuthContext = createContext(null);
 
@@ -52,6 +52,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }

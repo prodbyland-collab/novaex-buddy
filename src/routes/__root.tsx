@@ -82,10 +82,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "GNG Exchange" },
-      { name: "description", content: "Trade crypto, deposit with NOWPayments and track your portfolio." },
+      {
+        name: "description",
+        content: "Trade crypto, deposit with NOWPayments and track your portfolio.",
+      },
       { name: "author", content: "GNG" },
       { property: "og:title", content: "GNG Exchange" },
-      { property: "og:description", content: "Trade crypto, deposit with NOWPayments and track your portfolio." },
+      {
+        property: "og:description",
+        content: "Trade crypto, deposit with NOWPayments and track your portfolio.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

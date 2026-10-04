@@ -24,3 +24,7 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for the database migration, required server
+configuration, payout schedule, and validation commands for the accounting and
+security fixes.

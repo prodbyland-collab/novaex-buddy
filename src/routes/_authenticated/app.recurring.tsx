@@ -7,7 +7,10 @@ export const Route = createFileRoute("/_authenticated/app/recurring")({
       { title: "Referrals — GNG" },
       { name: "description", content: "Track your GNG invitations and eligible referral bonuses." },
       { property: "og:title", content: "Referrals — GNG" },
-      { property: "og:description", content: "Track your GNG invitations and eligible referral bonuses." },
+      {
+        property: "og:description",
+        content: "Track your GNG invitations and eligible referral bonuses.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

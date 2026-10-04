@@ -15,7 +15,6 @@ export const DEPOSIT_CURRENCIES = [
 
 const ALLOWED = new Set<string>(DEPOSIT_CURRENCIES as readonly string[]);
 
-
 export type DepositCurrency = { currency: string };
 export type MinDeposit = { currency: string; minUsd: number | null; minAmount: number | null };
 
@@ -31,7 +30,7 @@ function getCurrencyCode(value: unknown): string | null {
 }
 
 function normalizeCurrencies(body: unknown): DepositCurrency[] {
-  const root = body && typeof body === "object" ? body as Record<string, unknown> : {};
+  const root = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   const values = Array.isArray(body)
     ? body
     : Array.isArray(root["currencies"])
@@ -48,9 +47,10 @@ function normalizeCurrencies(body: unknown): DepositCurrency[] {
     .map((currency) => ({ currency: currency.toLowerCase() }))
     .filter((item) => ALLOWED.has(item.currency));
 
-  const order = (DEPOSIT_CURRENCIES as readonly string[]);
-  return [...new Map(currencies.map((item) => [item.currency, item])).values()]
-    .sort((a, b) => order.indexOf(a.currency) - order.indexOf(b.currency));
+  const order = DEPOSIT_CURRENCIES as readonly string[];
+  return [...new Map(currencies.map((item) => [item.currency, item])).values()].sort(
+    (a, b) => order.indexOf(a.currency) - order.indexOf(b.currency),
+  );
 }
 
 export async function fetchSupportedDepositCurrencies(apiKey: string): Promise<DepositCurrency[]> {
@@ -78,7 +78,10 @@ export async function fetchMinDeposit(currency: string, apiKey: string): Promise
     const response = await fetch(url, { headers: { "x-api-key": apiKey } });
     if (!response.ok) return { currency, minUsd: null, minAmount: null };
 
-    const body = await response.json() as { min_amount?: number | string; fiat_equivalent?: number | string };
+    const body = (await response.json()) as {
+      min_amount?: number | string;
+      fiat_equivalent?: number | string;
+    };
     const fiat = Number(body.fiat_equivalent);
     const minAmount = Number(body.min_amount);
 

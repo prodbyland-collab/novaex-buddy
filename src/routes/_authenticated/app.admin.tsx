@@ -7,7 +7,10 @@ export const Route = createFileRoute("/_authenticated/app/admin")({
       { title: "Admin Console — GNG" },
       { name: "description", content: "Manage users, balances, bot plans, deposits and payouts." },
       { property: "og:title", content: "Admin Console — GNG" },
-      { property: "og:description", content: "Manage users, balances, bot plans, deposits and payouts." },
+      {
+        property: "og:description",
+        content: "Manage users, balances, bot plans, deposits and payouts.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
