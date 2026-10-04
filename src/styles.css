@@ -6,6 +6,11 @@
 @import "./styles/app.css";
 @import "./styles/support.css";
 
+/* Hide the publishing platform's badge throughout the app. */
+#lovable-badge {
+  display: none !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*
