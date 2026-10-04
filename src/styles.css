@@ -8,6 +8,7 @@
 @import "./styles/admin.css";
 @import "./styles/design.css";
 @import "./styles/member-tools.css";
+@import "./styles/mobile.css";
 
 /* Hide the publishing platform's badge throughout the app. */
 #lovable-badge {

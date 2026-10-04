@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -23,12 +23,34 @@ import {
 
 export default function AppLayout({ children }) {
   const { user, signOut } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { total, changeUsd, changePct, flashDir, loading, error } = usePortfolio();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const navigation = useRef(null);
+
+  useEffect(() => {
+    const revealActive = () => {
+      const nav = navigation.current;
+      const active = nav?.querySelector('[aria-current="page"]');
+      if (!nav || !active) return;
+      const container = nav.getBoundingClientRect();
+      const item = active.getBoundingClientRect();
+      if (item.left < container.left || item.right > container.right) {
+        nav.scrollTo({
+          left: nav.scrollLeft + item.left - container.left - (container.width - item.width) / 2,
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "instant"
+            : "smooth",
+        });
+      }
+    };
+    revealActive();
+    window.addEventListener("resize", revealActive);
+    return () => window.removeEventListener("resize", revealActive);
+  }, [location.pathname, isAdmin, language]);
 
   useEffect(() => {
     let alive = true;
@@ -87,7 +109,7 @@ export default function AppLayout({ children }) {
           </span>
           <span className="brand-name">GNG</span>
         </Link>
-        <nav className="app-nav" aria-label={t("common.dashboard")}>
+        <nav ref={navigation} className="app-nav" aria-label={t("common.dashboard")}>
           {navItems.map((item) => (
             <Link
               key={item.to}

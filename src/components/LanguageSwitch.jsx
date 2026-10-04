@@ -12,8 +12,16 @@ export default function LanguageSwitch() {
   return (
     <div className="lang-switch" role="group" aria-label={t("common.language") || "Language"}>
       <button
+        className="mobile-language-toggle"
         type="button"
-        className={lang === "ka" ? "active" : ""}
+        aria-label={t(lang === "ka" ? "Switch to English" : "Switch to Georgian")}
+        onClick={() => changeLanguage(lang === "ka" ? "en" : "ka")}
+      >
+        {lang === "ka" ? "ქარ" : "EN"}
+      </button>
+      <button
+        type="button"
+        className={`desktop-language-option ${lang === "ka" ? "active" : ""}`}
         aria-pressed={lang === "ka"}
         onClick={() => changeLanguage("ka")}
       >
@@ -21,7 +29,7 @@ export default function LanguageSwitch() {
       </button>
       <button
         type="button"
-        className={lang === "en" ? "active" : ""}
+        className={`desktop-language-option ${lang === "en" ? "active" : ""}`}
         aria-pressed={lang === "en"}
         onClick={() => changeLanguage("en")}
       >

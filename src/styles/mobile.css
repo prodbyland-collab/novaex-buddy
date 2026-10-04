@@ -1,0 +1,332 @@
+/* Phone and tablet refinements, loaded after the shared design system. */
+.lang-switch .mobile-language-toggle {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .btn,
+  .btn.small,
+  .trade-tab,
+  .side-btn,
+  .history-pagination button,
+  .support-icon-button,
+  .support-suggestions button,
+  .support-footer button,
+  .auth-card .text-link,
+  .lang-switch button,
+  .menu-button,
+  .admin-compact button {
+    min-height: 44px;
+  }
+  .menu-button {
+    min-width: 44px;
+  }
+  .field input,
+  .field select,
+  .app-body input:not([type="checkbox"]),
+  .app-body select,
+  .app-body textarea,
+  .auth-card input,
+  .admin-compact input:not([type="checkbox"]),
+  .admin-compact select,
+  .admin-compact textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .notification-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  .plan-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ai-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ai-workspace > :nth-child(3),
+  .ai-workspace > :nth-child(4) {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  html {
+    scroll-padding-top: 140px;
+  }
+  .app-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0
+      max(12px, env(safe-area-inset-left));
+    column-gap: 6px;
+    row-gap: 8px;
+  }
+  .app-header .brand-name {
+    display: none;
+  }
+  .app-header .brand,
+  .app-header .brand-mark {
+    width: 32px;
+    min-width: 32px;
+    height: 44px;
+  }
+  .app-header .brand-mark {
+    height: 32px;
+  }
+  .app-header .header-balance {
+    justify-self: stretch;
+    padding: 5px 6px;
+    text-align: center;
+  }
+  .header-balance-value {
+    font-size: clamp(12px, 3.7vw, 16px);
+    overflow-wrap: anywhere;
+  }
+  .header-balance-change {
+    font-size: 9px;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+  }
+  .app-header .user-area {
+    gap: 2px;
+  }
+  .lang-switch .desktop-language-option {
+    display: none;
+  }
+  .lang-switch .mobile-language-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 5px;
+    font-size: 12px;
+  }
+  .notification-toggle,
+  .app-header .user-area .sign-out {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .app-header .app-nav {
+    padding-bottom: 8px;
+    gap: 6px;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 6px;
+  }
+  .app-header .app-nav a {
+    min-height: 44px;
+    padding: 10px 12px;
+    scroll-snap-align: start;
+  }
+  .app-body {
+    padding: 20px max(14px, env(safe-area-inset-right)) 32px max(14px, env(safe-area-inset-left));
+  }
+  .app-body > *,
+  .page-heading > div,
+  .holding-left,
+  .member-activity-row > span,
+  .deposit-history-row > span {
+    min-width: 0;
+  }
+  .page-heading {
+    margin-bottom: 18px;
+  }
+  .page-title {
+    font-size: clamp(21px, 5.8vw, 26px);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .page-sub {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .card,
+  .card-2,
+  .portfolio-card,
+  .plan-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+  .btn,
+  .btn.small,
+  .trade-tab,
+  .side-btn,
+  .history-pagination button,
+  .support-icon-button,
+  .support-suggestions button,
+  .auth-card .text-link {
+    min-height: 44px;
+  }
+  .app-body .btn,
+  .auth-card .btn,
+  .support-launcher {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.5;
+    justify-content: center;
+  }
+  .field input,
+  .field select,
+  .app-body input:not([type="checkbox"]),
+  .app-body select,
+  .app-body textarea,
+  .auth-card input,
+  .admin-compact input:not([type="checkbox"]),
+  .admin-compact select,
+  .admin-compact textarea {
+    min-height: 44px;
+    max-width: 100%;
+    font-size: 16px;
+  }
+  .trade-summary div {
+    align-items: flex-start;
+  }
+  .trade-summary div > * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .portfolio-value,
+  .holding-amount,
+  .member-activity-row,
+  .member-next-payout strong,
+  .ac-stats strong {
+    overflow-wrap: anywhere;
+  }
+  .address-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .address-box .btn {
+    width: 100%;
+  }
+  .wallet-empty {
+    padding: 28px 12px;
+  }
+  .security-item {
+    flex-wrap: nowrap;
+  }
+  .security-info {
+    min-width: 0;
+    flex: 1;
+  }
+  .toggle {
+    min-width: 48px;
+    min-height: 44px;
+    border-radius: 22px;
+  }
+  .toggle::after {
+    top: 13px;
+  }
+  .toggle.on::after {
+    transform: translateX(24px);
+  }
+  .notification-inbox {
+    top: 76px;
+    right: max(12px, env(safe-area-inset-right));
+    max-height: calc(100dvh - 100px);
+    overscroll-behavior: contain;
+    width: min(360px, calc(100vw - 32px));
+  }
+  .support-widget {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .support-panel {
+    width: min(400px, calc(100vw - 32px));
+    max-height: calc(100dvh - 90px - env(safe-area-inset-bottom));
+  }
+  .support-form .btn {
+    padding-inline: 12px;
+  }
+  .legal-footer {
+    padding: 20px 14px calc(90px + env(safe-area-inset-bottom));
+  }
+  .toast {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    overflow-wrap: anywhere;
+  }
+  .admin-compact button {
+    min-height: 44px;
+    white-space: normal;
+  }
+  .ac-toolbar {
+    gap: 10px;
+  }
+  .ac-actions {
+    gap: 8px;
+  }
+  .ac-tabs {
+    scroll-snap-type: x proximity;
+  }
+  .ac-tabs button {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+  .ac-form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ac-table-scroll {
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+  .admin-compact .ac-check {
+    min-height: 44px;
+  }
+  .admin-compact input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+  .ac-stats > div {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .plan-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Keep the amount visible instead of dropping this column on phones. */
+  .deposit-history-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+  }
+  .deposit-history-row > span:nth-child(2) {
+    display: flex;
+    text-align: right;
+  }
+  .deposit-history-row > .badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+  .deposit-history-row strong,
+  .deposit-history-row small {
+    overflow-wrap: anywhere;
+  }
+  .member-activity-row {
+    align-items: start;
+    gap: 10px;
+  }
+  .member-activity-row > span {
+    flex: 1;
+  }
+  .member-inbox-heading {
+    flex-wrap: wrap;
+  }
+  .landing-page .hero {
+    padding-top: 32px;
+  }
+  .landing-page .hero-art {
+    height: 300px;
+  }
+  .landing-page .section {
+    padding-block: 36px;
+  }
+  .auth-card,
+  .legal-document {
+    padding: 18px;
+  }
+}

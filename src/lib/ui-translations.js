@@ -1,5 +1,7 @@
 // English source phrases are keys for shared UI labels and server messages.
 export const georgianUi = {
+  "Switch to English": "ინგლისურზე გადართვა",
+  "Switch to Georgian": "ქართულზე გადართვა",
   "Available USD balance": "ხელმისაწვდომი USD ბალანსი",
   "Buy with balance": "ბალანსით ყიდვა",
   "Insufficient USD balance": "USD ბალანსი არასაკმარისია",
