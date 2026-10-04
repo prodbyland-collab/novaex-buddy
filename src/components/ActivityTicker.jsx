@@ -58,7 +58,8 @@ const LAST = [
 const COINS = MARKETS.map((m) => m.symbol).filter((s) => s !== "USD");
 // Users deposit stablecoins and BTC/ETH far more often than smaller coins.
 const WEIGHTS = { USDT: 5, BTC: 4, ETH: 3, SOL: 2, TRX: 1.5, LTC: 1, XRP: 1.5, BNB: 1, DOGE: 1 };
-const ROUND_USD = [50, 100, 150, 200, 250, 300, 500, 750, 1000, 1500, 2000, 2500, 5000];
+const MIN_DEPOSIT_USD = 500;
+const ROUND_USD = [500, 750, 1000, 1500, 2000, 2500, 5000];
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -77,14 +78,14 @@ function makeUser() {
   return `${base.slice(0, 4)}•••${Math.floor(Math.random() * 90 + 10)}`;
 }
 
-// Log-normal-ish spread: most transactions are small, a few are large.
+// Log-normal-ish spread, with deposits starting at $500.
 function usdSize(kind) {
   if (kind === "deposit" && Math.random() < 0.45) return pick(ROUND_USD);
-  const median = kind === "deposit" ? 320 : 180;
+  const median = kind === "deposit" ? 1000 : 180;
   const v = Math.exp(
     Math.log(median) + (Math.random() + Math.random() + Math.random() - 1.5) * 1.4,
   );
-  return Math.min(Math.max(v, 25), 12000);
+  return Math.min(Math.max(v, kind === "deposit" ? MIN_DEPOSIT_USD : 25), 12000);
 }
 
 function coinDecimals(price) {
@@ -99,7 +100,13 @@ function makeEvent(id, prices) {
   const symbol = pickCoin();
   const price = prices?.[symbol]?.price ?? MARKETS.find((m) => m.symbol === symbol)?.price ?? 1;
   const d = coinDecimals(price);
-  const coins = Number((usdSize(kind) / price).toFixed(d));
+  let coins = Number((usdSize(kind) / price).toFixed(d));
+  // Coin precision can round a $500 deposit below the minimum.
+  if (kind === "deposit" && coins * price < MIN_DEPOSIT_USD) {
+    const precision = 10 ** d;
+    coins = Math.ceil((MIN_DEPOSIT_USD / price) * precision) / precision;
+    if (coins * price < MIN_DEPOSIT_USD) coins += 1 / precision;
+  }
   const usd = coins * price;
   return {
     id,
