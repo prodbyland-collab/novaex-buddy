@@ -7,6 +7,7 @@ import { assetSymbol } from "./account.functions";
 import { paymentSchema } from "./payment";
 import { getBotPlan } from "./plans";
 import { fetchAllRows } from "./pagination";
+import { changeAccountAccess } from "./admin-tools";
 
 async function assertAdmin(context: { supabase: SupabaseClient<Database>; userId: string }) {
   const { data, error } = await context.supabase.rpc("has_role", {
@@ -40,30 +41,45 @@ export const adminOverview = createServerFn({ method: "GET" })
       allUsers.push(...data.users);
       if (data.users.length < 1000) break;
     }
-    const [holdingRows, settingRows, referralRows, roleRows, deposits, withdrawals, code, totals] =
-      await Promise.all([
-        fetchAllRows((from, to) =>
-          admin.from("holdings").select("user_id,symbol,amount").order("id").range(from, to),
-        ),
-        fetchAllRows((from, to) =>
-          admin.from("ai_trading_settings").select("*").order("id").range(from, to),
-        ),
-        fetchAllRows((from, to) =>
-          admin.from("referrals").select("referrer_id").order("id").range(from, to),
-        ),
-        fetchAllRows((from, to) =>
-          admin.from("user_roles").select("user_id,role").order("id").range(from, to),
-        ),
-        admin
-          .from("crypto_deposits")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(100),
-        admin.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
-        admin.from("daily_ai_codes").select("*").order("code_date", { ascending: false }).limit(1),
-        admin.rpc("admin_account_totals"),
-      ]);
-    for (const result of [deposits, withdrawals, code, totals])
+    const [
+      holdingRows,
+      settingRows,
+      referralRows,
+      roleRows,
+      deposits,
+      withdrawals,
+      code,
+      totals,
+      announcements,
+    ] = await Promise.all([
+      fetchAllRows((from, to) =>
+        admin.from("holdings").select("user_id,symbol,amount").order("id").range(from, to),
+      ),
+      fetchAllRows((from, to) =>
+        admin.from("ai_trading_settings").select("*").order("id").range(from, to),
+      ),
+      fetchAllRows((from, to) =>
+        admin.from("referrals").select("referrer_id").order("id").range(from, to),
+      ),
+      fetchAllRows((from, to) =>
+        admin.from("user_roles").select("user_id,role").order("id").range(from, to),
+      ),
+      admin
+        .from("crypto_deposits")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100),
+      admin.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
+      admin.from("daily_ai_codes").select("*").order("code_date", { ascending: false }).limit(1),
+      admin.rpc("admin_account_totals"),
+      admin
+        .from("group_announcements")
+        .select("id,body,kind,created_at")
+        .eq("kind", "news")
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
+    for (const result of [deposits, withdrawals, code, totals, announcements])
       if (result.error) throw new Error("Could not load administrator data");
     const users = allUsers.map((u) => {
       const own = holdingRows.filter((h) => h.user_id === u.id);
@@ -72,6 +88,10 @@ export const adminOverview = createServerFn({ method: "GET" })
         id: u.id,
         email: u.email ?? "",
         createdAt: u.created_at,
+        lastSignInAt: u.last_sign_in_at ?? null,
+        emailConfirmed: Boolean(u.email_confirmed_at),
+        suspended: Boolean(u.banned_until && Date.parse(u.banned_until) > Date.now()),
+        mfaEnabled: Boolean(u.factors?.some((f) => f.status === "verified")),
         usd: Number(own.find((h) => h.symbol === "USD")?.amount ?? 0),
         assets: own
           .filter((h) => h.symbol !== "USD" && Number(h.amount) > 0)
@@ -89,6 +109,7 @@ export const adminOverview = createServerFn({ method: "GET" })
     const emailById = new Map(users.map((u) => [u.id, u.email]));
     return {
       users,
+      announcements: announcements.data ?? [],
       deposits: (deposits.data ?? []).map((r) => ({
         ...r,
         email: emailById.get(r.user_id) ?? r.user_id,
@@ -271,5 +292,29 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
     if (data.userId === context.userId) throw new Error("You cannot delete your own account");
     const { error } = await admin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminSetAccountAccess = createServerFn({ method: "POST" })
+  .middleware([requireVerifiedAuth])
+  .validator(z.object({ userId, suspended: z.boolean() }))
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    return changeAccountAccess(admin, context.userId, data.userId, data.suspended);
+  });
+
+export const adminDeleteAnnouncement = createServerFn({ method: "POST" })
+  .middleware([requireVerifiedAuth])
+  .validator(z.object({ announcementId: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const admin = await assertAdmin(context);
+    const { data: removed, error } = await admin
+      .from("group_announcements")
+      .delete()
+      .eq("id", data.announcementId)
+      .eq("kind", "news")
+      .select("id");
+    if (error) throw new Error(error.message);
+    if (!removed?.length) throw new Error("Announcement not found");
     return { ok: true };
   });

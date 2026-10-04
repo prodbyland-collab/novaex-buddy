@@ -5,6 +5,7 @@
 @import "./styles/landing.css";
 @import "./styles/app.css";
 @import "./styles/support.css";
+@import "./styles/admin.css";
 
 /* Hide the publishing platform's badge throughout the app. */
 #lovable-badge {
