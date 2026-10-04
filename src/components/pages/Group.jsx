@@ -18,7 +18,7 @@ export default function Group() {
       setFeed(await getGroupFeed());
       setError("");
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || "Could not load the group. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ export default function Group() {
       setNews("");
       await load();
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || "Could not publish news. Please try again later.");
     } finally {
       setBusy(false);
     }

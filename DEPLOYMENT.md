@@ -62,6 +62,12 @@ unavailable because the project has no execution workers for them.
 
 ## Verification
 
+If the preview reports a failure in `getGroupFeed`, check its server log. A
+`PGRST202` error for `session_is_verified` means the application was deployed
+before `20261004120000_secure_accounting.sql` was applied, or is connected to a
+different database. Apply that pending migration to the project configured by
+`SUPABASE_URL`, then refresh the preview. Do not bypass verification as a workaround.
+
 Use Node 24 or newer for the test runner's TypeScript support. Bun's checked-in
 lockfile includes the embedded PostgreSQL test dependency.
 
