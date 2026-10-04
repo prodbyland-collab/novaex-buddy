@@ -19,8 +19,15 @@
     {
       "idx": 2,
       "version": "7",
+      "when": 1791091492753,
+      "tag": "0002_create_group_announcements",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
       "when": 1791115200000,
-      "tag": "0002_secure_accounting",
+      "tag": "0003_secure_accounting",
       "breakpoints": true
     }
   ]

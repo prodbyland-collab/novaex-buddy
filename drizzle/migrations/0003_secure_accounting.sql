@@ -1,5 +1,8 @@
 -- All financial writes are transactional and serialized by account.
 -- Withdrawals intentionally continue to use the existing completed status.
+-- Normalize databases where the group table was created by the Drizzle path.
+ALTER TABLE public.group_announcements ALTER COLUMN body SET DEFAULT '';
+CREATE UNIQUE INDEX IF NOT EXISTS group_announcements_code_date_key ON public.group_announcements(code_date);
 CREATE OR REPLACE FUNCTION public.session_is_verified()
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT auth.uid() IS NOT NULL AND (

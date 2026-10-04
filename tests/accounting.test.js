@@ -286,7 +286,7 @@ test("Supabase and Drizzle fixes match and reapplication preserves trusted addre
   assert.equal(
     sql,
     await readFile(
-      new URL("../drizzle/migrations/0002_secure_accounting.sql", import.meta.url),
+      new URL("../drizzle/migrations/0003_secure_accounting.sql", import.meta.url),
       "utf8",
     ),
   );

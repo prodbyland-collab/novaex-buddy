@@ -9,7 +9,7 @@ server functions and restricted database RPCs.
 `supabase/migrations` is the canonical migration history. Apply pending migrations
 in filename order, including `20261004120000_secure_accounting.sql`, using your
 Supabase deployment workflow. Do not replay the old referral migrations afterward.
-For an existing database managed by Drizzle, `0002_secure_accounting.sql` contains
+For an existing database managed by Drizzle, `0003_secure_accounting.sql` contains
 the identical final definitions. Drizzle's history is incremental over the existing
 Supabase schema; it does not create a fresh database. Choose one migration runner.
 

@@ -164,6 +164,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      group_announcements: {
+        Row: {
+          author_id: string | null;
+          body: string;
+          code: string | null;
+          code_date: string | null;
+          created_at: string;
+          expires_at: string | null;
+          id: string;
+          kind: string;
+        };
+        Insert: {
+          author_id?: string | null;
+          body: string;
+          code?: string | null;
+          code_date?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          kind?: string;
+        };
+        Update: {
+          author_id?: string | null;
+          body?: string;
+          code?: string | null;
+          code_date?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          kind?: string;
+        };
+        Relationships: [];
+      };
       holdings: {
         Row: {
           amount: number;
