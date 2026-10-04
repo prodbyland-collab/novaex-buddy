@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/language";
 import { usePortfolio } from "@/lib/portfolio";
 import { formatUsd } from "@/lib/markets";
+import { profitPercentage } from "@/lib/portfolio-math";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import LegalLinks from "@/components/LegalLinks";
 import NotificationCenter from "@/components/NotificationCenter";
@@ -109,8 +110,7 @@ export default function AppLayout({ children }) {
           {!loading && !error && (
             <div className={`header-balance-change ${isGain ? "gain" : "loss"}`}>
               {isGain ? "+" : ""}
-              {formatUsd(changeUsd)} ({isGain ? "+" : ""}
-              {changePct.toFixed(2)}%)
+              {formatUsd(changeUsd)} ({profitPercentage(changePct)})
             </div>
           )}
         </div>

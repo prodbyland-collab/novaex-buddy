@@ -10,6 +10,7 @@ import {
 import PageHeading from "@/components/PageHeading";
 import RetryNotice from "@/components/RetryNotice";
 import AccountOverview from "@/components/AccountOverview";
+import { profitPercentage } from "@/lib/portfolio-math";
 import { Link } from "@tanstack/react-router";
 import { usePortfolio } from "@/lib/portfolio";
 import { MARKETS, MARKET_MAP, formatUsd, formatNum } from "@/lib/markets";
@@ -113,8 +114,7 @@ export default function Dashboard() {
               >
                 <span>
                   {isGain ? "▲" : "▼"} {isGain ? "+" : ""}
-                  {formatUsd(Math.abs(changeUsd))} ({isGain ? "+" : ""}
-                  {changePct.toFixed(2)}%)
+                  {formatUsd(Math.abs(changeUsd))} ({profitPercentage(changePct)})
                 </span>
                 <span className="muted-2" style={{ fontSize: 12 }}>
                   {t("dashboard.sinceStart")}

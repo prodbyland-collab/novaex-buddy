@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { useLivePrices } from "@/lib/useLivePrices";
 import { MARKET_MAP } from "@/lib/markets";
 import { ensureUsdBalance, fetchHoldings, fetchCostBasis } from "@/lib/api";
+import { portfolioProfit } from "@/lib/portfolio-math";
 
 // Keep one context instance across hot reloads so provider and consumers always match.
 const PortfolioContext =
@@ -13,34 +14,45 @@ export function PortfolioProvider({ user, children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const sequence = useRef(0);
+  const pendingRequests = useRef(0);
   const [prevTotal, setPrevTotal] = useState(null);
   const [basis, setBasis] = useState({ deposited: 0, withdrawn: 0, netInvested: 0 });
 
-  const load = useCallback(async () => {
-    const request = ++sequence.current;
-    if (!user) {
-      setLoading(false);
-      return false;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      await ensureUsdBalance(user.id);
-      const [data, costBasis] = await Promise.all([
-        fetchHoldings(user.id),
-        fetchCostBasis(user.id),
-      ]);
-      if (request !== sequence.current) return false;
-      setHoldings(data);
-      setBasis(costBasis);
-      return true;
-    } catch (e) {
-      if (request === sequence.current) setError(e.message || "Could not load portfolio");
-      return false;
-    } finally {
-      if (request === sequence.current) setLoading(false);
-    }
-  }, [user]);
+  const load = useCallback(
+    async (background = false) => {
+      background = background === true;
+      if (background && pendingRequests.current) return false;
+      const request = ++sequence.current;
+      if (!user) {
+        setLoading(false);
+        return false;
+      }
+      pendingRequests.current++;
+      if (!background) {
+        setLoading(true);
+        setError("");
+      }
+      try {
+        await ensureUsdBalance(user.id);
+        const [data, costBasis] = await Promise.all([
+          fetchHoldings(user.id),
+          fetchCostBasis(user.id),
+        ]);
+        if (request !== sequence.current) return false;
+        setHoldings(data);
+        setBasis(costBasis);
+        setError("");
+        return true;
+      } catch (e) {
+        if (request === sequence.current) setError(e.message || "Could not load portfolio");
+        return false;
+      } finally {
+        pendingRequests.current--;
+        if (request === sequence.current) setLoading(false);
+      }
+    },
+    [user],
+  );
 
   useEffect(() => {
     setHoldings([]);
@@ -52,6 +64,21 @@ export function PortfolioProvider({ user, children }) {
       pending.current++;
     };
   }, [load]);
+
+  useEffect(() => {
+    if (!user) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") load(true);
+    };
+    const timer = setInterval(refresh, 10000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [load, user]);
 
   const total = holdings.reduce((sum, h) => {
     const price =
@@ -73,12 +100,11 @@ export function PortfolioProvider({ user, children }) {
 
   const usdBalance = holdings.find((h) => h.symbol === "USD")?.amount ?? 0;
 
-  // Profit since start = what you hold now minus what you actually put in
-  // (credited deposits less withdrawn value). With no deposits yet, anything
-  // in the account (e.g. AI trading payouts) counts fully as profit.
-  const netInvested = Number(basis.netInvested) || 0;
-  const changeUsd = total - netInvested;
-  const changePct = netInvested > 0 ? (changeUsd / netInvested) * 100 : total > 0 ? 100 : 0;
+  const { netInvested, changeUsd, changePct } = portfolioProfit(
+    total,
+    basis.deposited,
+    basis.withdrawn,
+  );
 
   return (
     <PortfolioContext.Provider

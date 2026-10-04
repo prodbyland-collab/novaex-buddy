@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createDeposit, getMinDeposits, getDepositMinimum } from "@/lib/deposits.functions";
 import { requestWithdrawal, requestMarketOrder } from "@/lib/account.functions";
 import { fetchAllRows } from "@/lib/pagination";
+import { depositPrincipal } from "@/lib/portfolio-math";
 
 // Ensure the current user has a USD cash row. New accounts start at $0 —
 // balance only grows through confirmed crypto deposits.
@@ -241,13 +242,7 @@ export async function fetchCostBasis(userId) {
     ),
   ]);
 
-  const deposited = deposits.reduce(
-    (sum, d) =>
-      sum +
-      Number(d.price_amount || 0) *
-        Math.min(Number(d.actually_paid || 0) / Number(d.pay_amount || 1), 1),
-    0,
-  );
+  const deposited = depositPrincipal(deposits);
   const withdrawn = withdrawals.reduce((sum, w) => sum + Number(w.usd_value || 0), 0);
   return { deposited, withdrawn, netInvested: deposited - withdrawn };
 }
